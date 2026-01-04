@@ -72,40 +72,60 @@ class ClaudachiFaceSprites {
 
     // MARK: - Mouth
 
-    /// Generates a whistle "o" mouth texture (filled circle)
-    /// Mouth size: 4x3 pixels
+    /// Generates a whistle "o" mouth texture (lowercase o style)
+    /// Mouth size: 2x2 pixels
     static func generateWhistleMouthTexture() -> SKTexture {
-        var pixels = Array(repeating: Array(repeating: P.clear, count: 4), count: 3)
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 2), count: 2)
 
-        // Filled round shape for whistling
-        pixels[2][1] = P.mouthColor  // Top row (narrower)
-        pixels[2][2] = P.mouthColor
-        // Middle row (full width)
-        for col in 0..<4 {
-            pixels[1][col] = P.mouthColor
+        // Simple 2x2 filled block - minimal lowercase 'o'
+        for row in 0..<2 {
+            for col in 0..<2 {
+                pixels[row][col] = P.mouthColor
+            }
         }
-        pixels[0][1] = P.mouthColor  // Bottom row (narrower)
-        pixels[0][2] = P.mouthColor
 
-        return PixelArtGenerator.textureFromPixels(pixels, width: 4, height: 3)
+        return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 2)
     }
 
     /// Generates a musical note texture for whistle effect
-    /// Note size: 3x5 pixels
+    /// Note size: 5x7 pixels - white with black stroke
     static func generateMusicNoteTexture() -> SKTexture {
-        var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 5)
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 5), count: 7)
 
-        // Simple music note shape
-        pixels[0][0] = P.eyePupil  // Note head
-        pixels[0][1] = P.eyePupil
-        pixels[1][0] = P.eyePupil
-        pixels[1][2] = P.eyePupil  // Stem
-        pixels[2][2] = P.eyePupil
-        pixels[3][2] = P.eyePupil
-        pixels[4][2] = P.eyePupil
-        pixels[4][1] = P.eyePupil  // Flag
+        let fill = P.eyeWhite
+        let stroke = P.eyePupil
 
-        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 5)
+        // Note head - outline
+        pixels[0][0] = stroke
+        pixels[0][1] = stroke
+        pixels[0][2] = stroke
+        pixels[1][0] = stroke
+        pixels[1][3] = stroke
+        pixels[2][1] = stroke
+        pixels[2][2] = stroke
+        pixels[2][3] = stroke
+
+        // Note head - fill
+        pixels[1][1] = fill
+        pixels[1][2] = fill
+
+        // Stem - outline and fill
+        pixels[2][4] = stroke
+        pixels[3][3] = stroke
+        pixels[3][4] = fill
+        pixels[4][3] = stroke
+        pixels[4][4] = fill
+        pixels[5][3] = stroke
+        pixels[5][4] = fill
+        pixels[6][3] = stroke
+        pixels[6][4] = stroke
+
+        // Flag - outline and fill
+        pixels[6][2] = stroke
+        pixels[5][2] = fill
+        pixels[5][1] = stroke
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 5, height: 7)
     }
 
     // MARK: - Effect Textures

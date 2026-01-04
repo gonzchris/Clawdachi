@@ -87,7 +87,7 @@ extension ClaudachiSprite {
 
         let resetMouth = SKAction.run { [weak self] in
             self?.mouthNode.texture = self?.whistleMouthTexture
-            self?.mouthNode.size = CGSize(width: 4, height: 3)
+            self?.mouthNode.size = CGSize(width: 2, height: 2)
             self?.mouthNode.setScale(1.0)
         }
 

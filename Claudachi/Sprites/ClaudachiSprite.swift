@@ -183,7 +183,7 @@ class ClaudachiSprite: SKNode {
 
         // Mouth (Layer 2) - hidden by default
         mouthNode = SKSpriteNode(texture: whistleMouthTexture)
-        mouthNode.size = CGSize(width: 4, height: 3)
+        mouthNode.size = CGSize(width: 2, height: 2)
         mouthNode.position = CGPoint(x: 0, y: -4)
         mouthNode.zPosition = 2
         mouthNode.alpha = 0
