@@ -14,6 +14,13 @@ class ClaudachiSprite: SKNode {
     private var leftEyeNode: SKSpriteNode!
     private var rightEyeNode: SKSpriteNode!
     private var mouthNode: SKSpriteNode!
+    private var terminalSprite: TerminalSprite!
+
+    // Limbs (separate nodes for animation)
+    private var leftArmNode: SKSpriteNode!
+    private var rightArmNode: SKSpriteNode!
+    private var leftFootNode: SKSpriteNode!
+    private var rightFootNode: SKSpriteNode!
 
     // MARK: - Animation Textures
 
@@ -35,11 +42,21 @@ class ClaudachiSprite: SKNode {
     private var isWhistling = false
     private var isPerformingAction = false
     private var isLookingAround = false
+    private var isDragging = false
 
     // MARK: - Base Positions (for returning after animations)
 
     private let leftEyeBasePos = CGPoint(x: -4, y: 0)
     private let rightEyeBasePos = CGPoint(x: 4, y: 0)
+
+    // Limb positions relative to body center (sprite is 32x32, center at 0,0)
+    // Arms at rows 11-13 means y = 12 - 16 = -4 (center of arm)
+    // Left arm at x = 4-6 means x = 5 - 16 = -11
+    private let leftArmBasePos = CGPoint(x: -11, y: -4)
+    private let rightArmBasePos = CGPoint(x: 11, y: -4)
+    // Feet at rows 5-6, left foot at x = 9-11, right at x = 20-22
+    private let leftFootBasePos = CGPoint(x: -6, y: -10)
+    private let rightFootBasePos = CGPoint(x: 6, y: -10)
 
     // MARK: - Animation Constants
 
@@ -86,6 +103,35 @@ class ClaudachiSprite: SKNode {
     }
 
     private func setupSprites() {
+        // Limbs first (Layer 0) - behind body
+        leftArmNode = SKSpriteNode(texture: ClaudachiBodySprites.generateLeftArmTexture())
+        leftArmNode.size = CGSize(width: 3, height: 3)
+        leftArmNode.position = leftArmBasePos
+        leftArmNode.anchorPoint = CGPoint(x: 1.0, y: 0.5)  // Anchor at right edge (attaches to body)
+        leftArmNode.zPosition = 0
+        addChild(leftArmNode)
+
+        rightArmNode = SKSpriteNode(texture: ClaudachiBodySprites.generateRightArmTexture())
+        rightArmNode.size = CGSize(width: 3, height: 3)
+        rightArmNode.position = rightArmBasePos
+        rightArmNode.anchorPoint = CGPoint(x: 0.0, y: 0.5)  // Anchor at left edge (attaches to body)
+        rightArmNode.zPosition = 0
+        addChild(rightArmNode)
+
+        leftFootNode = SKSpriteNode(texture: ClaudachiBodySprites.generateLeftFootTexture())
+        leftFootNode.size = CGSize(width: 3, height: 2)
+        leftFootNode.position = leftFootBasePos
+        leftFootNode.anchorPoint = CGPoint(x: 0.5, y: 1.0)  // Anchor at top (attaches to body)
+        leftFootNode.zPosition = 0
+        addChild(leftFootNode)
+
+        rightFootNode = SKSpriteNode(texture: ClaudachiBodySprites.generateRightFootTexture())
+        rightFootNode.size = CGSize(width: 3, height: 2)
+        rightFootNode.position = rightFootBasePos
+        rightFootNode.anchorPoint = CGPoint(x: 0.5, y: 1.0)  // Anchor at top (attaches to body)
+        rightFootNode.zPosition = 0
+        addChild(rightFootNode)
+
         // Body (Layer 1)
         bodyNode = SKSpriteNode(texture: breathingFrames[1])
         bodyNode.size = CGSize(width: 32, height: 32)
@@ -114,6 +160,12 @@ class ClaudachiSprite: SKNode {
         mouthNode.zPosition = 2
         mouthNode.alpha = 0
         addChild(mouthNode)
+
+        // Terminal (Layer 5) - for coding animation
+        terminalSprite = TerminalSprite()
+        terminalSprite.position = CGPoint(x: 14, y: 4)  // To the right of character
+        terminalSprite.zPosition = 5
+        addChild(terminalSprite)
     }
 
     // MARK: - Idle Animations
@@ -154,14 +206,13 @@ class ClaudachiSprite: SKNode {
     }
 
     private func startSwayAnimation() {
-        // Gentle side-to-side sway using position (not rotation - avoids anti-aliasing)
-        let swayAmount: CGFloat = 0.3  // Subtle horizontal movement
-        let swayRight = SKAction.moveBy(x: swayAmount, y: 0, duration: swayDuration / 2)
-        let swayLeft = SKAction.moveBy(x: -swayAmount, y: 0, duration: swayDuration / 2)
-        swayRight.timingMode = .easeInEaseOut
-        swayLeft.timingMode = .easeInEaseOut
+        // Gentle breathing pulse using scale (no position movement)
+        let pulseUp = SKAction.scaleX(to: 1.02, duration: swayDuration / 2)
+        let pulseDown = SKAction.scaleX(to: 0.98, duration: swayDuration / 2)
+        pulseUp.timingMode = .easeInEaseOut
+        pulseDown.timingMode = .easeInEaseOut
 
-        let swayCycle = SKAction.sequence([swayRight, swayLeft, swayLeft, swayRight])
+        let swayCycle = SKAction.sequence([pulseUp, pulseDown])
         run(SKAction.repeatForever(swayCycle), withKey: "sway")
     }
 
@@ -286,11 +337,11 @@ class ClaudachiSprite: SKNode {
         spawnMusicNote(delay: 0.7, variation: 1)
         spawnMusicNote(delay: 1.2, variation: 2)
 
-        // Slight body lift while whistling (position-based, not rotation)
-        let liftUp = SKAction.moveBy(x: 0, y: 0.5, duration: 0.3)
+        // Slight body lift while whistling (scale-based)
+        let liftUp = SKAction.scaleY(to: 1.03, duration: 0.3)
         liftUp.timingMode = .easeOut
         let holdLift = SKAction.wait(forDuration: whistleDuration - 0.5)
-        let liftBack = SKAction.moveBy(x: 0, y: -0.5, duration: 0.2)
+        let liftBack = SKAction.scaleY(to: 1.0, duration: 0.2)
         liftBack.timingMode = .easeInEaseOut
         run(SKAction.sequence([liftUp, holdLift, liftBack]), withKey: "whistleLift")
 
@@ -425,32 +476,27 @@ class ClaudachiSprite: SKNode {
         guard !isPerformingAction else { return }
         isPerformingAction = true
 
-        // Anticipation - crouch before jump
+        // Anticipation - crouch before jump (squash)
         let crouch = SKAction.scaleY(to: 0.8, duration: 0.1)
         crouch.timingMode = .easeIn
-        let crouchX = SKAction.scaleX(to: 1.1, duration: 0.1)
+        let crouchX = SKAction.scaleX(to: 1.15, duration: 0.1)
         crouchX.timingMode = .easeIn
         let anticipation = SKAction.group([crouch, crouchX])
 
-        // Jump with stretch
-        let stretchUp = SKAction.scaleY(to: 1.2, duration: 0.08)
-        let squeezeX = SKAction.scaleX(to: 0.9, duration: 0.08)
-        let jumpUp = SKAction.moveBy(x: 0, y: 5, duration: 0.15)
-        jumpUp.timingMode = .easeOut
+        // Jump - stretch tall and thin (no position movement)
+        let stretchUp = SKAction.scaleY(to: 1.25, duration: 0.12)
+        stretchUp.timingMode = .easeOut
+        let squeezeX = SKAction.scaleX(to: 0.85, duration: 0.12)
+        squeezeX.timingMode = .easeOut
 
-        let jumpPhase = SKAction.group([
-            SKAction.sequence([stretchUp, SKAction.scaleY(to: 1.0, duration: 0.07)]),
-            SKAction.sequence([squeezeX, SKAction.scaleX(to: 1.0, duration: 0.07)]),
-            jumpUp
-        ])
+        let jumpPhase = SKAction.group([stretchUp, squeezeX])
 
-        // Fall with squash on landing
-        let fall = SKAction.moveBy(x: 0, y: -5, duration: 0.12)
-        fall.timingMode = .easeIn
-
-        let landSquash = SKAction.scaleY(to: 0.85, duration: 0.06)
-        let landSquashX = SKAction.scaleX(to: 1.15, duration: 0.06)
-        let landPhase = SKAction.group([fall, landSquash, landSquashX])
+        // Land - squash back down
+        let landSquash = SKAction.scaleY(to: 0.8, duration: 0.08)
+        landSquash.timingMode = .easeIn
+        let landSquashX = SKAction.scaleX(to: 1.2, duration: 0.08)
+        landSquashX.timingMode = .easeIn
+        let landPhase = SKAction.group([landSquash, landSquashX])
 
         // Overshoot and settle
         let overshoot = SKAction.group([
@@ -462,23 +508,23 @@ class ClaudachiSprite: SKNode {
 
         let singleBounce = SKAction.sequence([anticipation, jumpPhase, landPhase, overshoot, settle])
 
-        // Two bounces, second smaller
+        // Second smaller bounce
         let smallCrouch = SKAction.group([
             SKAction.scaleY(to: 0.9, duration: 0.06),
-            SKAction.scaleX(to: 1.05, duration: 0.06)
+            SKAction.scaleX(to: 1.08, duration: 0.06)
         ])
-        let smallJump = SKAction.moveBy(x: 0, y: 3, duration: 0.1)
-        smallJump.timingMode = .easeOut
-        let smallFall = SKAction.moveBy(x: 0, y: -3, duration: 0.08)
-        smallFall.timingMode = .easeIn
+        let smallStretch = SKAction.group([
+            SKAction.scaleY(to: 1.12, duration: 0.08),
+            SKAction.scaleX(to: 0.92, duration: 0.08)
+        ])
         let smallLand = SKAction.group([
-            SKAction.scaleY(to: 0.92, duration: 0.04),
-            SKAction.scaleX(to: 1.08, duration: 0.04)
+            SKAction.scaleY(to: 0.92, duration: 0.05),
+            SKAction.scaleX(to: 1.06, duration: 0.05)
         ])
         let finalSettle = SKAction.scale(to: 1.0, duration: 0.12)
         finalSettle.timingMode = .easeOut
 
-        let smallBounce = SKAction.sequence([smallCrouch, smallJump, smallFall, smallLand, finalSettle])
+        let smallBounce = SKAction.sequence([smallCrouch, smallStretch, smallLand, finalSettle])
 
         let doubleBounce = SKAction.sequence([singleBounce, smallBounce])
 
@@ -660,13 +706,13 @@ class ClaudachiSprite: SKNode {
             dot.run(SKAction.sequence([delay, popIn, settle, repeatBounce, fadeOut, SKAction.removeFromParent()]))
         }
 
-        // Gentle sway while thinking (position-based)
-        let swayRight = SKAction.moveBy(x: 0.4, y: 0, duration: 0.8)
-        swayRight.timingMode = .easeInEaseOut
-        let swayLeft = SKAction.moveBy(x: -0.4, y: 0, duration: 0.8)
-        swayLeft.timingMode = .easeInEaseOut
-        let swayCycle = SKAction.sequence([swayRight, swayLeft])
-        run(SKAction.repeat(swayCycle, count: Int(duration / 1.6) + 1), withKey: "thinkingSway")
+        // Gentle pulse while thinking (scale-based)
+        let pulseWide = SKAction.scaleX(to: 1.03, duration: 0.8)
+        pulseWide.timingMode = .easeInEaseOut
+        let pulseNormal = SKAction.scaleX(to: 0.97, duration: 0.8)
+        pulseNormal.timingMode = .easeInEaseOut
+        let pulseCycle = SKAction.sequence([pulseWide, pulseNormal])
+        run(SKAction.repeat(pulseCycle, count: Int(duration / 1.6) + 1), withKey: "thinkingSway")
 
         let completionAction = SKAction.run { [weak self] in
             self?.isPerformingAction = false
@@ -684,34 +730,32 @@ class ClaudachiSprite: SKNode {
         }
         isPerformingAction = true
 
-        // Anticipation
+        // Anticipation - crouch
         let windUp = SKAction.group([
-            SKAction.scaleY(to: 0.85, duration: 0.08),
-            SKAction.scaleX(to: 1.1, duration: 0.08)
+            SKAction.scaleY(to: 0.8, duration: 0.08),
+            SKAction.scaleX(to: 1.15, duration: 0.08)
         ])
 
-        // Big jump
+        // Jump - stretch tall (no position movement)
         let jumpStretch = SKAction.group([
-            SKAction.scaleY(to: 1.15, duration: 0.06),
-            SKAction.scaleX(to: 0.9, duration: 0.06)
+            SKAction.scaleY(to: 1.3, duration: 0.12),
+            SKAction.scaleX(to: 0.85, duration: 0.12)
         ])
-        let jumpUp = SKAction.moveBy(x: 0, y: 4, duration: 0.12)
-        jumpUp.timingMode = .easeOut
-        let jumpDown = SKAction.moveBy(x: 0, y: -4, duration: 0.1)
-        jumpDown.timingMode = .easeIn
+        jumpStretch.timingMode = .easeOut
 
+        // Land - squash
         let landSquash = SKAction.group([
-            SKAction.scaleY(to: 0.88, duration: 0.05),
-            SKAction.scaleX(to: 1.12, duration: 0.05)
+            SKAction.scaleY(to: 0.82, duration: 0.08),
+            SKAction.scaleX(to: 1.18, duration: 0.08)
         ])
+        landSquash.timingMode = .easeIn
+
         let recover = SKAction.scale(to: 1.0, duration: 0.1)
         recover.timingMode = .easeOut
 
         let jump = SKAction.sequence([
             windUp,
             jumpStretch,
-            jumpUp,
-            jumpDown,
             landSquash,
             recover
         ])
@@ -797,26 +841,18 @@ class ClaudachiSprite: SKNode {
         }
         isPerformingAction = true
 
-        // Slow head shake with droop
-        let shakeL = SKAction.rotate(byAngle: 0.1, duration: 0.2)
-        shakeL.timingMode = .easeInEaseOut
-        let shakeR = SKAction.rotate(byAngle: -0.2, duration: 0.3)
-        shakeR.timingMode = .easeInEaseOut
-        let shakeBack = SKAction.rotate(byAngle: 0.1, duration: 0.2)
-        shakeBack.timingMode = .easeInEaseOut
-
-        let shake = SKAction.sequence([shakeL, shakeR, shakeBack])
-
-        // Slight droop
-        let droop = SKAction.sequence([
-            SKAction.wait(forDuration: 0.3),
-            SKAction.moveBy(x: 0, y: -1.5, duration: 0.3),
-            SKAction.wait(forDuration: 0.4),
-            SKAction.moveBy(x: 0, y: 1.5, duration: 0.25)
+        // Slight deflate/droop using scale (no position movement, no rotation)
+        let deflate = SKAction.sequence([
+            SKAction.wait(forDuration: 0.1),
+            SKAction.group([
+                SKAction.scaleY(to: 0.92, duration: 0.3),
+                SKAction.scaleX(to: 1.05, duration: 0.3)
+            ]),
+            SKAction.wait(forDuration: 0.5),
+            SKAction.scale(to: 1.0, duration: 0.25)
         ])
-        droop.timingMode = .easeInEaseOut
 
-        run(SKAction.group([shake, droop]), withKey: "confused")
+        run(deflate, withKey: "confused")
 
         let completionAction = SKAction.run { [weak self] in
             self?.isPerformingAction = false
@@ -837,8 +873,8 @@ class ClaudachiSprite: SKNode {
         removeAction(forKey: "lookAroundSchedule")
         removeAction(forKey: "sway")
 
-        // Slow droop into sleep
-        let droop = SKAction.moveBy(x: 0, y: -1, duration: 0.5)
+        // Slow droop into sleep using scale (no position movement)
+        let droop = SKAction.scaleY(to: 0.95, duration: 0.5)
         droop.timingMode = .easeInEaseOut
         run(droop)
 
@@ -852,13 +888,13 @@ class ClaudachiSprite: SKNode {
             }
         ]))
 
-        // Start gentle sleeping sway (position-based)
-        let sleepSway = SKAction.sequence([
-            SKAction.moveBy(x: 0.3, y: 0, duration: 2.0),
-            SKAction.moveBy(x: -0.3, y: 0, duration: 2.0)
+        // Gentle sleeping breathing (scale-based)
+        let sleepBreath = SKAction.sequence([
+            SKAction.scaleX(to: 1.02, duration: 2.0),
+            SKAction.scaleX(to: 0.98, duration: 2.0)
         ])
-        sleepSway.timingMode = .easeInEaseOut
-        run(SKAction.repeatForever(sleepSway), withKey: "sleepSway")
+        sleepBreath.timingMode = .easeInEaseOut
+        run(SKAction.repeatForever(sleepBreath), withKey: "sleepSway")
 
         // Start Z spawning after settling
         run(SKAction.sequence([
@@ -906,8 +942,7 @@ class ClaudachiSprite: SKNode {
         leftEyeNode.texture = eyeOpenTexture
         rightEyeNode.texture = eyeOpenTexture
 
-        // Wake up stretch
-        let moveUp = SKAction.moveBy(x: 0, y: 1, duration: 0.2)
+        // Wake up stretch (scale-based, no position movement)
         let bigStretch = SKAction.group([
             SKAction.scaleY(to: 1.25, duration: 0.3),
             SKAction.scaleX(to: 0.9, duration: 0.3)
@@ -922,13 +957,9 @@ class ClaudachiSprite: SKNode {
         let settle = SKAction.scale(to: 1.0, duration: 0.15)
         settle.timingMode = .easeOut
 
-        // Reset position (in case we're mid-sway)
-        let resetPosition = SKAction.move(to: .zero, duration: 0.2)
-        resetPosition.timingMode = .easeOut
+        let stretchSequence = SKAction.sequence([bigStretch, wideStretch, settle])
 
-        let stretchSequence = SKAction.sequence([moveUp, bigStretch, wideStretch, settle])
-
-        run(SKAction.group([stretchSequence, resetPosition]), withKey: "wakeUp")
+        run(stretchSequence, withKey: "wakeUp")
 
         let completionAction = SKAction.run { [weak self] in
             self?.isPerformingAction = false
@@ -938,6 +969,191 @@ class ClaudachiSprite: SKNode {
             self?.scheduleNextLookAround()
             completion?()
         }
-        run(SKAction.sequence([SKAction.wait(forDuration: 0.8), completionAction]))
+        run(SKAction.sequence([SKAction.wait(forDuration: 0.7), completionAction]))
+    }
+
+    // MARK: - Coding Flow
+
+    /// Perform the full coding sequence: idea → typing → result
+    /// - Parameters:
+    ///   - item: The item being "coded"
+    ///   - codingDuration: How long to show the typing animation
+    ///   - onCodingStart: Called when terminal appears and typing begins
+    ///   - onComplete: Called when the entire sequence finishes (after celebration/failure)
+    func performCodingSequence(
+        item: String,
+        codingDuration: TimeInterval = 3.0,
+        onCodingStart: (() -> Void)? = nil,
+        onSuccess: (() -> Void)? = nil,
+        onComplete: (() -> Void)? = nil
+    ) {
+        guard !isPerformingAction else {
+            onComplete?()
+            return
+        }
+
+        // Stop idle animations during coding
+        pauseIdleAnimations()
+
+        // Step 1: Getting idea animation
+        performGettingIdea { [weak self] in
+            guard let self = self else { return }
+
+            // Step 2: Show terminal and start typing
+            self.terminalSprite.show {
+                self.terminalSprite.startTyping()
+                onCodingStart?()
+            }
+
+            // Step 3: Focused coding pose (slight squish toward terminal using scale)
+            let focusPose = SKAction.group([
+                SKAction.scaleX(to: 0.95, duration: 0.3),
+                SKAction.scaleY(to: 1.02, duration: 0.3)
+            ])
+            focusPose.timingMode = .easeOut
+            self.run(focusPose, withKey: "codingLean")
+
+            // Step 4: After coding duration, show result
+            self.run(SKAction.sequence([
+                SKAction.wait(forDuration: codingDuration),
+                SKAction.run { [weak self] in
+                    self?.finishCoding(success: true, onSuccess: onSuccess, onComplete: onComplete)
+                }
+            ]), withKey: "codingSequence")
+        }
+    }
+
+    /// Finish the coding sequence with success or failure
+    private func finishCoding(success: Bool, onSuccess: (() -> Void)?, onComplete: (() -> Void)?) {
+        // Stop typing and hide terminal
+        terminalSprite.hide()
+
+        // Return to normal pose (scale-based)
+        let resetPose = SKAction.scale(to: 1.0, duration: 0.2)
+        resetPose.timingMode = .easeOut
+        run(resetPose)
+
+        // Wait for terminal to hide, then show result
+        run(SKAction.sequence([
+            SKAction.wait(forDuration: 0.2),
+            SKAction.run { [weak self] in
+                guard let self = self else { return }
+
+                if success {
+                    onSuccess?()
+                    self.performCelebrate {
+                        self.resumeIdleAnimations()
+                        onComplete?()
+                    }
+                } else {
+                    self.performConfused {
+                        self.resumeIdleAnimations()
+                        onComplete?()
+                    }
+                }
+            }
+        ]))
+    }
+
+    /// Cancel an in-progress coding sequence
+    func cancelCoding() {
+        removeAction(forKey: "codingSequence")
+        removeAction(forKey: "codingLean")
+        terminalSprite.hide()
+
+        // Reset to normal scale
+        let resetScale = SKAction.scale(to: 1.0, duration: 0.2)
+        run(resetScale)
+
+        resumeIdleAnimations()
+    }
+
+    // MARK: - Drag Animation
+
+    /// Start a subtle wiggle when being dragged - arms wave up/down, legs kick in/out
+    func startDragWiggle() {
+        guard !isDragging else { return }
+        isDragging = true
+
+        // Arms wave up and down at an angle (rotate around attachment point)
+        let armWiggleDuration: TimeInterval = 0.12
+
+        // Left arm - waves up and down
+        let leftArmUp = SKAction.rotate(toAngle: 0.4, duration: armWiggleDuration)
+        let leftArmDown = SKAction.rotate(toAngle: -0.3, duration: armWiggleDuration)
+        leftArmUp.timingMode = .easeInEaseOut
+        leftArmDown.timingMode = .easeInEaseOut
+        let leftArmWiggle = SKAction.sequence([leftArmUp, leftArmDown])
+        leftArmNode.run(SKAction.repeatForever(leftArmWiggle), withKey: "dragWiggle")
+
+        // Right arm - opposite phase
+        let rightArmUp = SKAction.rotate(toAngle: -0.4, duration: armWiggleDuration)
+        let rightArmDown = SKAction.rotate(toAngle: 0.3, duration: armWiggleDuration)
+        rightArmUp.timingMode = .easeInEaseOut
+        rightArmDown.timingMode = .easeInEaseOut
+        let rightArmWiggle = SKAction.sequence([rightArmDown, rightArmUp])
+        rightArmNode.run(SKAction.repeatForever(rightArmWiggle), withKey: "dragWiggle")
+
+        // Legs kick in and out at an angle
+        let legWiggleDuration: TimeInterval = 0.15
+
+        // Left foot - kicks outward and inward
+        let leftFootOut = SKAction.rotate(toAngle: -0.35, duration: legWiggleDuration)
+        let leftFootIn = SKAction.rotate(toAngle: 0.2, duration: legWiggleDuration)
+        leftFootOut.timingMode = .easeInEaseOut
+        leftFootIn.timingMode = .easeInEaseOut
+        let leftFootWiggle = SKAction.sequence([leftFootOut, leftFootIn])
+        leftFootNode.run(SKAction.repeatForever(leftFootWiggle), withKey: "dragWiggle")
+
+        // Right foot - opposite phase
+        let rightFootOut = SKAction.rotate(toAngle: 0.35, duration: legWiggleDuration)
+        let rightFootIn = SKAction.rotate(toAngle: -0.2, duration: legWiggleDuration)
+        rightFootOut.timingMode = .easeInEaseOut
+        rightFootIn.timingMode = .easeInEaseOut
+        let rightFootWiggle = SKAction.sequence([rightFootIn, rightFootOut])
+        rightFootNode.run(SKAction.repeatForever(rightFootWiggle), withKey: "dragWiggle")
+    }
+
+    /// Stop the drag wiggle and return to normal
+    func stopDragWiggle() {
+        guard isDragging else { return }
+        isDragging = false
+
+        // Stop all limb wiggling
+        leftArmNode.removeAction(forKey: "dragWiggle")
+        rightArmNode.removeAction(forKey: "dragWiggle")
+        leftFootNode.removeAction(forKey: "dragWiggle")
+        rightFootNode.removeAction(forKey: "dragWiggle")
+
+        // Return limbs to neutral rotation
+        let resetDuration: TimeInterval = 0.15
+        let resetRotation = SKAction.rotate(toAngle: 0, duration: resetDuration)
+        resetRotation.timingMode = .easeOut
+
+        leftArmNode.run(resetRotation)
+        rightArmNode.run(resetRotation)
+        leftFootNode.run(resetRotation)
+        rightFootNode.run(resetRotation)
+    }
+
+    // MARK: - Idle Animation Control
+
+    private func pauseIdleAnimations() {
+        removeAction(forKey: "sway")
+        removeAction(forKey: "whistleSchedule")
+        removeAction(forKey: "blinkSchedule")
+        removeAction(forKey: "lookAroundSchedule")
+        isWhistling = false
+        isLookingAround = false
+    }
+
+    private func resumeIdleAnimations() {
+        isPerformingAction = false
+        // Ensure scale is reset to normal before resuming
+        setScale(1.0)
+        startSwayAnimation()
+        scheduleNextBlink()
+        scheduleNextWhistle()
+        scheduleNextLookAround()
     }
 }

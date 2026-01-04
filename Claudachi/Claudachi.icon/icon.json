@@ -1,41 +1,51 @@
 {
   "fill" : {
-    "linear-gradient" : [
-      "extended-gray:1.00000,1.00000",
-      "extended-gray:1.00000,1.00000"
-    ],
-    "orientation" : {
-      "start" : {
-        "x" : 0.5,
-        "y" : 1
-      },
-      "stop" : {
-        "x" : 0.5,
-        "y" : 0.3
-      }
-    }
+    "solid" : "extended-gray:1.00000,1.00000"
   },
   "groups" : [
     {
       "blur-material" : 0.5,
       "layers" : [
         {
-          "fill" : {
-            "linear-gradient" : [
-              "srgb:1.00000,0.55294,0.15686,1.00000",
-              "extended-srgb:1.00000,0.55294,0.15686,1.00000"
-            ],
-            "orientation" : {
-              "start" : {
-                "x" : 0.5,
-                "y" : 0
-              },
-              "stop" : {
-                "x" : 0.5,
-                "y" : 0.7
+          "fill-specializations" : [
+            {
+              "value" : {
+                "linear-gradient" : [
+                  "srgb:1.00000,0.55294,0.15686,1.00000",
+                  "extended-srgb:1.00000,0.55294,0.15686,1.00000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 0.7
+                  }
+                }
+              }
+            },
+            {
+              "appearance" : "dark",
+              "value" : {
+                "linear-gradient" : [
+                  "display-p3:1.00000,0.64301,0.24870,1.00000",
+                  "display-p3:1.00000,0.64301,0.24870,1.00000"
+                ],
+                "orientation" : {
+                  "start" : {
+                    "x" : 0.5,
+                    "y" : 0
+                  },
+                  "stop" : {
+                    "x" : 0.5,
+                    "y" : 0.7
+                  }
+                }
               }
             }
-          },
+          ],
           "image-name" : "square.fill.png",
           "name" : "square.fill",
           "position-specializations" : [
