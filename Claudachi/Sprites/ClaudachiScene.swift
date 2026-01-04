@@ -16,10 +16,15 @@ class ClaudachiScene: SKScene {
     private var currentItem: String?
     private var currentCategory: ItemCategory?
 
+    // Generation state
+    private var lastGeneratedSprite: GeneratedSprite?
+    private var generationFailed: Bool = false
+    private var generationTask: Task<Void, Never>?
+
     // MARK: - Initialization
 
     override init() {
-        super.init(size: CGSize(width: 32, height: 32))
+        super.init(size: CGSize(width: 48, height: 48))
         scaleMode = .aspectFill
         backgroundColor = .clear
     }
@@ -35,7 +40,7 @@ class ClaudachiScene: SKScene {
 
     private func setupCharacter() {
         claudachi = ClaudachiSprite()
-        claudachi.position = CGPoint(x: 16, y: 16)
+        claudachi.position = CGPoint(x: 20, y: 20)  // Slightly offset to leave room for terminal
         addChild(claudachi)
     }
 
@@ -51,14 +56,8 @@ class ClaudachiScene: SKScene {
             self?.currentCategory = category
         }
 
-        // Configure for testing (faster intervals)
-        #if DEBUG
-        stateMachine.ideaMinInterval = 30   // 30 seconds for testing
-        stateMachine.ideaMaxInterval = 60   // 1 minute for testing
-        #endif
-
-        // Start the idea timer
-        stateMachine.startIdeaTimer()
+        // Disable automatic idea generation - right-click only for now
+        stateMachine.autoIdeaEnabled = false
     }
 
     // MARK: - State Handling
@@ -89,23 +88,103 @@ class ClaudachiScene: SKScene {
     private func startCodingSequence() {
         guard let item = currentItem, let category = currentCategory else { return }
 
-        claudachi.performCodingSequence(
-            item: item,
-            codingDuration: 3.0,
-            onCodingStart: { [weak self] in
-                // Transition to coding state
-                self?.stateMachine.beginCoding(item: item, category: category)
-            },
-            onSuccess: { [weak self] in
-                // TODO: In Phase 3, this is where we'd add the item to inventory
-                self?.stateMachine.codingSucceeded(item: item)
-            },
-            onComplete: { [weak self] in
-                self?.stateMachine.returnToIdle()
-                self?.currentItem = nil
-                self?.currentCategory = nil
+        // Reset generation state
+        generationFailed = false
+        lastGeneratedSprite = nil
+
+        // Transition to coding state
+        stateMachine.beginCoding(item: item, category: category)
+
+        // Start the coding animation (loops until we stop it)
+        claudachi.startCodingAnimation(item: item)
+
+        // Start async sprite generation
+        generationTask = Task { [weak self] in
+            do {
+                print("Starting sprite generation for: \(item)")
+                let sprite = try await SpriteGenerator.generate(item: item, category: category)
+
+                await MainActor.run {
+                    guard let self = self else { return }
+                    self.lastGeneratedSprite = sprite
+                    print("Successfully generated sprite for: \(item)")
+
+                    // Stop coding animation and show success
+                    self.claudachi.stopCodingAnimation(success: true) {
+                        self.stateMachine.codingSucceeded(item: item)
+                        print("Created \(sprite.category.displayName): \(sprite.item)")
+
+                        // Show the generated sprite!
+                        self.showGeneratedSprite(sprite)
+
+                        self.finishCodingSequence()
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    guard let self = self else { return }
+                    self.generationFailed = true
+                    print("Sprite generation failed: \(error.localizedDescription)")
+
+                    // Stop coding animation and show failure
+                    self.claudachi.stopCodingAnimation(success: false) {
+                        self.stateMachine.codingFailed()
+                        self.finishCodingSequence()
+                    }
+                }
             }
-        )
+        }
+    }
+
+    private func finishCodingSequence() {
+        stateMachine.returnToIdle()
+        currentItem = nil
+        currentCategory = nil
+        generationTask = nil
+    }
+
+    // MARK: - Display Generated Sprite
+
+    private func showGeneratedSprite(_ sprite: GeneratedSprite) {
+        // Create sprite node from generated texture
+        let node = SKSpriteNode(texture: sprite.texture)
+        node.texture?.filteringMode = .nearest  // Crisp pixels
+        node.setScale(2.0)  // Scale up for visibility (16x16 → 32x32)
+
+        // Position to the right of Claudachi
+        node.position = CGPoint(x: 38, y: 24)
+        node.alpha = 0
+        node.zPosition = 100
+
+        addChild(node)
+
+        // Animate in with a pop and float
+        node.setScale(0.5)
+        let scaleUp = SKAction.scale(to: 2.0, duration: 0.3)
+        scaleUp.timingMode = .easeOut
+        let popIn = SKAction.group([
+            SKAction.fadeIn(withDuration: 0.2),
+            scaleUp
+        ])
+
+        // Gentle float
+        let floatUp = SKAction.moveBy(x: 0, y: 2, duration: 0.8)
+        let floatDown = SKAction.moveBy(x: 0, y: -2, duration: 0.8)
+        floatUp.timingMode = .easeInEaseOut
+        floatDown.timingMode = .easeInEaseOut
+        let float = SKAction.repeatForever(SKAction.sequence([floatUp, floatDown]))
+
+        // After a few seconds, fade out
+        let fadeOut = SKAction.sequence([
+            SKAction.wait(forDuration: 5.0),
+            SKAction.fadeOut(withDuration: 0.5),
+            SKAction.removeFromParent()
+        ])
+
+        node.run(SKAction.sequence([
+            popIn,
+            SKAction.group([float, fadeOut])
+        ]))
     }
 
     // MARK: - Interaction

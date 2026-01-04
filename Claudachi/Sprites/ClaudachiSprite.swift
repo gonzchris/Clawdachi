@@ -14,7 +14,8 @@ class ClaudachiSprite: SKNode {
     private var leftEyeNode: SKSpriteNode!
     private var rightEyeNode: SKSpriteNode!
     private var mouthNode: SKSpriteNode!
-    private var terminalSprite: TerminalSprite!
+    private var hatNode: SKSpriteNode!  // For chef mode
+    private var chefMode: ChefModeSprite!  // Mixing bowl effect
 
     // Limbs (separate nodes for animation)
     private var leftArmNode: SKSpriteNode!
@@ -35,6 +36,12 @@ class ClaudachiSprite: SKNode {
     private var sparkleTexture: SKTexture!
     private var zzzTexture: SKTexture!
     private var smileMouthTexture: SKTexture!
+    private var sweatDropTexture: SKTexture!
+
+    // Chef mode textures
+    private var chefBreathingFrames: [SKTexture] = []
+    private var chefHatTexture: SKTexture!
+    private var isInChefMode = false
 
     // MARK: - Animation State
 
@@ -57,6 +64,17 @@ class ClaudachiSprite: SKNode {
     // Feet at rows 5-6, left foot at x = 9-11, right at x = 20-22
     private let leftFootBasePos = CGPoint(x: -6, y: -10)
     private let rightFootBasePos = CGPoint(x: 6, y: -10)
+
+    // MARK: - Accessory Positions
+    // Body spans y: -9 to +6 (rows 7-22 in 32x32 grid, centered at 0)
+    // Accessories can overlap body edges for natural look
+
+    /// Hat position - sits above head, can overlap slightly
+    private let hatBasePos = CGPoint(x: 0, y: 12)
+    private let hatDropStartY: CGFloat = 24  // Start high for drop animation
+
+    /// Bottom accessory position (bowl, etc.) - hangs below/overlaps with body
+    static let bottomAccessoryPos = CGPoint(x: 16, y: -10)
 
     // MARK: - Animation Constants
 
@@ -100,6 +118,11 @@ class ClaudachiSprite: SKNode {
         sparkleTexture = ClaudachiFaceSprites.generateSparkleTexture()
         zzzTexture = ClaudachiFaceSprites.generateZzzTexture()
         smileMouthTexture = ClaudachiFaceSprites.generateSmileMouthTexture()
+        sweatDropTexture = ClaudachiFaceSprites.generateSweatDropTexture()
+
+        // Chef mode textures
+        chefBreathingFrames = ClaudachiBodySprites.generateChefBreathingFrames()
+        chefHatTexture = ClaudachiFaceSprites.generateChefHat()
     }
 
     private func setupSprites() {
@@ -161,11 +184,19 @@ class ClaudachiSprite: SKNode {
         mouthNode.alpha = 0
         addChild(mouthNode)
 
-        // Terminal (Layer 5) - for coding animation
-        terminalSprite = TerminalSprite()
-        terminalSprite.position = CGPoint(x: 14, y: 4)  // To the right of character
-        terminalSprite.zPosition = 5
-        addChild(terminalSprite)
+        // Chef hat (Layer 5) - hidden by default, sits on head
+        hatNode = SKSpriteNode(texture: chefHatTexture)
+        hatNode.size = CGSize(width: 13, height: 12)
+        hatNode.position = hatBasePos  // Uses accessory position system
+        hatNode.zPosition = 5
+        hatNode.alpha = 0
+        addChild(hatNode)
+
+        // Mixing bowl effect (Layer -10) - behind character
+        chefMode = ChefModeSprite()
+        chefMode.position = CGPoint(x: 0, y: 0)
+        chefMode.zPosition = -10
+        addChild(chefMode)
     }
 
     // MARK: - Idle Animations
@@ -999,9 +1030,8 @@ class ClaudachiSprite: SKNode {
         performGettingIdea { [weak self] in
             guard let self = self else { return }
 
-            // Step 2: Show terminal and start typing
-            self.terminalSprite.show {
-                self.terminalSprite.startTyping()
+            // Step 2: Activate chef mode
+            self.chefMode.activate {
                 onCodingStart?()
             }
 
@@ -1025,8 +1055,8 @@ class ClaudachiSprite: SKNode {
 
     /// Finish the coding sequence with success or failure
     private func finishCoding(success: Bool, onSuccess: (() -> Void)?, onComplete: (() -> Void)?) {
-        // Stop typing and hide terminal
-        terminalSprite.hide()
+        // Deactivate chef mode
+        chefMode.deactivate(success: success)
 
         // Return to normal pose (scale-based)
         let resetPose = SKAction.scale(to: 1.0, duration: 0.2)
@@ -1059,13 +1089,148 @@ class ClaudachiSprite: SKNode {
     func cancelCoding() {
         removeAction(forKey: "codingSequence")
         removeAction(forKey: "codingLean")
-        terminalSprite.hide()
+        chefMode.reset()
 
         // Reset to normal scale
         let resetScale = SKAction.scale(to: 1.0, duration: 0.2)
         run(resetScale)
 
         resumeIdleAnimations()
+    }
+
+    // MARK: - Async Coding Animation
+
+    /// Start the coding animation (loops until stopCodingAnimation is called)
+    /// - Parameter item: The item being coded (for display)
+    func startCodingAnimation(item: String) {
+        guard !isPerformingAction else { return }
+
+        // Stop idle animations during coding
+        pauseIdleAnimations()
+
+        // Step 1: Getting idea animation, then activate chef mode
+        performGettingIdea { [weak self] in
+            guard let self = self else { return }
+
+            // Step 2: Enter chef mode - swap textures!
+            self.enterChefMode()
+
+            // Step 3: Focused coding pose
+            let focusPose = SKAction.group([
+                SKAction.scaleX(to: 0.95, duration: 0.3),
+                SKAction.scaleY(to: 1.02, duration: 0.3)
+            ])
+            focusPose.timingMode = .easeOut
+            self.run(focusPose, withKey: "codingLean")
+        }
+    }
+
+    /// Stop the coding animation and show result
+    /// - Parameters:
+    ///   - success: Whether coding succeeded
+    ///   - completion: Called after the celebration/failure animation
+    func stopCodingAnimation(success: Bool, completion: @escaping () -> Void) {
+        // Exit chef mode - restore normal textures
+        exitChefMode()
+
+        // Return to normal pose
+        let resetPose = SKAction.scale(to: 1.0, duration: 0.2)
+        resetPose.timingMode = .easeOut
+        run(resetPose)
+
+        // Wait for transition, then show result
+        run(SKAction.sequence([
+            SKAction.wait(forDuration: 0.3),
+            SKAction.run { [weak self] in
+                guard let self = self else { return }
+
+                if success {
+                    self.performCelebrate {
+                        self.resumeIdleAnimations()
+                        completion()
+                    }
+                } else {
+                    self.performConfused {
+                        self.resumeIdleAnimations()
+                        completion()
+                    }
+                }
+            }
+        ]))
+    }
+
+    // MARK: - Chef Mode
+
+    private func enterChefMode() {
+        guard !isInChefMode else { return }
+        isInChefMode = true
+
+        // Swap body texture to chef apron version
+        bodyNode.removeAction(forKey: "breathing")
+        bodyNode.texture = chefBreathingFrames[1]
+
+        // Start chef breathing animation
+        let chefBreathe = SKAction.animate(
+            with: chefBreathingFrames,
+            timePerFrame: breathingDuration / 4,
+            resize: false,
+            restore: false
+        )
+        bodyNode.run(SKAction.repeatForever(chefBreathe), withKey: "breathing")
+
+        // Drop chef hat from above with squish bounce
+        hatNode.position.y = hatDropStartY
+        hatNode.alpha = 1
+        hatNode.setScale(1.0)
+
+        let dropDown = SKAction.moveTo(y: hatBasePos.y, duration: 0.25)
+        dropDown.timingMode = .easeIn
+
+        // Squish on landing then bounce back
+        let squish = SKAction.group([
+            SKAction.scaleY(to: 0.8, duration: 0.06),
+            SKAction.scaleX(to: 1.15, duration: 0.06)
+        ])
+        let bounce = SKAction.group([
+            SKAction.scaleY(to: 1.1, duration: 0.08),
+            SKAction.scaleX(to: 0.95, duration: 0.08)
+        ])
+        let settle = SKAction.scale(to: 1.0, duration: 0.06)
+
+        hatNode.run(SKAction.sequence([dropDown, squish, bounce, settle]))
+
+        // Activate mixing bowl
+        chefMode.activate()
+    }
+
+    private func exitChefMode() {
+        guard isInChefMode else { return }
+        isInChefMode = false
+
+        // Swap body texture back to normal
+        bodyNode.removeAction(forKey: "breathing")
+        bodyNode.texture = breathingFrames[1]
+
+        // Restart normal breathing animation
+        let normalBreathe = SKAction.animate(
+            with: breathingFrames,
+            timePerFrame: breathingDuration / 4,
+            resize: false,
+            restore: false
+        )
+        bodyNode.run(SKAction.repeatForever(normalBreathe), withKey: "breathing")
+
+        // Hat floats up and fades
+        let floatUp = SKAction.group([
+            SKAction.moveTo(y: 18, duration: 0.3),
+            SKAction.fadeOut(withDuration: 0.3),
+            SKAction.rotate(byAngle: 0.15, duration: 0.3)
+        ])
+        floatUp.timingMode = .easeOut
+        hatNode.run(floatUp)
+
+        // Deactivate mixing bowl
+        chefMode.deactivate(success: true)
     }
 
     // MARK: - Drag Animation
@@ -1112,12 +1277,18 @@ class ClaudachiSprite: SKNode {
         rightFootIn.timingMode = .easeInEaseOut
         let rightFootWiggle = SKAction.sequence([rightFootIn, rightFootOut])
         rightFootNode.run(SKAction.repeatForever(rightFootWiggle), withKey: "dragWiggle")
+
+        // Start spawning sweat drops
+        spawnSweatDrop()
     }
 
     /// Stop the drag wiggle and return to normal
     func stopDragWiggle() {
         guard isDragging else { return }
         isDragging = false
+
+        // Stop sweat drop spawning
+        removeAction(forKey: "sweatDropSchedule")
 
         // Stop all limb wiggling
         leftArmNode.removeAction(forKey: "dragWiggle")
@@ -1134,6 +1305,56 @@ class ClaudachiSprite: SKNode {
         rightArmNode.run(resetRotation)
         leftFootNode.run(resetRotation)
         rightFootNode.run(resetRotation)
+    }
+
+    private func spawnSweatDrop() {
+        guard isDragging else { return }
+
+        // Spawn a sweat drop from the top edges of the sprite
+        let drop = SKSpriteNode(texture: sweatDropTexture)
+        drop.size = CGSize(width: 3, height: 6)
+
+        // Randomly spawn from left or right edge of head
+        let isLeftSide = Bool.random()
+        let xOffset: CGFloat = isLeftSide ? CGFloat.random(in: -8 ... -5) : CGFloat.random(in: 5...8)
+        drop.position = CGPoint(x: xOffset, y: 5)
+        drop.alpha = 0
+        drop.zPosition = 4
+        drop.setScale(0.8)
+
+        // Angle the drop slightly outward
+        drop.zRotation = isLeftSide ? 0.2 : -0.2
+        addChild(drop)
+
+        // Pop in
+        let fadeIn = SKAction.fadeIn(withDuration: 0.08)
+
+        // Fall down at an angle (outward from the side it spawned)
+        let fallDuration: TimeInterval = 0.5
+        let fallDistance: CGFloat = 22
+        let horizontalDrift: CGFloat = isLeftSide ? -3 : 3  // Drift outward
+
+        let fallDown = SKAction.moveBy(x: horizontalDrift, y: -fallDistance, duration: fallDuration)
+        fallDown.timingMode = .easeIn
+
+        // Fade out near the end
+        let fadeOut = SKAction.sequence([
+            SKAction.wait(forDuration: fallDuration * 0.6),
+            SKAction.fadeOut(withDuration: fallDuration * 0.4)
+        ])
+
+        drop.run(SKAction.sequence([
+            fadeIn,
+            SKAction.group([fallDown, fadeOut]),
+            SKAction.removeFromParent()
+        ]))
+
+        // Schedule next sweat drop
+        let nextDelay = TimeInterval.random(in: 0.5...0.9)
+        run(SKAction.sequence([
+            SKAction.wait(forDuration: nextDelay),
+            SKAction.run { [weak self] in self?.spawnSweatDrop() }
+        ]), withKey: "sweatDropSchedule")
     }
 
     // MARK: - Idle Animation Control
