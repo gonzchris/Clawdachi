@@ -9,17 +9,17 @@
         {
           "fill" : {
             "linear-gradient" : [
-              "srgb:1.00000,0.55294,0.15686,1.00000",
-              "extended-srgb:1.00000,0.55294,0.15686,1.00000"
+              "display-p3:1.00000,0.64301,0.24870,1.00000",
+              "display-p3:0.84364,0.44705,0.05264,1.00000"
             ],
             "orientation" : {
               "start" : {
-                "x" : 0.5,
-                "y" : 0
+                "x" : 0.377130126953125,
+                "y" : 0.1899965347782258
               },
               "stop" : {
-                "x" : 0.5,
-                "y" : 0.7
+                "x" : 0.0724365234375,
+                "y" : 0.4742471018145161
               }
             }
           },
@@ -37,73 +37,28 @@
               }
             }
           ]
-        },
-        {
-          "fill-specializations" : [
-            {
-              "value" : {
-                "linear-gradient" : [
-                  "srgb:1.00000,0.55294,0.15686,1.00000",
-                  "extended-srgb:1.00000,0.55294,0.15686,1.00000"
-                ],
-                "orientation" : {
-                  "start" : {
-                    "x" : 0.5,
-                    "y" : 0
-                  },
-                  "stop" : {
-                    "x" : 0.5,
-                    "y" : 0.7
-                  }
-                }
-              }
-            },
-            {
-              "appearance" : "dark",
-              "value" : {
-                "linear-gradient" : [
-                  "display-p3:1.00000,0.64301,0.24870,1.00000",
-                  "display-p3:1.00000,0.64301,0.24870,1.00000"
-                ],
-                "orientation" : {
-                  "start" : {
-                    "x" : 0.5,
-                    "y" : 0
-                  },
-                  "stop" : {
-                    "x" : 0.5,
-                    "y" : 0.7
-                  }
-                }
-              }
-            }
-          ],
-          "hidden" : true,
-          "image-name" : "square.fill.png",
-          "name" : "square.fill",
-          "position-specializations" : [
-            {
-              "idiom" : "square",
-              "value" : {
-                "scale" : 4,
-                "translation-in-points" : [
-                  0,
-                  0
-                ]
-              }
-            }
-          ]
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
-      },
+      "shadow-specializations" : [
+        {
+          "value" : {
+            "kind" : "neutral",
+            "opacity" : 1
+          }
+        },
+        {
+          "appearance" : "dark",
+          "value" : {
+            "kind" : "neutral",
+            "opacity" : 1
+          }
+        }
+      ],
       "translucency-specializations" : [
         {
           "value" : {
             "enabled" : true,
-            "value" : 0.1
+            "value" : 0.25
           }
         },
         {

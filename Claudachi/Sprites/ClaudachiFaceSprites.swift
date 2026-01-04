@@ -72,18 +72,22 @@ class ClaudachiFaceSprites {
 
     // MARK: - Mouth
 
-    /// Generates a whistle "o" mouth texture
-    /// Mouth size: 3x3 pixels
+    /// Generates a whistle "o" mouth texture (filled circle)
+    /// Mouth size: 4x3 pixels
     static func generateWhistleMouthTexture() -> SKTexture {
-        var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 3)
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 4), count: 3)
 
-        // Small "o" shape for whistling
-        pixels[0][1] = P.mouthColor  // Bottom
-        pixels[1][0] = P.mouthColor  // Left
-        pixels[1][2] = P.mouthColor  // Right
-        pixels[2][1] = P.mouthColor  // Top
+        // Filled round shape for whistling
+        pixels[2][1] = P.mouthColor  // Top row (narrower)
+        pixels[2][2] = P.mouthColor
+        // Middle row (full width)
+        for col in 0..<4 {
+            pixels[1][col] = P.mouthColor
+        }
+        pixels[0][1] = P.mouthColor  // Bottom row (narrower)
+        pixels[0][2] = P.mouthColor
 
-        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 3)
+        return PixelArtGenerator.textureFromPixels(pixels, width: 4, height: 3)
     }
 
     /// Generates a musical note texture for whistle effect
@@ -155,6 +159,29 @@ class ClaudachiFaceSprites {
         pixels[0][3] = z
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 4, height: 5)
+    }
+
+    /// Generates a yawn mouth texture (filled oval)
+    /// Size: 5x4 pixels
+    static func generateYawnMouthTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 5), count: 4)
+
+        // Filled oval for yawning mouth
+        // Top row (narrower)
+        pixels[3][1] = P.mouthColor
+        pixels[3][2] = P.mouthColor
+        pixels[3][3] = P.mouthColor
+        // Middle rows (full width)
+        for col in 0..<5 {
+            pixels[2][col] = P.mouthColor
+            pixels[1][col] = P.mouthColor
+        }
+        // Bottom row (narrower)
+        pixels[0][1] = P.mouthColor
+        pixels[0][2] = P.mouthColor
+        pixels[0][3] = P.mouthColor
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 5, height: 4)
     }
 
     /// Generates a small smile mouth texture

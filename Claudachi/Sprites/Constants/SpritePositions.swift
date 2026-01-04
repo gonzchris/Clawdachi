@@ -24,10 +24,10 @@ enum SpritePositions {
     // MARK: - Limbs
 
     /// Left arm attachment point
-    static let leftArm = CGPoint(x: -11, y: 0)
+    static let leftArm = CGPoint(x: -10, y: 0)
 
     /// Right arm attachment point
-    static let rightArm = CGPoint(x: 11, y: 0)
+    static let rightArm = CGPoint(x: 10, y: 0)
 
     /// Outer left leg attachment point
     static let outerLeftLeg = CGPoint(x: -8, y: -9)

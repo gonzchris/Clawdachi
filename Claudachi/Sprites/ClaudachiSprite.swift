@@ -38,6 +38,7 @@ class ClaudachiSprite: SKNode {
     var heartTexture: SKTexture!
     var zzzTexture: SKTexture!
     var smileMouthTexture: SKTexture!
+    var yawnMouthTexture: SKTexture!
     var sweatDropTexture: SKTexture!
 
     // MARK: - Animation State (internal for extension access)
@@ -111,6 +112,7 @@ class ClaudachiSprite: SKNode {
         heartTexture = ClaudachiFaceSprites.generateHeartTexture()
         zzzTexture = ClaudachiFaceSprites.generateZzzTexture()
         smileMouthTexture = ClaudachiFaceSprites.generateSmileMouthTexture()
+        yawnMouthTexture = ClaudachiFaceSprites.generateYawnMouthTexture()
         sweatDropTexture = ClaudachiFaceSprites.generateSweatDropTexture()
     }
 
@@ -181,7 +183,7 @@ class ClaudachiSprite: SKNode {
 
         // Mouth (Layer 2) - hidden by default
         mouthNode = SKSpriteNode(texture: whistleMouthTexture)
-        mouthNode.size = CGSize(width: 3, height: 3)
+        mouthNode.size = CGSize(width: 4, height: 3)
         mouthNode.position = CGPoint(x: 0, y: -4)
         mouthNode.zPosition = 2
         mouthNode.alpha = 0
