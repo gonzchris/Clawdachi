@@ -31,6 +31,7 @@ class ClaudachiSprite: SKNode {
     var breathingFrames: [SKTexture] = []
     var eyeOpenTexture: SKTexture!
     var eyeClosedTexture: SKTexture!
+    var eyeSquintTexture: SKTexture!
     var blinkFrames: [SKTexture] = []
     var whistleMouthTexture: SKTexture!
     var musicNoteTexture: SKTexture!
@@ -103,6 +104,7 @@ class ClaudachiSprite: SKNode {
         blinkFrames = ClaudachiFaceSprites.generateBlinkFrames()
         eyeOpenTexture = ClaudachiFaceSprites.generateEyeTexture(state: .open)
         eyeClosedTexture = ClaudachiFaceSprites.generateEyeTexture(state: .closed)
+        eyeSquintTexture = ClaudachiFaceSprites.generateEyeTexture(state: .squint)
         whistleMouthTexture = ClaudachiFaceSprites.generateWhistleMouthTexture()
         musicNoteTexture = ClaudachiFaceSprites.generateMusicNoteTexture()
 

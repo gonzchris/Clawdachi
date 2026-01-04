@@ -78,9 +78,13 @@ class ClaudachiScene: SKScene {
         longPressTimer?.invalidate()
         longPressTimer = nil
 
-        // Start drag animation only on first movement (skip if sleeping)
-        if !isDragging && !isSleeping {
-            claudachi.startDragWiggle()
+        // Start drag animation only on first movement
+        if !isDragging {
+            if isSleeping {
+                claudachi.startSleepyDrag()  // Annoyed squint when disturbed
+            } else {
+                claudachi.startDragWiggle()
+            }
         }
         isDragging = true
     }
@@ -110,7 +114,11 @@ class ClaudachiScene: SKScene {
     // MARK: - Drag Safety
 
     private func endDragIfNeeded() {
-        claudachi.stopDragWiggle()
+        if isSleeping {
+            claudachi.stopSleepyDrag()
+        } else {
+            claudachi.stopDragWiggle()
+        }
         isDragging = false
     }
 

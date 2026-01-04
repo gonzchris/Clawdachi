@@ -194,4 +194,72 @@ extension ClaudachiSprite {
             SKAction.run { [weak self] in self?.spawnSweatDrop() }
         ]), withKey: "sweatDropSchedule")
     }
+
+    // MARK: - Sleepy Drag (disturbed while sleeping)
+
+    func startSleepyDrag() {
+        guard !isDragging else { return }
+        isDragging = true
+
+        // Animate both eyes opening upward (closed → half-open)
+        let openUp = SKAction.animate(
+            with: [eyeClosedTexture, blinkFrames[1]],
+            timePerFrame: 0.15,
+            resize: false,
+            restore: false
+        )
+        leftEyeNode.run(openUp, withKey: "sleepyPeek")
+        rightEyeNode.run(openUp, withKey: "sleepyPeek")
+
+        // Schedule sleepy blinks
+        scheduleSleepyBlink()
+    }
+
+    private func scheduleSleepyBlink() {
+        guard isDragging else { return }
+
+        let delay = TimeInterval.random(in: 0.8...1.5)
+        run(SKAction.sequence([
+            SKAction.wait(forDuration: delay),
+            SKAction.run { [weak self] in self?.performSleepyBlink() }
+        ]), withKey: "sleepyBlinkSchedule")
+    }
+
+    private func performSleepyBlink() {
+        guard isDragging else { return }
+
+        // Quick blink: half-open → closed → half-open
+        let blink = SKAction.animate(
+            with: [eyeClosedTexture, blinkFrames[1]],
+            timePerFrame: 0.1,
+            resize: false,
+            restore: false
+        )
+        leftEyeNode.run(blink, withKey: "sleepyBlink")
+        rightEyeNode.run(blink, withKey: "sleepyBlink")
+
+        // Schedule next blink
+        scheduleSleepyBlink()
+    }
+
+    func stopSleepyDrag() {
+        isDragging = false
+
+        // Stop blink scheduling
+        removeAction(forKey: "sleepyBlinkSchedule")
+        leftEyeNode.removeAction(forKey: "sleepyPeek")
+        leftEyeNode.removeAction(forKey: "sleepyBlink")
+        rightEyeNode.removeAction(forKey: "sleepyPeek")
+        rightEyeNode.removeAction(forKey: "sleepyBlink")
+
+        // Animate both eyes closing back down
+        let closeDown = SKAction.animate(
+            with: [blinkFrames[1], eyeClosedTexture],
+            timePerFrame: 0.12,
+            resize: false,
+            restore: false
+        )
+        leftEyeNode.run(closeDown, withKey: "sleepyClose")
+        rightEyeNode.run(closeDown, withKey: "sleepyClose")
+    }
 }

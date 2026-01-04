@@ -16,6 +16,7 @@ class ClaudachiFaceSprites {
         case open
         case halfClosed
         case closed
+        case squint  // ">" shape for peeking while sleeping
     }
 
     /// Generates an eye texture for the given state
@@ -45,6 +46,13 @@ class ClaudachiFaceSprites {
             for col in 0..<3 {
                 pixels[1][col] = P.eyePupil
             }
+
+        case .squint:
+            // ">" shape for annoyed peeking (pointing right)
+            pixels[3][0] = P.eyePupil  // Top left
+            pixels[2][1] = P.eyePupil  // Upper middle
+            pixels[1][1] = P.eyePupil  // Lower middle
+            pixels[0][0] = P.eyePupil  // Bottom left
         }
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 4)
