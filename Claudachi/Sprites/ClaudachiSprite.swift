@@ -159,14 +159,14 @@ class ClaudachiSprite: SKNode {
 
         // Left Eye (Layer 2)
         leftEyeNode = SKSpriteNode(texture: eyeOpenTexture)
-        leftEyeNode.size = CGSize(width: 3, height: 4)
+        leftEyeNode.size = CGSize(width: 2, height: 3)
         leftEyeNode.position = leftEyeBasePos
         leftEyeNode.zPosition = 2
         addChild(leftEyeNode)
 
         // Right Eye (Layer 2)
         rightEyeNode = SKSpriteNode(texture: eyeOpenTexture)
-        rightEyeNode.size = CGSize(width: 3, height: 4)
+        rightEyeNode.size = CGSize(width: 2, height: 3)
         rightEyeNode.position = rightEyeBasePos
         rightEyeNode.zPosition = 2
         addChild(rightEyeNode)

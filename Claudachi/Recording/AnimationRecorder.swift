@@ -19,9 +19,9 @@ class AnimationRecorder {
     private var recordingIndicator: SKShapeNode?
 
     // Recording configuration
-    private let frameRate: Double = 60.0
-    private let maxRecordingDuration: Double = 10.0
-    private let outputSize = CGSize(width: 288, height: 288)
+    private let frameRate: Double = 30.0  // 30fps is sufficient for pixel art
+    private let maxRecordingDuration: Double = 20.0
+    private let outputSize = CGSize(width: 192, height: 192)  // 1:1 pixel art (32px * 6x scale)
     private var recordingStartTime: Date?
 
     // Callback for UI updates

@@ -43,17 +43,36 @@ class ClaudachiScene: SKScene {
         addChild(claudachi)
     }
 
+    // MARK: - Update Loop
+
+    override func update(_ currentTime: TimeInterval) {
+        guard !isSleeping else { return }
+        claudachi.updateEyeTracking(globalMouse: NSEvent.mouseLocation, currentTime: currentTime)
+    }
+
     // MARK: - Interaction
 
     private var isDragging = false
     private var dragStartLocation: CGPoint = .zero
+    private var longPressTimer: Timer?
 
     override func mouseDown(with event: NSEvent) {
         dragStartLocation = event.locationInWindow
         isDragging = false
+
+        // Start long-press timer for heart reaction (3 seconds)
+        longPressTimer?.invalidate()
+        longPressTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
+            guard let self = self, !self.isDragging, !self.isSleeping else { return }
+            self.claudachi.performHeartReaction()
+        }
     }
 
     override func mouseDragged(with event: NSEvent) {
+        // Cancel long-press timer when dragging
+        longPressTimer?.invalidate()
+        longPressTimer = nil
+
         // Start drag animation only on first movement (skip if sleeping)
         if !isDragging && !isSleeping {
             claudachi.startDragWiggle()
@@ -62,6 +81,10 @@ class ClaudachiScene: SKScene {
     }
 
     override func mouseUp(with event: NSEvent) {
+        // Cancel long-press timer
+        longPressTimer?.invalidate()
+        longPressTimer = nil
+
         endDragIfNeeded()
 
         // If it was a click (not a drag), trigger reaction
@@ -73,6 +96,8 @@ class ClaudachiScene: SKScene {
     }
 
     override func rightMouseDown(with event: NSEvent) {
+        longPressTimer?.invalidate()
+        longPressTimer = nil
         endDragIfNeeded()
         showContextMenu(with: event)
     }

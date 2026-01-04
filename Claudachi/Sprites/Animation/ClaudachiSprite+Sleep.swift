@@ -15,6 +15,8 @@ extension ClaudachiSprite {
         guard !isPerformingAction else { return }
         isPerformingAction = true
 
+        disableMouseTracking()
+
         removeAction(forKey: "whistleSchedule")
         removeAction(forKey: "blinkSchedule")
         removeAction(forKey: "lookAroundSchedule")
@@ -83,6 +85,7 @@ extension ClaudachiSprite {
 
         let completionAction = SKAction.run { [weak self] in
             self?.isPerformingAction = false
+            self?.enableMouseTracking()
             self?.startSwayAnimation()
             self?.scheduleNextBlink()
             self?.scheduleNextWhistle()

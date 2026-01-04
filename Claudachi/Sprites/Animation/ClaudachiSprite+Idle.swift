@@ -41,8 +41,8 @@ extension ClaudachiSprite {
             faceDown
         ])
 
-        leftEyeNode.run(SKAction.repeatForever(faceBreath), withKey: "faceBreathing")
-        rightEyeNode.run(SKAction.repeatForever(faceBreath), withKey: "faceBreathing")
+        // Note: Eye breathing is now handled by updateEyePositions() in EyeTracking extension
+        // This allows eye tracking offset + breathing bob to coexist
         mouthNode.run(SKAction.repeatForever(faceBreath), withKey: "faceBreathing")
     }
 
@@ -72,37 +72,26 @@ extension ClaudachiSprite {
         }
         isLookingAround = true
 
+        // Temporarily disable mouse tracking during look-around
+        isMouseTrackingEnabled = false
+
         let directions: [(x: CGFloat, y: CGFloat)] = [
             (1, 0), (-1, 0), (0, 0.5), (1, 0.5), (-1, 0.5)
         ]
         let dir = directions.randomElement()!
 
-        let lookOffset: CGFloat = 1.0
-        let lookDuration: TimeInterval = 0.25
         let holdDuration = TimeInterval.random(in: 0.8...2.0)
 
-        let moveToLook = SKAction.moveBy(x: dir.x * lookOffset, y: dir.y * lookOffset, duration: lookDuration)
-        moveToLook.timingMode = .easeOut
+        // Set target offset directly (eye tracking lerp will animate smoothly)
+        targetEyeOffset = CGPoint(x: dir.x, y: dir.y * 0.5)
 
-        let hold = SKAction.wait(forDuration: holdDuration)
-
-        let returnToCenter = SKAction.move(to: leftEyeBasePos, duration: lookDuration)
-        returnToCenter.timingMode = .easeInEaseOut
-
-        let returnToCenterRight = SKAction.move(to: rightEyeBasePos, duration: lookDuration)
-        returnToCenterRight.timingMode = .easeInEaseOut
-
-        let leftSequence = SKAction.sequence([moveToLook, hold, returnToCenter])
-        let rightSequence = SKAction.sequence([moveToLook.copy() as! SKAction, hold, returnToCenterRight])
-
-        leftEyeNode.run(leftSequence)
-        rightEyeNode.run(rightSequence)
-
-        let totalDuration = lookDuration * 2 + holdDuration
+        // After hold duration, return to mouse tracking
+        let totalDuration = holdDuration + 0.5
         run(SKAction.sequence([
             SKAction.wait(forDuration: totalDuration),
             SKAction.run { [weak self] in
                 self?.isLookingAround = false
+                self?.isMouseTrackingEnabled = true
                 self?.scheduleNextLookAround()
             }
         ]))

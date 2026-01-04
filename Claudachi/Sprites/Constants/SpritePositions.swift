@@ -13,10 +13,10 @@ enum SpritePositions {
     // MARK: - Face Elements
 
     /// Left eye base position relative to body center
-    static let leftEye = CGPoint(x: -4, y: 0)
+    static let leftEye = CGPoint(x: -4, y: 1)
 
     /// Right eye base position relative to body center
-    static let rightEye = CGPoint(x: 4, y: 0)
+    static let rightEye = CGPoint(x: 4, y: 1)
 
     /// Mouth position relative to body center
     static let mouth = CGPoint(x: 0, y: -4)

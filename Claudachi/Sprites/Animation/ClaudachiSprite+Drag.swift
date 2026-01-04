@@ -15,6 +15,9 @@ extension ClaudachiSprite {
         guard !isDragging else { return }
         isDragging = true
 
+        // Eyes return to center during drag
+        targetEyeOffset = .zero
+
         let armWiggleDuration: TimeInterval = 0.12
 
         let leftArmUp = SKAction.rotate(toAngle: 0.4, duration: armWiggleDuration)
