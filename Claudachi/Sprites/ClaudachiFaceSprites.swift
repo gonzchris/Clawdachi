@@ -95,4 +95,123 @@ class ClaudachiFaceSprites {
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 5)
     }
+
+    // MARK: - Effect Textures
+
+    /// Generates an exclamation mark texture for "getting idea" animation
+    /// Size: 3x7 pixels
+    static func generateExclamationTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 7)
+
+        // Exclamation mark "!"
+        // Vertical line (top part)
+        for row in 2..<7 {
+            pixels[row][1] = P.effectGreen
+        }
+        // Dot at bottom
+        pixels[0][1] = P.effectGreen
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 7)
+    }
+
+    /// Generates a thought bubble dot texture
+    /// Size: 2x2 pixels
+    static func generateThoughtDotTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 2), count: 2)
+
+        pixels[0][0] = P.eyeWhite
+        pixels[0][1] = P.eyeWhite
+        pixels[1][0] = P.eyeWhite
+        pixels[1][1] = P.eyeWhite
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 2)
+    }
+
+    /// Generates a heart texture for happy reactions
+    /// Size: 5x5 pixels
+    static func generateHeartTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 5), count: 5)
+
+        let heart = P.primary  // Orange heart to match character
+
+        // Heart shape
+        pixels[4][1] = heart
+        pixels[4][3] = heart
+        pixels[3][0] = heart
+        pixels[3][1] = heart
+        pixels[3][2] = heart
+        pixels[3][3] = heart
+        pixels[3][4] = heart
+        pixels[2][0] = heart
+        pixels[2][1] = heart
+        pixels[2][2] = heart
+        pixels[2][3] = heart
+        pixels[2][4] = heart
+        pixels[1][1] = heart
+        pixels[1][2] = heart
+        pixels[1][3] = heart
+        pixels[0][2] = heart
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 5, height: 5)
+    }
+
+    /// Generates a star/sparkle texture for success celebrations
+    /// Size: 5x5 pixels
+    static func generateSparkleTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 5), count: 5)
+
+        let spark = P.effectGreen
+
+        // 4-point star shape
+        pixels[2][2] = spark  // Center
+        pixels[0][2] = spark  // Top
+        pixels[4][2] = spark  // Bottom
+        pixels[2][0] = spark  // Left
+        pixels[2][4] = spark  // Right
+        // Diagonal hints
+        pixels[1][1] = spark
+        pixels[1][3] = spark
+        pixels[3][1] = spark
+        pixels[3][3] = spark
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 5, height: 5)
+    }
+
+    /// Generates a "Z" texture for sleeping animation
+    /// Size: 4x5 pixels
+    static func generateZzzTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 4), count: 5)
+
+        let z = P.eyeWhite
+
+        // Z shape
+        pixels[4][0] = z
+        pixels[4][1] = z
+        pixels[4][2] = z
+        pixels[4][3] = z
+        pixels[3][2] = z
+        pixels[2][1] = z
+        pixels[1][0] = z
+        pixels[0][0] = z
+        pixels[0][1] = z
+        pixels[0][2] = z
+        pixels[0][3] = z
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 4, height: 5)
+    }
+
+    /// Generates a small smile mouth texture
+    /// Size: 5x2 pixels
+    static func generateSmileMouthTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 5), count: 2)
+
+        // Simple curved smile
+        pixels[1][1] = P.mouthColor
+        pixels[1][2] = P.mouthColor
+        pixels[1][3] = P.mouthColor
+        pixels[0][0] = P.mouthColor
+        pixels[0][4] = P.mouthColor
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 5, height: 2)
+    }
 }

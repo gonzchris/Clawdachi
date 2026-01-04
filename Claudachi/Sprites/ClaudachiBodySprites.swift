@@ -55,24 +55,25 @@ class ClaudachiBodySprites {
         let bodyWidth = 10 + extraWidth  // Half-width of body
 
         // Draw from bottom to top (array index 0 = bottom of sprite)
+        // Rectangular body ~18px tall (rows 5-22)
 
-        // Feet (rows 4-5) - two small bumps at bottom
+        // Feet (rows 5-6) - two small bumps at bottom
         // Left foot
-        setPixels(&pixels, row: 4, from: 8, to: 11, color: s)
-        setPixels(&pixels, row: 5, from: 8, to: 11, color: c)
+        setPixels(&pixels, row: 5, from: 9, to: 11, color: s)
+        setPixels(&pixels, row: 6, from: 9, to: 11, color: c)
 
         // Right foot
-        setPixels(&pixels, row: 5, from: 20, to: 23, color: c)
-        setPixels(&pixels, row: 4, from: 20, to: 23, color: s)
+        setPixels(&pixels, row: 6, from: 20, to: 22, color: c)
+        setPixels(&pixels, row: 5, from: 20, to: 22, color: s)
 
-        // Main body (rows 6-24) - squared rectangle with slightly rounded corners
-        for row in 6...24 {
+        // Main body (rows 7-22) - 16px tall, rectangular shape
+        for row in 7...22 {
             let adjustedRow = row + yOffset
             if adjustedRow < 0 || adjustedRow >= 32 { continue }
 
             // Slight corner rounding only at very top and bottom rows
             var width = bodyWidth
-            if row == 6 || row == 24 {
+            if row == 7 || row == 22 {
                 width = bodyWidth - 1  // Slight corner cut
             }
 
@@ -89,11 +90,11 @@ class ClaudachiBodySprites {
                     pixels[adjustedRow][x] = h
                 }
                 // Top highlight (top 2 rows)
-                else if row >= 23 {
+                else if row >= 21 {
                     pixels[adjustedRow][x] = h
                 }
                 // Bottom shadow (bottom row of body)
-                else if row == 6 {
+                else if row == 7 {
                     pixels[adjustedRow][x] = s
                 }
                 // Main body color
@@ -103,13 +104,13 @@ class ClaudachiBodySprites {
             }
         }
 
-        // Left arm (small block sticking out) - rows 11-14
-        for row in 11...14 {
+        // Left arm (small block sticking out) - rows 11-13
+        for row in 11...13 {
             let adjustedRow = row + yOffset
             if adjustedRow < 0 || adjustedRow >= 32 { continue }
 
-            let armLeft = 16 - bodyWidth - 3  // 3 pixels out from body
-            let armRight = 16 - bodyWidth - 1
+            let armLeft = 16 - bodyWidth - 2  // 2 pixels out from body
+            let armRight = 16 - bodyWidth
 
             for x in armLeft...armRight {
                 if row == 11 {
@@ -122,13 +123,13 @@ class ClaudachiBodySprites {
             }
         }
 
-        // Right arm (small block sticking out) - rows 11-14
-        for row in 11...14 {
+        // Right arm (small block sticking out) - rows 11-13
+        for row in 11...13 {
             let adjustedRow = row + yOffset
             if adjustedRow < 0 || adjustedRow >= 32 { continue }
 
-            let armLeft = 16 + bodyWidth
-            let armRight = 16 + bodyWidth + 2  // 3 pixels out from body
+            let armLeft = 16 + bodyWidth - 1
+            let armRight = 16 + bodyWidth + 1  // 2 pixels out from body
 
             for x in armLeft...armRight {
                 if row == 11 {
