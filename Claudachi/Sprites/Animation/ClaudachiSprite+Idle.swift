@@ -147,7 +147,7 @@ extension ClaudachiSprite {
     }
 
     func performWhistle() {
-        guard !isWhistling && !isPerformingAction else { return }
+        guard !isWhistling && !isPerformingAction && !isDragging else { return }
         isWhistling = true
 
         mouthNode.setScale(0.8)

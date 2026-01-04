@@ -27,6 +27,14 @@ class ClaudachiScene: SKScene {
 
     override func didMove(to view: SKView) {
         setupCharacter()
+
+        // Watch for app losing focus to cancel drag
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidResignActive),
+            name: NSApplication.didResignActiveNotification,
+            object: nil
+        )
     }
 
     private func setupCharacter() {
@@ -46,16 +54,15 @@ class ClaudachiScene: SKScene {
     }
 
     override func mouseDragged(with event: NSEvent) {
-        // Start drag animation only on first movement
-        if !isDragging {
+        // Start drag animation only on first movement (skip if sleeping)
+        if !isDragging && !isSleeping {
             claudachi.startDragWiggle()
         }
         isDragging = true
     }
 
     override func mouseUp(with event: NSEvent) {
-        // Stop drag wiggle
-        claudachi.stopDragWiggle()
+        endDragIfNeeded()
 
         // If it was a click (not a drag), trigger reaction
         if !isDragging && !isSleeping {
@@ -66,7 +73,19 @@ class ClaudachiScene: SKScene {
     }
 
     override func rightMouseDown(with event: NSEvent) {
+        endDragIfNeeded()
         showContextMenu(with: event)
+    }
+
+    // MARK: - Drag Safety
+
+    private func endDragIfNeeded() {
+        claudachi.stopDragWiggle()
+        isDragging = false
+    }
+
+    @objc private func appDidResignActive() {
+        endDragIfNeeded()
     }
 
     // MARK: - Context Menu

@@ -53,13 +53,92 @@ extension ClaudachiSprite {
             SKAction.wait(forDuration: sweatDelay),
             SKAction.run { [weak self] in self?.spawnSweatDrop() }
         ]), withKey: "sweatDropSchedule")
+
+        // Start surprised "O" mouth animation
+        startDragMouthAnimation()
+    }
+
+    private func startDragMouthAnimation() {
+        mouthNode.removeAction(forKey: "faceBreathing")
+        mouthNode.texture = whistleMouthTexture
+        mouthNode.setScale(0.8)
+        mouthNode.alpha = 0
+
+        // Delay before mouth appears
+        let showDelay = TimeInterval.random(in: 0.4...0.7)
+        let fadeIn = SKAction.fadeIn(withDuration: 0.1)
+        let popIn = SKAction.scale(to: 1.0, duration: 0.1)
+        popIn.timingMode = .easeOut
+
+        mouthNode.run(SKAction.sequence([
+            SKAction.wait(forDuration: showDelay),
+            SKAction.group([fadeIn, popIn]),
+            SKAction.run { [weak self] in self?.scheduleDragMouthPop() }
+        ]), withKey: "dragMouthPop")
+    }
+
+    private func scheduleDragMouthPop() {
+        guard isDragging else { return }
+
+        // Randomly pick an animation variation
+        let variation = Int.random(in: 0...3)
+        var actions: [SKAction] = []
+
+        let delay = TimeInterval.random(in: 0.2...0.6)
+        actions.append(SKAction.wait(forDuration: delay))
+
+        switch variation {
+        case 0:
+            // Quick pop
+            let popOut = SKAction.scale(to: 1.3, duration: 0.06)
+            let popIn = SKAction.scale(to: 1.0, duration: 0.08)
+            popOut.timingMode = .easeOut
+            popIn.timingMode = .easeInEaseOut
+            actions.append(contentsOf: [popOut, popIn])
+
+        case 1:
+            // Bigger gasp
+            let popOut = SKAction.scale(to: 1.5, duration: 0.1)
+            let hold = SKAction.wait(forDuration: 0.15)
+            let popIn = SKAction.scale(to: 1.0, duration: 0.12)
+            popOut.timingMode = .easeOut
+            popIn.timingMode = .easeInEaseOut
+            actions.append(contentsOf: [popOut, hold, popIn])
+
+        case 2:
+            // Double pop
+            let pop1 = SKAction.scale(to: 1.2, duration: 0.05)
+            let back1 = SKAction.scale(to: 1.0, duration: 0.05)
+            let pop2 = SKAction.scale(to: 1.25, duration: 0.06)
+            let back2 = SKAction.scale(to: 1.0, duration: 0.06)
+            actions.append(contentsOf: [pop1, back1, pop2, back2])
+
+        default:
+            // Gentle wobble
+            let wobbleLeft = SKAction.moveBy(x: -0.3, y: 0, duration: 0.06)
+            let wobbleRight = SKAction.moveBy(x: 0.6, y: 0, duration: 0.12)
+            let wobbleBack = SKAction.moveBy(x: -0.3, y: 0, duration: 0.06)
+            wobbleLeft.timingMode = .easeInEaseOut
+            wobbleRight.timingMode = .easeInEaseOut
+            wobbleBack.timingMode = .easeInEaseOut
+            actions.append(contentsOf: [wobbleLeft, wobbleRight, wobbleBack])
+        }
+
+        actions.append(SKAction.run { [weak self] in self?.scheduleDragMouthPop() })
+        mouthNode.run(SKAction.sequence(actions), withKey: "dragMouthPop")
     }
 
     func stopDragWiggle() {
-        guard isDragging else { return }
+        // Always clean up, even if not currently dragging (safety)
         isDragging = false
 
         removeAction(forKey: "sweatDropSchedule")
+
+        // Hide mouth and reset position
+        mouthNode.removeAction(forKey: "dragMouthPop")
+        mouthNode.run(SKAction.fadeOut(withDuration: 0.15))
+        mouthNode.run(SKAction.scale(to: 1.0, duration: 0.1))
+        mouthNode.run(SKAction.move(to: CGPoint(x: 0, y: -4), duration: 0.1))
 
         leftArmNode.removeAction(forKey: "dragWiggle")
         rightArmNode.removeAction(forKey: "dragWiggle")
