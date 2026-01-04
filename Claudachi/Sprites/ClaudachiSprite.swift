@@ -30,6 +30,7 @@ class ClaudachiSprite: SKNode {
 
     var breathingFrames: [SKTexture] = []
     var eyeOpenTexture: SKTexture!
+    var eyeClosedTexture: SKTexture!
     var blinkFrames: [SKTexture] = []
     var whistleMouthTexture: SKTexture!
     var musicNoteTexture: SKTexture!
@@ -91,12 +92,17 @@ class ClaudachiSprite: SKNode {
         fatalError("init(coder:) has not been implemented")
     }
 
+    deinit {
+        removeAllActions()
+    }
+
     // MARK: - Setup
 
     private func generateTextures() {
         breathingFrames = ClaudachiBodySprites.generateBreathingFrames()
         blinkFrames = ClaudachiFaceSprites.generateBlinkFrames()
         eyeOpenTexture = ClaudachiFaceSprites.generateEyeTexture(state: .open)
+        eyeClosedTexture = ClaudachiFaceSprites.generateEyeTexture(state: .closed)
         whistleMouthTexture = ClaudachiFaceSprites.generateWhistleMouthTexture()
         musicNoteTexture = ClaudachiFaceSprites.generateMusicNoteTexture()
 

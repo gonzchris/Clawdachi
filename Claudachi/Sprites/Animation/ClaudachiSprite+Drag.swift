@@ -157,7 +157,7 @@ extension ClaudachiSprite {
         mouthNode.removeAction(forKey: "dragMouthPop")
         mouthNode.run(SKAction.fadeOut(withDuration: 0.15))
         mouthNode.run(SKAction.scale(to: 1.0, duration: 0.1))
-        mouthNode.run(SKAction.move(to: CGPoint(x: 0, y: -4), duration: 0.1))
+        mouthNode.run(SKAction.move(to: SpritePositions.mouth, duration: 0.1))
 
         leftArmNode.removeAction(forKey: "dragWiggle")
         rightArmNode.removeAction(forKey: "dragWiggle")

@@ -68,8 +68,18 @@ extension ClaudachiSprite {
 
         // Smooth interpolation toward target (lerp factor 0.1 for smooth following)
         let lerpFactor: CGFloat = 0.1
-        currentEyeOffset.x += (targetEyeOffset.x - currentEyeOffset.x) * lerpFactor
-        currentEyeOffset.y += (targetEyeOffset.y - currentEyeOffset.y) * lerpFactor
+        let snapThreshold: CGFloat = 0.05
+
+        let dx = targetEyeOffset.x - currentEyeOffset.x
+        let dy = targetEyeOffset.y - currentEyeOffset.y
+
+        // Snap to target when very close, otherwise lerp
+        if abs(dx) < snapThreshold && abs(dy) < snapThreshold {
+            currentEyeOffset = targetEyeOffset
+        } else {
+            currentEyeOffset.x += dx * lerpFactor
+            currentEyeOffset.y += dy * lerpFactor
+        }
 
         // Apply combined offset to both eyes
         leftEyeNode.position = CGPoint(

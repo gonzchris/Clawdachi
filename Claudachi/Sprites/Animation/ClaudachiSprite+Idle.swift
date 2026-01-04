@@ -166,6 +166,7 @@ extension ClaudachiSprite {
         let completion = SKAction.sequence([
             SKAction.wait(forDuration: whistleDuration + 0.2),
             SKAction.run { [weak self] in
+                self?.mouthNode.texture = self?.whistleMouthTexture  // Reset texture
                 self?.isWhistling = false
                 self?.scheduleNextWhistle()
             }

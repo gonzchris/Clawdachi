@@ -185,10 +185,12 @@ class AnimationRecorder {
 
         let outputURL = GIFExporter.generateOutputURL()
         let frameDelay = 1.0 / frameRate
+        let capturedFrames = frames
+        frames = []  // Clear immediately to free memory
 
-        DispatchQueue.global(qos: .userInitiated).async { [frames] in
+        DispatchQueue.global(qos: .userInitiated).async {
             let success = GIFExporter.createGIF(
-                from: frames,
+                from: capturedFrames,
                 frameDelay: frameDelay,
                 outputURL: outputURL
             )

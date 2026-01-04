@@ -29,9 +29,9 @@ extension ClaudachiSprite {
         run(SKAction.sequence([
             SKAction.wait(forDuration: 0.2),
             SKAction.run { [weak self] in
-                let closedTexture = ClaudachiFaceSprites.generateEyeTexture(state: .closed)
-                self?.leftEyeNode.texture = closedTexture
-                self?.rightEyeNode.texture = closedTexture
+                guard let self = self else { return }
+                self.leftEyeNode.texture = self.eyeClosedTexture
+                self.rightEyeNode.texture = self.eyeClosedTexture
             }
         ]))
 

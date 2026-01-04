@@ -25,6 +25,11 @@ class ClaudachiScene: SKScene {
         fatalError("init(coder:) has not been implemented")
     }
 
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+        longPressTimer?.invalidate()
+    }
+
     override func didMove(to view: SKView) {
         setupCharacter()
 

@@ -158,9 +158,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Clean up event monitors
         if let monitor = globalEventMonitor {
             NSEvent.removeMonitor(monitor)
+            globalEventMonitor = nil
         }
         if let monitor = localEventMonitor {
             NSEvent.removeMonitor(monitor)
+            localEventMonitor = nil
         }
     }
 }

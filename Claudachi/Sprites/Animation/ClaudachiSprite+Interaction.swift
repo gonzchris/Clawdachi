@@ -13,6 +13,7 @@ extension ClaudachiSprite {
 
     func triggerBlink() {
         removeAction(forKey: "blinkSchedule")
+        isBlinking = false  // Reset flag so performBlink doesn't early-return
         performBlink()
     }
 
