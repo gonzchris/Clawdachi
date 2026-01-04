@@ -21,8 +21,10 @@ class ClaudachiSprite: SKNode {
     // Limbs (separate nodes for animation)
     var leftArmNode: SKSpriteNode!
     var rightArmNode: SKSpriteNode!
-    var leftFootNode: SKSpriteNode!
-    var rightFootNode: SKSpriteNode!
+    var outerLeftLegNode: SKSpriteNode!
+    var innerLeftLegNode: SKSpriteNode!
+    var innerRightLegNode: SKSpriteNode!
+    var outerRightLegNode: SKSpriteNode!
 
     // MARK: - Animation Textures (internal for extension access)
 
@@ -44,14 +46,24 @@ class ClaudachiSprite: SKNode {
     var isLookingAround = false
     var isDragging = false
 
+    // MARK: - Eye Tracking State
+
+    var eyeBreathPhase: CGFloat = 0
+    var currentEyeOffset: CGPoint = .zero
+    var targetEyeOffset: CGPoint = .zero
+    var isMouseTrackingEnabled = true
+    var lastEyeUpdateTime: TimeInterval = 0
+
     // MARK: - Position Aliases
 
     var leftEyeBasePos: CGPoint { SpritePositions.leftEye }
     var rightEyeBasePos: CGPoint { SpritePositions.rightEye }
     var leftArmBasePos: CGPoint { SpritePositions.leftArm }
     var rightArmBasePos: CGPoint { SpritePositions.rightArm }
-    var leftFootBasePos: CGPoint { SpritePositions.leftFoot }
-    var rightFootBasePos: CGPoint { SpritePositions.rightFoot }
+    var outerLeftLegBasePos: CGPoint { SpritePositions.outerLeftLeg }
+    var innerLeftLegBasePos: CGPoint { SpritePositions.innerLeftLeg }
+    var innerRightLegBasePos: CGPoint { SpritePositions.innerRightLeg }
+    var outerRightLegBasePos: CGPoint { SpritePositions.outerRightLeg }
 
     // MARK: - Timing Aliases
 
@@ -110,19 +122,33 @@ class ClaudachiSprite: SKNode {
         rightArmNode.zPosition = 0
         addChild(rightArmNode)
 
-        leftFootNode = SKSpriteNode(texture: ClaudachiBodySprites.generateLeftFootTexture())
-        leftFootNode.size = CGSize(width: 3, height: 2)
-        leftFootNode.position = leftFootBasePos
-        leftFootNode.anchorPoint = CGPoint(x: 0.5, y: 1.0)
-        leftFootNode.zPosition = 0
-        addChild(leftFootNode)
+        outerLeftLegNode = SKSpriteNode(texture: ClaudachiBodySprites.generateLeftLegTexture())
+        outerLeftLegNode.size = CGSize(width: 2, height: 5)
+        outerLeftLegNode.position = outerLeftLegBasePos
+        outerLeftLegNode.anchorPoint = CGPoint(x: 0.5, y: 1.0)
+        outerLeftLegNode.zPosition = 0
+        addChild(outerLeftLegNode)
 
-        rightFootNode = SKSpriteNode(texture: ClaudachiBodySprites.generateRightFootTexture())
-        rightFootNode.size = CGSize(width: 3, height: 2)
-        rightFootNode.position = rightFootBasePos
-        rightFootNode.anchorPoint = CGPoint(x: 0.5, y: 1.0)
-        rightFootNode.zPosition = 0
-        addChild(rightFootNode)
+        innerLeftLegNode = SKSpriteNode(texture: ClaudachiBodySprites.generateLeftLegTexture())
+        innerLeftLegNode.size = CGSize(width: 2, height: 5)
+        innerLeftLegNode.position = innerLeftLegBasePos
+        innerLeftLegNode.anchorPoint = CGPoint(x: 0.5, y: 1.0)
+        innerLeftLegNode.zPosition = 0
+        addChild(innerLeftLegNode)
+
+        innerRightLegNode = SKSpriteNode(texture: ClaudachiBodySprites.generateRightLegTexture())
+        innerRightLegNode.size = CGSize(width: 2, height: 5)
+        innerRightLegNode.position = innerRightLegBasePos
+        innerRightLegNode.anchorPoint = CGPoint(x: 0.5, y: 1.0)
+        innerRightLegNode.zPosition = 0
+        addChild(innerRightLegNode)
+
+        outerRightLegNode = SKSpriteNode(texture: ClaudachiBodySprites.generateRightLegTexture())
+        outerRightLegNode.size = CGSize(width: 2, height: 5)
+        outerRightLegNode.position = outerRightLegBasePos
+        outerRightLegNode.anchorPoint = CGPoint(x: 0.5, y: 1.0)
+        outerRightLegNode.zPosition = 0
+        addChild(outerRightLegNode)
 
         // Body (Layer 1)
         bodyNode = SKSpriteNode(texture: breathingFrames[1])

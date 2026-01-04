@@ -95,7 +95,7 @@ class ClaudachiBodySprites {
 
     // MARK: - Limb Textures
 
-    /// Generate left arm texture (3x3 pixels)
+    /// Generate left arm texture (3x3 pixels - horizontal stub)
     static func generateLeftArmTexture() -> SKTexture {
         let c = P.primaryOrange
         let s = P.shadowOrange
@@ -118,11 +118,11 @@ class ClaudachiBodySprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 3)
     }
 
-    /// Generate right arm texture (3x3 pixels)
+    /// Generate right arm texture (3x3 pixels - horizontal stub)
     static func generateRightArmTexture() -> SKTexture {
         let c = P.primaryOrange
-        let s = P.shadowOrange
         let h = P.highlightOrange
+        let s = P.shadowOrange
 
         var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 3)
 
@@ -142,44 +142,45 @@ class ClaudachiBodySprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 3)
     }
 
-    /// Generate left foot texture (3x2 pixels)
-    static func generateLeftFootTexture() -> SKTexture {
+    /// Generate left leg texture (2x5 pixels)
+    static func generateLeftLegTexture() -> SKTexture {
         let c = P.primaryOrange
         let s = P.shadowOrange
 
-        var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 2)
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 2), count: 5)
 
         // Bottom row - shadow
         pixels[0][0] = s
         pixels[0][1] = s
-        pixels[0][2] = s
 
-        // Top row - main color
-        pixels[1][0] = c
-        pixels[1][1] = c
-        pixels[1][2] = c
+        // Middle rows - left shadow, right main
+        for row in 1..<5 {
+            pixels[row][0] = s  // Left edge shadow
+            pixels[row][1] = c  // Main color
+        }
 
-        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 2)
+        return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 5)
     }
 
-    /// Generate right foot texture (3x2 pixels)
-    static func generateRightFootTexture() -> SKTexture {
+    /// Generate right leg texture (2x5 pixels)
+    static func generateRightLegTexture() -> SKTexture {
         let c = P.primaryOrange
+        let h = P.highlightOrange
         let s = P.shadowOrange
 
-        var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 2)
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 2), count: 5)
 
         // Bottom row - shadow
         pixels[0][0] = s
         pixels[0][1] = s
-        pixels[0][2] = s
 
-        // Top row - main color
-        pixels[1][0] = c
-        pixels[1][1] = c
-        pixels[1][2] = c
+        // Middle rows - main, right highlight
+        for row in 1..<5 {
+            pixels[row][0] = c  // Main color
+            pixels[row][1] = h  // Right edge highlight
+        }
 
-        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 2)
+        return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 5)
     }
 
 }

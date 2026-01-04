@@ -33,19 +33,35 @@ extension ClaudachiSprite {
 
         let legWiggleDuration: TimeInterval = 0.15
 
-        let leftFootOut = SKAction.rotate(toAngle: -0.35, duration: legWiggleDuration)
-        let leftFootIn = SKAction.rotate(toAngle: 0.2, duration: legWiggleDuration)
-        leftFootOut.timingMode = .easeInEaseOut
-        leftFootIn.timingMode = .easeInEaseOut
-        let leftFootWiggle = SKAction.sequence([leftFootOut, leftFootIn])
-        leftFootNode.run(SKAction.repeatForever(leftFootWiggle), withKey: "dragWiggle")
+        // Outer legs wiggle outward
+        let outerLeftOut = SKAction.rotate(toAngle: -0.3, duration: legWiggleDuration)
+        let outerLeftIn = SKAction.rotate(toAngle: 0.15, duration: legWiggleDuration)
+        outerLeftOut.timingMode = .easeInEaseOut
+        outerLeftIn.timingMode = .easeInEaseOut
+        let outerLeftWiggle = SKAction.sequence([outerLeftOut, outerLeftIn])
+        outerLeftLegNode.run(SKAction.repeatForever(outerLeftWiggle), withKey: "dragWiggle")
 
-        let rightFootOut = SKAction.rotate(toAngle: 0.35, duration: legWiggleDuration)
-        let rightFootIn = SKAction.rotate(toAngle: -0.2, duration: legWiggleDuration)
-        rightFootOut.timingMode = .easeInEaseOut
-        rightFootIn.timingMode = .easeInEaseOut
-        let rightFootWiggle = SKAction.sequence([rightFootIn, rightFootOut])
-        rightFootNode.run(SKAction.repeatForever(rightFootWiggle), withKey: "dragWiggle")
+        let outerRightOut = SKAction.rotate(toAngle: 0.3, duration: legWiggleDuration)
+        let outerRightIn = SKAction.rotate(toAngle: -0.15, duration: legWiggleDuration)
+        outerRightOut.timingMode = .easeInEaseOut
+        outerRightIn.timingMode = .easeInEaseOut
+        let outerRightWiggle = SKAction.sequence([outerRightIn, outerRightOut])
+        outerRightLegNode.run(SKAction.repeatForever(outerRightWiggle), withKey: "dragWiggle")
+
+        // Inner legs wiggle with offset timing
+        let innerLeftOut = SKAction.rotate(toAngle: -0.2, duration: legWiggleDuration)
+        let innerLeftIn = SKAction.rotate(toAngle: 0.25, duration: legWiggleDuration)
+        innerLeftOut.timingMode = .easeInEaseOut
+        innerLeftIn.timingMode = .easeInEaseOut
+        let innerLeftWiggle = SKAction.sequence([innerLeftIn, innerLeftOut])
+        innerLeftLegNode.run(SKAction.repeatForever(innerLeftWiggle), withKey: "dragWiggle")
+
+        let innerRightOut = SKAction.rotate(toAngle: 0.2, duration: legWiggleDuration)
+        let innerRightIn = SKAction.rotate(toAngle: -0.25, duration: legWiggleDuration)
+        innerRightOut.timingMode = .easeInEaseOut
+        innerRightIn.timingMode = .easeInEaseOut
+        let innerRightWiggle = SKAction.sequence([innerRightOut, innerRightIn])
+        innerRightLegNode.run(SKAction.repeatForever(innerRightWiggle), withKey: "dragWiggle")
 
         // Delay sweat drops so they only appear during prolonged drags
         let sweatDelay = TimeInterval.random(in: 1.0...2.0)
@@ -142,8 +158,10 @@ extension ClaudachiSprite {
 
         leftArmNode.removeAction(forKey: "dragWiggle")
         rightArmNode.removeAction(forKey: "dragWiggle")
-        leftFootNode.removeAction(forKey: "dragWiggle")
-        rightFootNode.removeAction(forKey: "dragWiggle")
+        outerLeftLegNode.removeAction(forKey: "dragWiggle")
+        innerLeftLegNode.removeAction(forKey: "dragWiggle")
+        innerRightLegNode.removeAction(forKey: "dragWiggle")
+        outerRightLegNode.removeAction(forKey: "dragWiggle")
 
         let resetDuration: TimeInterval = 0.15
         let resetRotation = SKAction.rotate(toAngle: 0, duration: resetDuration)
@@ -151,8 +169,10 @@ extension ClaudachiSprite {
 
         leftArmNode.run(resetRotation)
         rightArmNode.run(resetRotation)
-        leftFootNode.run(resetRotation)
-        rightFootNode.run(resetRotation)
+        outerLeftLegNode.run(resetRotation)
+        innerLeftLegNode.run(resetRotation)
+        innerRightLegNode.run(resetRotation)
+        outerRightLegNode.run(resetRotation)
     }
 
     func spawnSweatDrop() {

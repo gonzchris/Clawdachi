@@ -24,16 +24,22 @@ enum SpritePositions {
     // MARK: - Limbs
 
     /// Left arm attachment point
-    static let leftArm = CGPoint(x: -11, y: -4)
+    static let leftArm = CGPoint(x: -11, y: 0)
 
     /// Right arm attachment point
-    static let rightArm = CGPoint(x: 11, y: -4)
+    static let rightArm = CGPoint(x: 11, y: 0)
 
-    /// Left foot attachment point
-    static let leftFoot = CGPoint(x: -6, y: -10)
+    /// Outer left leg attachment point
+    static let outerLeftLeg = CGPoint(x: -8, y: -9)
 
-    /// Right foot attachment point
-    static let rightFoot = CGPoint(x: 6, y: -10)
+    /// Inner left leg attachment point
+    static let innerLeftLeg = CGPoint(x: -5, y: -9)
+
+    /// Inner right leg attachment point
+    static let innerRightLeg = CGPoint(x: 5, y: -9)
+
+    /// Outer right leg attachment point
+    static let outerRightLeg = CGPoint(x: 8, y: -9)
 
     // MARK: - Effects Spawn Points
 
