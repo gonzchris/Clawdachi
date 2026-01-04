@@ -18,10 +18,10 @@ class AnimationRecorder {
     private var recordingTimer: Timer?
     private var recordingIndicator: SKShapeNode?
 
-    // Configuration
-    private let frameRate: Double = 60  // 60 FPS for smooth animation
-    private let maxRecordingDuration: Double = 10.0  // 10 second limit
-    private let outputSize: CGSize = CGSize(width: 192, height: 192)  // 6x scale
+    // Recording configuration
+    private let frameRate: Double = 60.0
+    private let maxRecordingDuration: Double = 10.0
+    private let outputSize = CGSize(width: 288, height: 288)
     private var recordingStartTime: Date?
 
     // Callback for UI updates

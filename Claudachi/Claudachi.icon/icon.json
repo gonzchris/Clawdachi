@@ -7,6 +7,38 @@
       "blur-material" : 0.5,
       "layers" : [
         {
+          "fill" : {
+            "linear-gradient" : [
+              "srgb:1.00000,0.55294,0.15686,1.00000",
+              "extended-srgb:1.00000,0.55294,0.15686,1.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.5,
+                "y" : 0
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 0.7
+              }
+            }
+          },
+          "image-name" : "rectangle.fill.png",
+          "name" : "rectangle.fill",
+          "position-specializations" : [
+            {
+              "idiom" : "square",
+              "value" : {
+                "scale" : 4,
+                "translation-in-points" : [
+                  0,
+                  0
+                ]
+              }
+            }
+          ]
+        },
+        {
           "fill-specializations" : [
             {
               "value" : {
@@ -46,6 +78,7 @@
               }
             }
           ],
+          "hidden" : true,
           "image-name" : "square.fill.png",
           "name" : "square.fill",
           "position-specializations" : [
@@ -70,7 +103,7 @@
         {
           "value" : {
             "enabled" : true,
-            "value" : 0.25
+            "value" : 0.1
           }
         },
         {

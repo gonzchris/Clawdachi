@@ -70,12 +70,21 @@ class GIFExporter {
     }
 
     /// Generates a unique filename for the GIF
+    /// Falls back to Documents or temp directory if Desktop unavailable
     static func generateOutputURL() -> URL {
         let timestamp = ISO8601DateFormatter().string(from: Date())
             .replacingOccurrences(of: ":", with: "-")
         let filename = "Claudachi-\(timestamp).gif"
 
-        let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first!
-        return desktopURL.appendingPathComponent(filename)
+        // Try Desktop first, fall back to Documents, then temp directory
+        if let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first {
+            return desktopURL.appendingPathComponent(filename)
+        } else if let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            print("GIFExporter: Desktop unavailable, using Documents folder")
+            return documentsURL.appendingPathComponent(filename)
+        } else {
+            print("GIFExporter: Using temp directory as fallback")
+            return FileManager.default.temporaryDirectory.appendingPathComponent(filename)
+        }
     }
 }
