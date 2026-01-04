@@ -99,19 +99,36 @@ class ClaudachiFaceSprites {
     // MARK: - Effect Textures
 
     /// Generates an exclamation mark texture for "getting idea" animation
-    /// Size: 3x7 pixels
+    /// Size: 5x9 pixels - white with black border for visibility
     static func generateExclamationTexture() -> SKTexture {
-        var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 7)
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 5), count: 9)
 
-        // Exclamation mark "!"
-        // Vertical line (top part)
-        for row in 2..<7 {
-            pixels[row][1] = P.effectGreen
+        let white = PixelColor(r: 255, g: 255, b: 255)
+        let black = PixelColor(r: 30, g: 30, b: 30)
+
+        // Exclamation mark "!" with border
+        // Top cap of vertical line (row 8)
+        pixels[8][2] = black
+
+        // Vertical line with border (rows 3-7)
+        for row in 3...7 {
+            pixels[row][1] = black  // Left border
+            pixels[row][2] = white  // White fill
+            pixels[row][3] = black  // Right border
         }
-        // Dot at bottom
-        pixels[0][1] = P.effectGreen
 
-        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 7)
+        // Bottom of vertical line (row 2) - just border for gap
+        pixels[2][2] = black
+
+        // Dot with border (row 1)
+        pixels[1][1] = black  // Left border
+        pixels[1][2] = white  // White fill
+        pixels[1][3] = black  // Right border
+
+        // Bottom of dot (row 0)
+        pixels[0][2] = black
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 5, height: 9)
     }
 
     /// Generates a thought bubble dot texture

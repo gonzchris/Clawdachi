@@ -15,36 +15,6 @@ enum ClaudachiState: Equatable {
     case sleeping
 }
 
-/// Categories of items Claudachi can create
-enum ItemCategory: String, CaseIterable, Codable {
-    case hat
-    case glasses
-    case food
-    case prop
-
-    var displayName: String {
-        switch self {
-        case .hat: return "hat"
-        case .glasses: return "glasses"
-        case .food: return "snack"
-        case .prop: return "item"
-        }
-    }
-
-    var promptDescription: String {
-        switch self {
-        case .hat:
-            return "a tiny hat, seen from the front, sized to fit on a small character's head"
-        case .glasses:
-            return "a pair of glasses/eyewear, front view, sized for a small character"
-        case .food:
-            return "a small food item, cute and appetizing, suitable for a tiny character to hold"
-        case .prop:
-            return "a tiny handheld item, simple and iconic"
-        }
-    }
-}
-
 /// Manages Claudachi's state transitions and triggers
 class ClaudachiStateMachine {
 

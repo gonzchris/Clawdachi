@@ -132,46 +132,6 @@ enum SpriteStyle: String, CaseIterable {
     }
 }
 
-/// Category-specific composition rules
-extension ItemCategory {
-    var compositionRules: String {
-        switch self {
-        case .hat:
-            return """
-            COMPOSITION (hat):
-            - Position in upper 2/3 of sprite
-            - Leave 2-3 rows at bottom for head overlap
-            - Hat should be 10-14 pixels wide
-            - Clear brim/crown shape
-            """
-        case .glasses:
-            return """
-            COMPOSITION (glasses):
-            - Center horizontally
-            - Position in middle third vertically
-            - Bridge in center, lenses on each side
-            - 12-14 pixels wide
-            """
-        case .food:
-            return """
-            COMPOSITION (food):
-            - Center in sprite
-            - Use 10-12 pixel diameter
-            - Recognizable from iconic features
-            - Include small detail (bite mark, topping)
-            """
-        case .prop:
-            return """
-            COMPOSITION (prop):
-            - Center with slight bottom-heavy balance
-            - Leave margins on all sides
-            - Vertical orientation preferred
-            - Clear iconic shape
-            """
-        }
-    }
-}
-
 /// Palette enforcement utilities
 struct PaletteEnforcer {
 

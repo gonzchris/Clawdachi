@@ -93,15 +93,28 @@ The **unexpected** stuff is what gets screenshotted.
 
 **Sprite System** (DONE)
 - Programmatic pixel art generation (no external PNG files)
-- Layered composition: body, eyes, mouth, effects
+- Layered composition: body, arms, feet, eyes, mouth, accessories, effects
 - Nearest-neighbor filtering for crisp pixels
 - 32x32 base resolution
+- Separate arm/foot nodes for independent animation
 
-**Animations** (DONE)
+**Idle Animations** (DONE)
 - Breathing: 4-frame loop, 2.5s cycle
 - Blinking: random 3-8s intervals, 5-frame sequence
 - Whistling: random 8-15s intervals, spawns music notes
 - Click triggers blink
+
+**Drag Interaction** (DONE)
+- Sweat drop appears when dragged
+- Arms wiggle during drag
+- Smooth return animations on drop
+
+**Chef Mode / Coding Animation** (DONE)
+- Chef hat (toque) drops onto head with bounce animation
+- Chef apron appears on body (lower portion, hangs below body)
+- Frying pan held in right hand with shake animation
+- Steam rises from pan
+- Success/failure exit animations
 
 ### Window Configuration
 ```swift
@@ -130,10 +143,13 @@ window.collectionBehavior = [.canJoinAllSpaces, .stationary]
 
 **Layer Composition (Current)**
 ```
-Layer 3: Effects (music notes, sparkles — future: speech bubbles, z's)
+Layer 10+: Accessories in front (frying pan, held items)
+Layer 5: Hat (chef hat, other headwear)
+Layer 3: Effects (music notes, sparkles, sweat drops)
 Layer 2: Face (eyes, mouth — animated separately)
-Layer 1: Body (main character shape with arms/feet)
-Layer 0: (future: shadow, accessories below body)
+Layer 1: Body (main character shape)
+Layer 0: Arms and feet (separate nodes for animation)
+Layer -10: Accessories behind (chef mode effects)
 ```
 
 **Color Palette** (Implemented in ClaudachiPalette.swift)
@@ -153,10 +169,13 @@ Layer 0: (future: shadow, accessories below body)
 - **Blinking:** 5-frame sequence (open → half → closed → half → open)
 - **Whistling:** Mouth shape + floating music notes
 
+### Current Active Animations
+- **Dragging:** Sweat drop appears, arms wiggle
+- **Chef Mode (Coding):** Hat drops on head, apron appears, frying pan shakes with steam
+
 ### Future Active Animations
 - **Getting idea:** Perk up, "!" or lightbulb appears
-- **Coding:** Mini terminal appears, typing animation, focused expression
-- **Success:** Terminal poofs, item appears, happy wiggle
+- **Success:** Item appears, happy wiggle/celebration
 - **Equipping:** Puts on accessory with flourish
 - **Eating:** Nom nom animation, satisfied expression
 
@@ -274,13 +293,31 @@ Claudachi/
 ├── Claudachi/
 │   ├── App/
 │   │   └── AppDelegate.swift           # Window setup
+│   ├── Models/
+│   │   ├── ItemCategory.swift          # Item category enum
+│   │   └── GeneratedSprite.swift       # Generated sprite model
 │   ├── Sprites/
-│   │   ├── ClaudachiSprite.swift       # Main character (228 lines)
-│   │   ├── ClaudachiBodySprites.swift  # Body textures
-│   │   ├── ClaudachiFaceSprites.swift  # Face textures
+│   │   ├── ClaudachiSprite.swift       # Main character (~1300 lines)
+│   │   ├── ClaudachiBodySprites.swift  # Body textures + chef apron
+│   │   ├── ClaudachiFaceSprites.swift  # Face textures + chef hat
 │   │   ├── ClaudachiPalette.swift      # Colors
 │   │   ├── ClaudachiScene.swift        # SKScene setup
-│   │   └── PixelArtGenerator.swift     # Pixel→texture utility
+│   │   ├── ChefModeSprite.swift        # Frying pan + steam effects
+│   │   ├── PixelArtGenerator.swift     # Pixel→texture utility
+│   │   ├── Constants/
+│   │   │   ├── AnimationTimings.swift  # Timing constants
+│   │   │   └── SpritePositions.swift   # Position/layer constants
+│   │   └── Effects/
+│   │       └── ParticleSpawner.swift   # Reusable particle effects
+│   ├── Generation/
+│   │   ├── SpriteGenerator.swift       # Claude CLI sprite generation
+│   │   ├── SpriteStyles.swift          # Size/style presets + palette enforcement
+│   │   └── ClaudeCodeClient.swift      # Claude Code CLI wrapper
+│   ├── Recording/
+│   │   ├── AnimationRecorder.swift     # Frame capture for GIFs
+│   │   └── GIFExporter.swift           # GIF creation utility
+│   ├── State/
+│   │   └── ClaudachiStateMachine.swift # State management
 │   ├── ClaudachiApp.swift              # App entry
 │   └── Assets.xcassets/
 ├── CLAUDE.md
@@ -295,6 +332,10 @@ Claudachi/
 │   │   ├── ClaudachiApp.swift
 │   │   └── AppDelegate.swift
 │   │
+│   ├── Models/
+│   │   ├── ItemCategory.swift          # Item category enum
+│   │   └── GeneratedSprite.swift       # Generated sprite model
+│   │
 │   ├── Views/
 │   │   ├── ContextMenuView.swift       # Right-click menu
 │   │   └── InventoryView.swift         # Item gallery
@@ -302,8 +343,13 @@ Claudachi/
 │   ├── Sprites/
 │   │   ├── ClaudachiSprite.swift       # Main character
 │   │   ├── ClaudachiScene.swift        # Scene management
-│   │   ├── TerminalSprite.swift        # Mini coding terminal
 │   │   ├── AccessoryLayer.swift        # Item compositing
+│   │   ├── Constants/
+│   │   │   ├── AnimationTimings.swift  # Timing constants
+│   │   │   └── SpritePositions.swift   # Position constants
+│   │   ├── Effects/
+│   │   │   ├── ChefModeSprite.swift    # Frying pan + steam
+│   │   │   └── ParticleSpawner.swift   # Reusable particle effects
 │   │   └── Generation/
 │   │       ├── PixelArtGenerator.swift
 │   │       ├── ClaudachiBodySprites.swift
@@ -328,36 +374,38 @@ Claudachi/
 
 ## Development Roadmap
 
-### Phase 1: Living Character (MOSTLY DONE)
+### Phase 1: Living Character (DONE)
 - [x] Floating borderless transparent window
 - [x] 32x32 pixel character at 6x scale
 - [x] Idle animation: breathing loop
 - [x] Idle animation: blinking (randomized)
 - [x] Idle animation: whistling with effects
 - [x] Click detection (triggers blink)
-- [x] Draggable to reposition
-- [ ] **Persist window position between launches**
-- [ ] **Right-click context menu (basic: Quit)**
-- [ ] **Additional click reactions (wave, bounce)**
+- [x] Draggable to reposition with sweat drop + arm wiggle
+- [ ] Persist window position between launches
+- [ ] Right-click context menu (basic: Quit)
+- [ ] Additional click reactions (wave, bounce)
 
-### Phase 2: Self-Coding Foundation
+### Phase 2: Self-Coding Foundation (IN PROGRESS)
+- [x] Chef mode animation (hat, apron, frying pan with steam)
+- [x] Enter/exit chef mode with smooth transitions
 - [ ] Formal state machine (idle, coding, interacting)
 - [ ] "Getting idea" animation (perk up, "!" bubble)
-- [ ] Mini terminal sprite (appears during coding)
-- [ ] "Typing" animation
 - [ ] Success celebration animation
 - [ ] Timer-based idea triggers (configurable interval)
 
-### Phase 3: Claude API Integration
-- [ ] ClaudeClient wrapper for Anthropic API
-- [ ] SpriteGenerator with category-specific prompts
-- [ ] Base64 PNG → CGImage → SKTexture pipeline
+### Phase 3: Claude API Integration (IN PROGRESS)
+- [x] ClaudeCodeClient wrapper for Claude Code CLI
+- [x] SpriteGenerator with category-specific prompts
+- [x] Multiple sprite sizes (8x8, 12x12, 16x16, 24x24)
+- [x] Style presets (claudachi, gameboy, nes, monochrome, pastel)
+- [x] Palette enforcement post-processing
 - [ ] Generated sprite persistence to disk
 - [ ] Rate limiting and error handling
 
 ### Phase 4: Inventory & Accessories
 - [ ] Inventory data model and persistence
-- [ ] Accessory compositing system (layer items on character)
+- [x] Accessory positioning system (hats on head, items in hand)
 - [ ] Food consumption animation
 - [ ] Right-click menu with inventory submenu
 - [ ] Equip/unequip functionality
@@ -374,15 +422,17 @@ Claudachi/
 ## Interaction Model
 
 ### Click
-- Claudachi reacts (wave, bounce, happy expression)
 - Currently: triggers immediate blink
+- Future: wave, bounce, happy expression
 
-### Right-Click
+### Right-Click (future)
 - Context menu: Inventory, Settings, Screenshot, Quit
 
-### Drag
+### Drag (DONE)
 - Pick up and reposition
-- Position remembered between launches
+- Sweat drop appears above head
+- Arms wiggle anxiously during drag
+- Smooth return to idle on drop
 
 ### Hover (future)
 - Eyes briefly track cursor

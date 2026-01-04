@@ -6,17 +6,6 @@
 import Foundation
 import SpriteKit
 
-/// A generated sprite with its metadata
-struct GeneratedSprite {
-    let texture: SKTexture
-    let pixelData: [[PixelColor]]
-    let item: String
-    let category: ItemCategory
-    let width: Int
-    let height: Int
-    let style: SpriteStyle
-}
-
 /// Error types for sprite generation
 enum SpriteGenerationError: Error, LocalizedError {
     case jsonParsingFailed(String)

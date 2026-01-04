@@ -51,43 +51,33 @@ class ClaudachiSprite: SKNode {
     private var isLookingAround = false
     private var isDragging = false
 
-    // MARK: - Base Positions (for returning after animations)
+    // MARK: - Position Aliases (for convenience)
+    // See SpritePositions and AnimationTimings for centralized constants
 
-    private let leftEyeBasePos = CGPoint(x: -4, y: 0)
-    private let rightEyeBasePos = CGPoint(x: 4, y: 0)
-
-    // Limb positions relative to body center (sprite is 32x32, center at 0,0)
-    // Arms at rows 11-13 means y = 12 - 16 = -4 (center of arm)
-    // Left arm at x = 4-6 means x = 5 - 16 = -11
-    private let leftArmBasePos = CGPoint(x: -11, y: -4)
-    private let rightArmBasePos = CGPoint(x: 11, y: -4)
-    // Feet at rows 5-6, left foot at x = 9-11, right at x = 20-22
-    private let leftFootBasePos = CGPoint(x: -6, y: -10)
-    private let rightFootBasePos = CGPoint(x: 6, y: -10)
-
-    // MARK: - Accessory Positions
-    // Body spans y: -9 to +6 (rows 7-22 in 32x32 grid, centered at 0)
-    // Accessories can overlap body edges for natural look
-
-    /// Hat position - sits above head, can overlap slightly
-    private let hatBasePos = CGPoint(x: 0, y: 12)
-    private let hatDropStartY: CGFloat = 24  // Start high for drop animation
+    private var leftEyeBasePos: CGPoint { SpritePositions.leftEye }
+    private var rightEyeBasePos: CGPoint { SpritePositions.rightEye }
+    private var leftArmBasePos: CGPoint { SpritePositions.leftArm }
+    private var rightArmBasePos: CGPoint { SpritePositions.rightArm }
+    private var leftFootBasePos: CGPoint { SpritePositions.leftFoot }
+    private var rightFootBasePos: CGPoint { SpritePositions.rightFoot }
+    private var hatBasePos: CGPoint { SpritePositions.hat }
+    private var hatDropStartY: CGFloat { SpritePositions.hatDropStart }
 
     /// Bottom accessory position (bowl, etc.) - hangs below/overlaps with body
-    static let bottomAccessoryPos = CGPoint(x: 16, y: -10)
+    static var bottomAccessoryPos: CGPoint { SpritePositions.bottomAccessory }
 
-    // MARK: - Animation Constants
+    // MARK: - Timing Aliases (for convenience)
 
-    private let breathingDuration: TimeInterval = 3.0      // Slower, more relaxed
-    private let swayDuration: TimeInterval = 4.0           // Gentle side sway
-    private let blinkMinInterval: TimeInterval = 2.5
-    private let blinkMaxInterval: TimeInterval = 6.0
-    private let blinkDuration: TimeInterval = 0.18         // Snappier blink
-    private let whistleMinInterval: TimeInterval = 12.0
-    private let whistleMaxInterval: TimeInterval = 25.0
-    private let whistleDuration: TimeInterval = 2.0
-    private let lookAroundMinInterval: TimeInterval = 5.0
-    private let lookAroundMaxInterval: TimeInterval = 12.0
+    private var breathingDuration: TimeInterval { AnimationTimings.breathingDuration }
+    private var swayDuration: TimeInterval { AnimationTimings.swayDuration }
+    private var blinkMinInterval: TimeInterval { AnimationTimings.blinkMinInterval }
+    private var blinkMaxInterval: TimeInterval { AnimationTimings.blinkMaxInterval }
+    private var blinkDuration: TimeInterval { AnimationTimings.blinkDuration }
+    private var whistleMinInterval: TimeInterval { AnimationTimings.whistleMinInterval }
+    private var whistleMaxInterval: TimeInterval { AnimationTimings.whistleMaxInterval }
+    private var whistleDuration: TimeInterval { AnimationTimings.whistleDuration }
+    private var lookAroundMinInterval: TimeInterval { AnimationTimings.lookAroundMinInterval }
+    private var lookAroundMaxInterval: TimeInterval { AnimationTimings.lookAroundMaxInterval }
 
     // MARK: - Initialization
 
@@ -656,7 +646,7 @@ class ClaudachiSprite: SKNode {
 
         // Exclamation with bounce
         let exclamation = SKSpriteNode(texture: exclamationTexture)
-        exclamation.size = CGSize(width: 3, height: 7)
+        exclamation.size = CGSize(width: 5, height: 9)
         exclamation.position = CGPoint(x: 7, y: 14)
         exclamation.alpha = 0
         exclamation.zPosition = 4
