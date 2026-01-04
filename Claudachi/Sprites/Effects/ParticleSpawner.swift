@@ -368,7 +368,7 @@ enum ParticleSpawner {
 
         return spawnFalling(
             texture: texture,
-            size: CGSize(width: 3, height: 6),
+            size: CGSize(width: 2, height: 4),
             startPosition: CGPoint(x: xOffset, y: 5),
             fallDistance: 22,
             horizontalDrift: horizontalDrift,

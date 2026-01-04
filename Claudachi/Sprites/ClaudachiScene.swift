@@ -43,12 +43,13 @@ class ClaudachiScene: SKScene {
     override func mouseDown(with event: NSEvent) {
         dragStartLocation = event.locationInWindow
         isDragging = false
-
-        // Start drag wiggle immediately on mouse down
-        claudachi.startDragWiggle()
     }
 
     override func mouseDragged(with event: NSEvent) {
+        // Start drag animation only on first movement
+        if !isDragging {
+            claudachi.startDragWiggle()
+        }
         isDragging = true
     }
 

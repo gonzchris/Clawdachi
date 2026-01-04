@@ -47,7 +47,12 @@ extension ClaudachiSprite {
         let rightFootWiggle = SKAction.sequence([rightFootIn, rightFootOut])
         rightFootNode.run(SKAction.repeatForever(rightFootWiggle), withKey: "dragWiggle")
 
-        spawnSweatDrop()
+        // Delay sweat drops so they only appear during prolonged drags
+        let sweatDelay = TimeInterval.random(in: 1.0...2.0)
+        run(SKAction.sequence([
+            SKAction.wait(forDuration: sweatDelay),
+            SKAction.run { [weak self] in self?.spawnSweatDrop() }
+        ]), withKey: "sweatDropSchedule")
     }
 
     func stopDragWiggle() {
