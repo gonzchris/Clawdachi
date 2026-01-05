@@ -6,6 +6,7 @@
 import SpriteKit
 import AppKit
 import UserNotifications
+import QuartzCore
 
 class AnimationRecorder {
 
@@ -15,14 +16,20 @@ class AnimationRecorder {
     private(set) var isRecording = false
     private weak var scene: SKScene?
     private weak var view: SKView?
-    private var recordingTimer: Timer?
+    private var displayLink: CVDisplayLink?
     private var recordingIndicator: SKShapeNode?
 
     // Recording configuration
-    private let frameRate: Double = 30.0  // 30fps is sufficient for pixel art
+    private let targetFrameRate: Double = 24.0  // 24fps for smoother GIFs
     private let maxRecordingDuration: Double = 20.0
-    private let outputSize = CGSize(width: 192, height: 192)  // 1:1 pixel art (32px * 6x scale)
     private var recordingStartTime: Date?
+    private var lastCaptureTime: CFTimeInterval = 0
+    private var frameInterval: CFTimeInterval { 1.0 / targetFrameRate }
+
+    // Output at full view resolution for crisp pixels
+    private var outputSize: CGSize {
+        view?.bounds.size ?? CGSize(width: 288, height: 288)
+    }
 
     // Callback for UI updates
     var onRecordingStateChanged: ((Bool) -> Void)?
@@ -33,6 +40,44 @@ class AnimationRecorder {
         self.scene = scene
         self.view = view
         setupRecordingIndicator()
+        setupDisplayLink()
+    }
+
+    // MARK: - Display Link Setup
+
+    private func setupDisplayLink() {
+        var link: CVDisplayLink?
+        CVDisplayLinkCreateWithActiveCGDisplays(&link)
+        guard let displayLink = link else { return }
+
+        let callback: CVDisplayLinkOutputCallback = { _, inNow, _, _, _, userInfo -> CVReturn in
+            guard let userInfo = userInfo else { return kCVReturnSuccess }
+            let recorder = Unmanaged<AnimationRecorder>.fromOpaque(userInfo).takeUnretainedValue()
+            recorder.displayLinkFired(timestamp: inNow.pointee)
+            return kCVReturnSuccess
+        }
+
+        let userInfo = Unmanaged.passUnretained(self).toOpaque()
+        CVDisplayLinkSetOutputCallback(displayLink, callback, userInfo)
+        self.displayLink = displayLink
+    }
+
+    private func displayLinkFired(timestamp: CVTimeStamp) {
+        guard isRecording else { return }
+
+        let currentTime = CFAbsoluteTimeGetCurrent()
+
+        // Throttle to target frame rate
+        if currentTime - lastCaptureTime < frameInterval {
+            return
+        }
+
+        lastCaptureTime = currentTime
+
+        // Capture must happen on main thread since SKView isn't thread-safe
+        DispatchQueue.main.async { [weak self] in
+            self?.captureFrame()
+        }
     }
 
     // MARK: - Recording Indicator
@@ -78,16 +123,18 @@ class AnimationRecorder {
 
         isRecording = true
         frames = []
+        frames.reserveCapacity(Int(maxRecordingDuration * targetFrameRate))
         recordingStartTime = Date()
+        lastCaptureTime = 0
 
         showRecordingIndicator()
         onRecordingStateChanged?(true)
 
-        print("AnimationRecorder: Started recording")
+        print("AnimationRecorder: Started recording at \(Int(targetFrameRate))fps, output size: \(outputSize)")
 
-        // Start frame capture timer
-        recordingTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / frameRate, repeats: true) { [weak self] _ in
-            self?.captureFrame()
+        // Start the display link
+        if let displayLink = displayLink {
+            CVDisplayLinkStart(displayLink)
         }
     }
 
@@ -95,8 +142,11 @@ class AnimationRecorder {
         guard isRecording else { return }
 
         isRecording = false
-        recordingTimer?.invalidate()
-        recordingTimer = nil
+
+        // Stop the display link
+        if let displayLink = displayLink {
+            CVDisplayLinkStop(displayLink)
+        }
 
         hideRecordingIndicator()
         onRecordingStateChanged?(false)
@@ -132,46 +182,20 @@ class AnimationRecorder {
         let indicatorWasVisible = recordingIndicator?.alpha ?? 0 > 0
         recordingIndicator?.alpha = 0
 
-        // Capture the scene and scale up to output size
-        if let texture = view.texture(from: scene) {
+        // Force a render pass before capturing
+        view.isPaused = false
+
+        // Capture at full view resolution for maximum quality
+        let captureRect = CGRect(origin: .zero, size: view.bounds.size)
+        if let texture = view.texture(from: scene, crop: captureRect) {
             let cgImage = texture.cgImage()
-            if let scaledImage = scaleImage(cgImage, to: outputSize) {
-                frames.append(scaledImage)
-            }
+            frames.append(cgImage)
         }
 
         // Restore indicator
         if indicatorWasVisible {
             recordingIndicator?.alpha = 1
         }
-    }
-
-    // MARK: - Image Scaling
-
-    /// Scales a CGImage to the target size using nearest-neighbor interpolation (crisp pixels)
-    private func scaleImage(_ image: CGImage, to size: CGSize) -> CGImage? {
-        let width = Int(size.width)
-        let height = Int(size.height)
-
-        guard let context = CGContext(
-            data: nil,
-            width: width,
-            height: height,
-            bitsPerComponent: 8,
-            bytesPerRow: width * 4,
-            space: CGColorSpaceCreateDeviceRGB(),
-            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-        ) else {
-            return nil
-        }
-
-        // Use nearest-neighbor interpolation for crisp pixel art
-        context.interpolationQuality = .none
-
-        // Draw the image scaled up
-        context.draw(image, in: CGRect(origin: .zero, size: size))
-
-        return context.makeImage()
     }
 
     // MARK: - Export
@@ -184,7 +208,7 @@ class AnimationRecorder {
         }
 
         let outputURL = GIFExporter.generateOutputURL()
-        let frameDelay = 1.0 / frameRate
+        let frameDelay = 1.0 / targetFrameRate
         let capturedFrames = frames
         frames = []  // Clear immediately to free memory
 
@@ -199,7 +223,7 @@ class AnimationRecorder {
                 if success {
                     self.sendNotification(
                         title: "Recording Saved",
-                        body: "GIF saved to Desktop"
+                        body: "GIF saved to Desktop (\(capturedFrames.count) frames)"
                     )
                     // Open in Finder
                     NSWorkspace.shared.selectFile(outputURL.path, inFileViewerRootedAtPath: "")
@@ -237,7 +261,9 @@ class AnimationRecorder {
     // MARK: - Cleanup
 
     deinit {
-        recordingTimer?.invalidate()
+        if let displayLink = displayLink {
+            CVDisplayLinkStop(displayLink)
+        }
         recordingIndicator?.removeFromParent()
     }
 }

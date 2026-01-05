@@ -6,6 +6,7 @@
 import Foundation
 import ImageIO
 import UniformTypeIdentifiers
+import CoreGraphics
 
 class GIFExporter {
 
@@ -36,18 +37,23 @@ class GIFExporter {
             return false
         }
 
-        // GIF file properties - loop forever
+        // GIF file properties - loop forever with optimized color table
         let gifProperties: [String: Any] = [
             kCGImagePropertyGIFDictionary as String: [
-                kCGImagePropertyGIFLoopCount as String: 0  // 0 = infinite loop
-            ]
+                kCGImagePropertyGIFLoopCount as String: 0,  // 0 = infinite loop
+                kCGImagePropertyGIFHasGlobalColorMap as String: true
+            ],
+            kCGImagePropertyColorModel as String: kCGImagePropertyColorModelRGB,
+            kCGImagePropertyDepth as String: 8
         ]
         CGImageDestinationSetProperties(destination, gifProperties as CFDictionary)
 
-        // Frame properties - delay time
+        // Frame properties - delay time with proper precision
+        // GIF delay is in 1/100ths of a second, so round to nearest centisecond
+        let roundedDelay = round(frameDelay * 100) / 100
         let frameProperties: [String: Any] = [
             kCGImagePropertyGIFDictionary as String: [
-                kCGImagePropertyGIFDelayTime as String: frameDelay,
+                kCGImagePropertyGIFDelayTime as String: roundedDelay,
                 kCGImagePropertyGIFUnclampedDelayTime as String: frameDelay
             ]
         ]
@@ -61,7 +67,14 @@ class GIFExporter {
         let success = CGImageDestinationFinalize(destination)
 
         if success {
-            print("GIFExporter: Successfully saved GIF to \(outputURL.path)")
+            // Get file size for logging
+            if let attrs = try? FileManager.default.attributesOfItem(atPath: outputURL.path),
+               let fileSize = attrs[.size] as? Int64 {
+                let sizeKB = Double(fileSize) / 1024.0
+                print("GIFExporter: Saved \(frames.count) frames to \(outputURL.lastPathComponent) (\(String(format: "%.1f", sizeKB)) KB)")
+            } else {
+                print("GIFExporter: Successfully saved GIF to \(outputURL.path)")
+            }
         } else {
             print("GIFExporter: Failed to finalize GIF")
         }
