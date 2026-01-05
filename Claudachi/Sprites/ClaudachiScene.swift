@@ -96,9 +96,14 @@ class ClaudachiScene: SKScene {
 
         endDragIfNeeded()
 
-        // If it was a click (not a drag), trigger reaction
-        if !isDragging && !isSleeping {
-            claudachi.triggerClickReaction()
+        // If it was a click (not a drag), trigger reaction or wake up
+        if !isDragging {
+            if isSleeping {
+                isSleeping = false
+                claudachi.wakeUp()
+            } else {
+                claudachi.triggerClickReaction()
+            }
         }
 
         isDragging = false

@@ -56,6 +56,7 @@ class ClaudachiSprite: SKNode {
     var targetEyeOffset: CGPoint = .zero
     var isMouseTrackingEnabled = true
     var lastEyeUpdateTime: TimeInterval = 0
+    var lastMousePosition: CGPoint = .zero
 
     // MARK: - Position Aliases
 

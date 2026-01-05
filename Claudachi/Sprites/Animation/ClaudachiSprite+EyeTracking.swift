@@ -18,7 +18,10 @@ extension ClaudachiSprite {
         lastEyeUpdateTime = currentTime
 
         // Calculate target offset from mouse position (unless tracking is disabled)
-        if isMouseTrackingEnabled && !isDragging && !isLookingAround {
+        // Skip recalculation if mouse hasn't moved enough (performance optimization)
+        let mouseDelta = hypot(globalMouse.x - lastMousePosition.x, globalMouse.y - lastMousePosition.y)
+        if isMouseTrackingEnabled && !isDragging && !isLookingAround && mouseDelta > 2 {
+            lastMousePosition = globalMouse
             targetEyeOffset = calculateEyeOffset(from: globalMouse)
         }
 
@@ -44,7 +47,7 @@ extension ClaudachiSprite {
         let distance = hypot(dx, dy)
 
         // Dead zone - eyes stay centered when mouse is very close
-        let deadZone: CGFloat = 30
+        let deadZone: CGFloat = 15
         guard distance > deadZone else { return .zero }
 
         // Normalize and scale to max offset (1.0 point, matching look-around)
