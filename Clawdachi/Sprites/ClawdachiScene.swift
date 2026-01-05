@@ -98,11 +98,15 @@ class ClawdachiScene: SKScene {
 
             // Show lightbulb when transitioning from active → complete
             if wasClaudeActive {
-                clawdachi.showCompletionLightbulb()
+                clawdachi.showCompletionLightbulb { [weak self] in
+                    // Resume dancing after lightbulb fades
+                    guard let self = self else { return }
+                    if self.musicMonitor.isPlaying && !self.clawdachi.isPerformingAction {
+                        self.clawdachi.startDancing()
+                    }
+                }
                 wasClaudeActive = false
             }
-            // Don't resume dancing here - MusicPlaybackMonitor will do it
-            // after lightbulb fades (guards will allow it then)
         }
     }
 
