@@ -31,14 +31,15 @@ It's a small piece of joy that makes your desktop feel a little more alive.
 - **Smart behavior:** Stops dancing when sleeping, resumes after waking
 
 ### Claude Code Integration
+- **Auto-setup:** On first launch, automatically installs hooks to `~/.claude/settings.json`
 - **Thinking animation:** When Claude Code is working:
   - Focused eyes: `> <` expression with occasional blinks
   - Gentle head bob
   - Orange dots float upward and pop at the top
-- **Waiting question mark:** White pixel question mark appears when Claude is waiting for user input (dismisses on click or when Claude starts again)
-- **Completion lightbulb:** Yellow pixel lightbulb appears above head when Claude session ends (dismisses on click or when Claude starts again)
+- **Waiting question mark:** White pixel question mark appears when Claude is waiting for user input or permission approval (dismisses on click or when Claude starts again)
+- **Completion lightbulb:** Yellow pixel lightbulb appears above head when Claude session ends (persists until clicked or new CLI activity)
 - **File-based hooks:** Monitors `~/.clawdachi/sessions/` for status files
-- **Smart behavior:** Pauses dancing/idle animations while thinking
+- **Smart behavior:** Pauses dancing/idle animations during all Claude states (thinking, question mark, lightbulb)
 
 ### Interactions
 - **Click:** Triggers random reactions (wave, bounce, pixel heart)
@@ -103,9 +104,12 @@ Clawdachi/
 ├── Recording/
 │   ├── AnimationRecorder.swift     # GIF frame capture
 │   └── GIFExporter.swift           # GIF file creation
+├── Resources/
+│   └── claude-status.sh            # Hook script bundled for auto-setup
 ├── Services/
-│   ├── ClaudeSessionMonitor.swift  # Claude Code status via file polling
-│   └── MusicPlaybackMonitor.swift  # Spotify/Apple Music detection via AppleScript
+│   ├── ClaudeIntegrationSetup.swift # Auto-setup hooks on first launch
+│   ├── ClaudeSessionMonitor.swift   # Claude Code status via file polling
+│   └── MusicPlaybackMonitor.swift   # Spotify/Apple Music detection via AppleScript
 └── Sprites/
     ├── Animation/
     │   ├── ClawdachiSprite+Claude.swift     # Claude Code thinking animation
