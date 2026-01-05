@@ -1,6 +1,6 @@
 //
 //  AnimationRecorder.swift
-//  Claudachi
+//  Clawdachi
 //
 
 import SpriteKit
@@ -16,7 +16,7 @@ class AnimationRecorder {
     private(set) var isRecording = false
     private weak var scene: SKScene?
     private weak var view: SKView?
-    private var displayLink: CVDisplayLink?
+    private var displayLink: CADisplayLink?
     private var recordingIndicator: SKShapeNode?
 
     // Recording configuration
@@ -40,32 +40,19 @@ class AnimationRecorder {
         self.scene = scene
         self.view = view
         setupRecordingIndicator()
-        setupDisplayLink()
     }
 
     // MARK: - Display Link Setup
 
     private func setupDisplayLink() {
-        var link: CVDisplayLink?
-        CVDisplayLinkCreateWithActiveCGDisplays(&link)
-        guard let displayLink = link else { return }
-
-        let callback: CVDisplayLinkOutputCallback = { _, inNow, _, _, _, userInfo -> CVReturn in
-            guard let userInfo = userInfo else { return kCVReturnSuccess }
-            let recorder = Unmanaged<AnimationRecorder>.fromOpaque(userInfo).takeUnretainedValue()
-            recorder.displayLinkFired(timestamp: inNow.pointee)
-            return kCVReturnSuccess
-        }
-
-        let userInfo = Unmanaged.passUnretained(self).toOpaque()
-        CVDisplayLinkSetOutputCallback(displayLink, callback, userInfo)
-        self.displayLink = displayLink
+        guard let screen = view?.window?.screen ?? NSScreen.main else { return }
+        displayLink = screen.displayLink(target: self, selector: #selector(displayLinkFired))
     }
 
-    private func displayLinkFired(timestamp: CVTimeStamp) {
+    @objc private func displayLinkFired(_ displayLink: CADisplayLink) {
         guard isRecording else { return }
 
-        let currentTime = CFAbsoluteTimeGetCurrent()
+        let currentTime = CACurrentMediaTime()
 
         // Throttle to target frame rate
         if currentTime - lastCaptureTime < frameInterval {
@@ -73,11 +60,7 @@ class AnimationRecorder {
         }
 
         lastCaptureTime = currentTime
-
-        // Capture must happen on main thread since SKView isn't thread-safe
-        DispatchQueue.main.async { [weak self] in
-            self?.captureFrame()
-        }
+        captureFrame()
     }
 
     // MARK: - Recording Indicator
@@ -132,10 +115,9 @@ class AnimationRecorder {
 
         print("AnimationRecorder: Started recording at \(Int(targetFrameRate))fps, output size: \(outputSize)")
 
-        // Start the display link
-        if let displayLink = displayLink {
-            CVDisplayLinkStart(displayLink)
-        }
+        // Create and start the display link
+        setupDisplayLink()
+        displayLink?.add(to: .main, forMode: .common)
     }
 
     func stopRecording() {
@@ -143,10 +125,9 @@ class AnimationRecorder {
 
         isRecording = false
 
-        // Stop the display link
-        if let displayLink = displayLink {
-            CVDisplayLinkStop(displayLink)
-        }
+        // Stop and clean up the display link
+        displayLink?.invalidate()
+        displayLink = nil
 
         hideRecordingIndicator()
         onRecordingStateChanged?(false)
@@ -261,9 +242,7 @@ class AnimationRecorder {
     // MARK: - Cleanup
 
     deinit {
-        if let displayLink = displayLink {
-            CVDisplayLinkStop(displayLink)
-        }
+        displayLink?.invalidate()
         recordingIndicator?.removeFromParent()
     }
 }
