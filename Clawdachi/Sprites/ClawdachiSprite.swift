@@ -50,6 +50,7 @@ class ClawdachiSprite: SKNode {
     var isLookingAround = false
     var isDragging = false
     var isDancing = false
+    var isClaudeThinking = false
 
     // MARK: - Eye Tracking State
 

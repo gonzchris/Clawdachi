@@ -91,4 +91,18 @@ enum AnimationTimings {
 
     /// Interval between music note spawns while dancing
     static let danceMusicNoteInterval: TimeInterval = 0.8
+
+    // MARK: - Claude Thinking Animation
+
+    /// Duration of one thinking bob cycle (up and down)
+    static let thinkingBobDuration: TimeInterval = 2.0
+
+    /// Interval between thinking particle spawns
+    static let thinkingParticleInterval: TimeInterval = 0.7
+
+    /// Duration of thinking particle float
+    static let thinkingParticleFloatDuration: TimeInterval = 1.0
+
+    /// Maximum age of session file before considered stale (seconds)
+    static let sessionStalenessThreshold: TimeInterval = 60.0
 }

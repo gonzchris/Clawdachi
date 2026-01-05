@@ -13,6 +13,8 @@ class ClawdachiScene: SKScene {
     private var clawdachi: ClawdachiSprite!
     private var isSleeping = false
     private var musicMonitor: MusicPlaybackMonitor!
+    private var claudeMonitor: ClaudeSessionMonitor!
+    private var wasClaudeActive = false
 
     // MARK: - Initialization
 
@@ -34,6 +36,7 @@ class ClawdachiScene: SKScene {
     override func didMove(to view: SKView) {
         setupCharacter()
         setupMusicMonitor()
+        setupClaudeMonitor()
 
         // Watch for app losing focus to cancel drag
         NotificationCenter.default.addObserver(
@@ -52,13 +55,45 @@ class ClawdachiScene: SKScene {
     }
 
     private func handleMusicPlaybackChanged(_ isPlaying: Bool) {
-        // Don't dance while sleeping
-        guard !isSleeping else { return }
+        // Don't dance while sleeping or when Claude is thinking
+        guard !isSleeping, !clawdachi.isClaudeThinking else { return }
 
         if isPlaying {
             clawdachi.startDancing()
         } else {
             clawdachi.stopDancing()
+        }
+    }
+
+    private func setupClaudeMonitor() {
+        claudeMonitor = ClaudeSessionMonitor()
+        claudeMonitor.onStatusChanged = { [weak self] isActive, status in
+            self?.handleClaudeStatusChanged(isActive: isActive, status: status)
+        }
+    }
+
+    private func handleClaudeStatusChanged(isActive: Bool, status: String?) {
+        // Don't interrupt sleep
+        guard !isSleeping else { return }
+
+        if isActive && (status == "thinking" || status == "tools") {
+            // Claude is working - show thinking pose
+            clawdachi.startClaudeThinking()
+            wasClaudeActive = true
+        } else {
+            // Claude is idle - stop thinking
+            clawdachi.stopClaudeThinking()
+
+            // Celebrate when transitioning from active → idle
+            if wasClaudeActive {
+                clawdachi.performBounce()
+                wasClaudeActive = false
+            }
+
+            // Resume dancing if music is playing (after bounce completes)
+            if musicMonitor.isPlaying && !clawdachi.isPerformingAction {
+                clawdachi.startDancing()
+            }
         }
     }
 
@@ -205,8 +240,10 @@ class ClawdachiScene: SKScene {
                 }
             }
         } else {
-            // Stop dancing before sleeping
+            // Stop dancing and thinking before sleeping
             clawdachi.stopDancing()
+            clawdachi.stopClaudeThinking()
+            wasClaudeActive = false  // Clear so we don't bounce on wake
             isSleeping = true
             clawdachi.startSleeping()
         }
