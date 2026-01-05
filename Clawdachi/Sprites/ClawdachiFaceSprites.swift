@@ -16,7 +16,8 @@ class ClawdachiFaceSprites {
         case open
         case halfClosed
         case closed
-        case squint  // ">" shape for peeking while sleeping
+        case squint       // ">" shape for peeking while sleeping
+        case squintLeft   // "<" shape (mirrored squint)
     }
 
     /// Generates an eye texture for the given state
@@ -48,11 +49,26 @@ class ClawdachiFaceSprites {
             }
 
         case .squint:
-            // ">" shape for annoyed peeking (pointing right)
-            pixels[3][0] = P.eyePupil  // Top left
-            pixels[2][1] = P.eyePupil  // Upper middle
-            pixels[1][1] = P.eyePupil  // Lower middle
-            pixels[0][0] = P.eyePupil  // Bottom left
+            // ">" shape - thicker version
+            pixels[3][0] = P.eyePupil
+            pixels[3][1] = P.eyePupil
+            pixels[2][1] = P.eyePupil
+            pixels[2][2] = P.eyePupil
+            pixels[1][1] = P.eyePupil
+            pixels[1][2] = P.eyePupil
+            pixels[0][0] = P.eyePupil
+            pixels[0][1] = P.eyePupil
+
+        case .squintLeft:
+            // "<" shape - thicker version (mirrored)
+            pixels[3][1] = P.eyePupil
+            pixels[3][2] = P.eyePupil
+            pixels[2][0] = P.eyePupil
+            pixels[2][1] = P.eyePupil
+            pixels[1][0] = P.eyePupil
+            pixels[1][1] = P.eyePupil
+            pixels[0][1] = P.eyePupil
+            pixels[0][2] = P.eyePupil
         }
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 4)
@@ -379,5 +395,120 @@ class ClawdachiFaceSprites {
         pixels[0][1] = dropMain           // Bottom rounded point
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 6)
+    }
+
+    // MARK: - Lightbulb Texture
+
+    /// Generates a pixel-art lightbulb texture with yellow glow, filament, and screw base
+    /// Size: 7x10 pixels - detailed bulb shape for "eureka" moment
+    static func generateLightbulbTexture() -> SKTexture {
+        let pixelSize: CGFloat = 4
+        let width = 7
+        let height = 10
+        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
+
+        // Lightbulb colors
+        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)       // #222222
+        let glowColor = NSColor(red: 255/255, green: 255/255, blue: 220/255, alpha: 1.0)      // #FFFFDC bright glow
+        let highlightColor = NSColor(red: 255/255, green: 250/255, blue: 180/255, alpha: 1.0) // #FFFAB4
+        let mainColor = NSColor(red: 255/255, green: 230/255, blue: 100/255, alpha: 1.0)      // #FFE664 yellow
+        let shadowColor = NSColor(red: 220/255, green: 180/255, blue: 50/255, alpha: 1.0)     // #DCB432 golden
+        let filamentColor = NSColor(red: 255/255, green: 200/255, blue: 50/255, alpha: 1.0)   // #FFC832 bright filament
+        let baseColor = NSColor(red: 140/255, green: 140/255, blue: 140/255, alpha: 1.0)      // #8C8C8C gray base
+        let baseDarkColor = NSColor(red: 100/255, green: 100/255, blue: 100/255, alpha: 1.0)  // #646464 dark base
+
+        // Lightbulb pattern (1=outline, 2=glow, 3=highlight, 4=main, 5=shadow, 6=filament, 7=base, 8=baseDark)
+        // Detailed bulb with visible filament and screw base
+        let pattern: [[Int]] = [
+            [0, 0, 1, 1, 1, 0, 0],  // top curve
+            [0, 1, 2, 2, 3, 1, 0],  // upper bulb glow
+            [1, 2, 3, 6, 3, 4, 1],  // filament visible
+            [1, 3, 3, 6, 4, 4, 1],  // filament
+            [1, 3, 4, 4, 4, 5, 1],  // lower bulb
+            [0, 1, 4, 4, 5, 1, 0],  // bulb narrows
+            [0, 0, 1, 4, 1, 0, 0],  // neck
+            [0, 0, 1, 7, 1, 0, 0],  // screw base top
+            [0, 0, 1, 8, 1, 0, 0],  // screw base bottom
+            [0, 0, 0, 1, 0, 0, 0],  // contact point
+        ]
+
+        let image = NSImage(size: size, flipped: true) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
+
+            for row in 0..<height {
+                for col in 0..<width {
+                    let value = pattern[row][col]
+                    guard value > 0 else { continue }
+
+                    let color: NSColor
+                    switch value {
+                    case 1: color = outlineColor
+                    case 2: color = glowColor
+                    case 3: color = highlightColor
+                    case 4: color = mainColor
+                    case 5: color = shadowColor
+                    case 6: color = filamentColor
+                    case 7: color = baseColor
+                    case 8: color = baseDarkColor
+                    default: continue
+                    }
+
+                    color.setFill()
+                    let pixelRect = CGRect(
+                        x: CGFloat(col) * pixelSize,
+                        y: CGFloat(row) * pixelSize,
+                        width: pixelSize,
+                        height: pixelSize
+                    )
+                    pixelRect.fill()
+                }
+            }
+
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create lightbulb image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .nearest
+        return texture
+    }
+
+    // MARK: - Thinking Dot Textures
+
+    /// Generates a small orange thinking dot (2x2 pixels)
+    static func generateThinkingDotSmall() -> SKTexture {
+        let P = ClawdachiPalette.self
+        var pixels: [[PixelColor]] = [
+            [P.primaryOrange, P.highlightOrange],
+            [P.shadowOrange, P.primaryOrange],
+        ]
+        return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 2)
+    }
+
+    /// Generates a medium orange thinking dot (3x3 pixels)
+    static func generateThinkingDotMedium() -> SKTexture {
+        let P = ClawdachiPalette.self
+        var pixels: [[PixelColor]] = [
+            [P.clear, P.highlightOrange, P.clear],
+            [P.highlightOrange, P.primaryOrange, P.shadowOrange],
+            [P.clear, P.shadowOrange, P.clear],
+        ]
+        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 3)
+    }
+
+    /// Generates a large orange thinking dot (4x4 pixels)
+    static func generateThinkingDotLarge() -> SKTexture {
+        let P = ClawdachiPalette.self
+        var pixels: [[PixelColor]] = [
+            [P.clear, P.highlightOrange, P.highlightOrange, P.clear],
+            [P.highlightOrange, P.primaryOrange, P.primaryOrange, P.shadowOrange],
+            [P.highlightOrange, P.primaryOrange, P.primaryOrange, P.shadowOrange],
+            [P.clear, P.shadowOrange, P.shadowOrange, P.clear],
+        ]
+        return PixelArtGenerator.textureFromPixels(pixels, width: 4, height: 4)
     }
 }

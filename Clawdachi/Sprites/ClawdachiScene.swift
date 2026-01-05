@@ -78,19 +78,20 @@ class ClawdachiScene: SKScene {
 
         if isActive && (status == "thinking" || status == "tools") {
             // Claude is working - show thinking pose
+            clawdachi.dismissLightbulb()  // Dismiss any existing lightbulb
             clawdachi.startClaudeThinking()
             wasClaudeActive = true
         } else {
             // Claude is idle - stop thinking
             clawdachi.stopClaudeThinking()
 
-            // Celebrate when transitioning from active → idle
+            // Show lightbulb when transitioning from active → idle
             if wasClaudeActive {
-                clawdachi.performBounce()
+                clawdachi.showCompletionLightbulb()
                 wasClaudeActive = false
             }
 
-            // Resume dancing if music is playing (after bounce completes)
+            // Resume dancing if music is playing
             if musicMonitor.isPlaying && !clawdachi.isPerformingAction {
                 clawdachi.startDancing()
             }
@@ -153,6 +154,9 @@ class ClawdachiScene: SKScene {
 
         // If it was a click (not a drag), trigger reaction or wake up
         if !isDragging {
+            // Dismiss lightbulb on any click
+            clawdachi.dismissLightbulb()
+
             if isSleeping {
                 isSleeping = false
                 clawdachi.wakeUp { [weak self] in
@@ -173,6 +177,7 @@ class ClawdachiScene: SKScene {
         longPressTimer?.invalidate()
         longPressTimer = nil
         endDragIfNeeded()
+        clawdachi.dismissLightbulb()  // Dismiss on right click too
         showContextMenu(with: event)
     }
 

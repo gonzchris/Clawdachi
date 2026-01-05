@@ -32,10 +32,10 @@ It's a small piece of joy that makes your desktop feel a little more alive.
 
 ### Claude Code Integration
 - **Thinking animation:** When Claude Code is working:
-  - Eyes look up-left (contemplative pose)
+  - Focused eyes: `> <` expression with occasional blinks
   - Gentle head bob
-  - Orange thinking dots float upward
-- **Completion bounce:** Celebratory bounce when Claude finishes
+  - Orange dots float upward and pop at the top
+- **Completion lightbulb:** Yellow pixel lightbulb appears above head when Claude finishes (dismisses on click or when Claude starts again)
 - **File-based hooks:** Monitors `~/.clawdachi/sessions/` for status files
 - **Smart behavior:** Pauses dancing/idle animations while thinking
 
@@ -145,7 +145,8 @@ All idle animations run continuously and independently:
 - Dance sway: 0.6s
 - Dance music note spawn: 0.8s
 - Claude thinking bob: 2.0s
-- Claude thinking dot spawn: 0.7s
+- Claude thinking dot spawn: 0.6-1.0s
+- Claude thinking blink: 4-7s
 
 ### Particle Effects
 Reusable spawner for floating effects:
