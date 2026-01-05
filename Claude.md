@@ -30,6 +30,15 @@ It's a small piece of joy that makes your desktop feel a little more alive.
   - Music notes (♪/♫) float up from both sides
 - **Smart behavior:** Stops dancing when sleeping, resumes after waking
 
+### Claude Code Integration
+- **Thinking animation:** When Claude Code is working:
+  - Eyes look up-left (contemplative pose)
+  - Gentle head bob
+  - Orange thinking dots float upward
+- **Completion bounce:** Celebratory bounce when Claude finishes
+- **File-based hooks:** Monitors `~/.clawdachi/sessions/` for status files
+- **Smart behavior:** Pauses dancing/idle animations while thinking
+
 ### Interactions
 - **Click:** Triggers random reactions (wave, bounce, pixel heart)
 - **Drag:** Pick up and reposition anywhere on screen
@@ -94,9 +103,11 @@ Clawdachi/
 │   ├── AnimationRecorder.swift     # GIF frame capture
 │   └── GIFExporter.swift           # GIF file creation
 ├── Services/
+│   ├── ClaudeSessionMonitor.swift  # Claude Code status via file polling
 │   └── MusicPlaybackMonitor.swift  # Spotify/Apple Music detection via AppleScript
 └── Sprites/
     ├── Animation/
+    │   ├── ClawdachiSprite+Claude.swift     # Claude Code thinking animation
     │   ├── ClawdachiSprite+Dancing.swift    # Music-reactive dance animations
     │   ├── ClawdachiSprite+Drag.swift       # Drag interaction
     │   ├── ClawdachiSprite+Idle.swift       # Breathing, blinking, whistling
@@ -133,13 +144,16 @@ All idle animations run continuously and independently:
 - Look around interval: 5-12s
 - Dance sway: 0.6s
 - Dance music note spawn: 0.8s
+- Claude thinking bob: 2.0s
+- Claude thinking dot spawn: 0.7s
 
 ### Particle Effects
 Reusable spawner for floating effects:
-- Music notes (whistling)
+- Music notes (whistling, dancing)
 - Hearts (click reaction)
 - Sleep Z's (sleep mode)
 - Sweat drops (dragging)
+- Thinking dots (Claude working)
 
 ---
 
