@@ -202,8 +202,8 @@ extension ClawdachiSprite {
     // MARK: - Completion Lightbulb
 
     /// Show the "eureka" lightbulb above the sprite's head
-    /// - Parameter completion: Called after lightbulb auto-dismisses
-    func showCompletionLightbulb(completion: (() -> Void)? = nil) {
+    /// Persists until dismissed by user click, CLI close, or new CLI status
+    func showCompletionLightbulb() {
         // Remove any existing lightbulb
         childNode(withName: Self.lightbulbName)?.removeFromParent()
 
@@ -224,23 +224,14 @@ extension ClawdachiSprite {
         let settle = SKAction.scale(to: 1.0, duration: 0.1)
         settle.timingMode = .easeOut
 
-        // Gentle floating bob while visible
+        // Gentle floating bob while visible (loops forever until dismissed)
         let bobUp = SKAction.moveBy(x: 0, y: 1.0, duration: 0.6)
         let bobDown = SKAction.moveBy(x: 0, y: -1.0, duration: 0.6)
         bobUp.timingMode = .easeInEaseOut
         bobDown.timingMode = .easeInEaseOut
-        let bob = SKAction.sequence([bobUp, bobDown])
+        let floatLoop = SKAction.repeatForever(SKAction.sequence([bobUp, bobDown]))
 
-        // Display for 2 seconds then fade out
-        let displayDuration = 2.0
-        let bobCount = Int(displayDuration / 1.2)  // Each bob cycle is 1.2s
-        let bobLoop = SKAction.repeat(bob, count: max(1, bobCount))
-
-        let fadeOut = SKAction.fadeOut(withDuration: 0.3)
-        let remove = SKAction.removeFromParent()
-        let callCompletion = SKAction.run { completion?() }
-
-        bulb.run(SKAction.sequence([popIn, settle, bobLoop, fadeOut, remove, callCompletion]))
+        bulb.run(SKAction.sequence([popIn, settle, floatLoop]))
     }
 
     /// Dismiss the lightbulb with a fade out

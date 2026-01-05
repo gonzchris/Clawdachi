@@ -97,14 +97,9 @@ class ClawdachiScene: SKScene {
             clawdachi.dismissQuestionMark()
 
             // Show lightbulb when transitioning from active → complete
+            // Lightbulb persists until user clicks sprite or new CLI status
             if wasClaudeActive {
-                clawdachi.showCompletionLightbulb { [weak self] in
-                    // Resume dancing after lightbulb fades
-                    guard let self = self else { return }
-                    if self.musicMonitor.isPlaying && !self.clawdachi.isPerformingAction {
-                        self.clawdachi.startDancing()
-                    }
-                }
+                clawdachi.showCompletionLightbulb()
                 wasClaudeActive = false
             }
         }
@@ -166,6 +161,9 @@ class ClawdachiScene: SKScene {
 
         // If it was a click (not a drag), trigger reaction or wake up
         if !isDragging {
+            // Check if lightbulb or question mark is visible before dismissing
+            let hadIndicator = clawdachi.isLightbulbVisible || clawdachi.isQuestionMarkVisible
+
             // Dismiss indicators on any click
             clawdachi.dismissLightbulb()
             clawdachi.dismissQuestionMark()
@@ -177,6 +175,11 @@ class ClawdachiScene: SKScene {
                     if self?.musicMonitor.isPlaying == true {
                         self?.clawdachi.startDancing()
                     }
+                }
+            } else if hadIndicator {
+                // Click was to dismiss indicator - resume dancing if music playing
+                if musicMonitor.isPlaying {
+                    clawdachi.startDancing()
                 }
             } else {
                 clawdachi.triggerClickReaction()
