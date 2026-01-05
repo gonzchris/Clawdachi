@@ -83,4 +83,12 @@ enum AnimationTimings {
 
     /// Interval between Z spawns
     static let sleepZInterval: TimeInterval = 2.5
+
+    // MARK: - Dance Animation
+
+    /// Duration of one full sway cycle (left to right)
+    static let danceSwayDuration: TimeInterval = 0.6
+
+    /// Interval between music note spawns while dancing
+    static let danceMusicNoteInterval: TimeInterval = 0.8
 }

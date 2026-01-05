@@ -72,113 +72,250 @@ class ClawdachiFaceSprites {
 
     // MARK: - Mouth
 
-    /// Generates a whistle "o" mouth texture (lowercase o style)
-    /// Mouth size: 2x2 pixels
+    /// Generates a whistle "o" mouth texture - small hollow circle
+    /// Mouth size: 3x3 pixels
     static func generateWhistleMouthTexture() -> SKTexture {
-        var pixels = Array(repeating: Array(repeating: P.clear, count: 2), count: 2)
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 3)
 
-        // Simple 2x2 filled block - minimal lowercase 'o'
-        for row in 0..<2 {
-            for col in 0..<2 {
-                pixels[row][col] = P.mouthColor
-            }
-        }
+        // Small hollow "o" shape for side whistle
+        pixels[2][1] = P.mouthColor  // Top
+        pixels[1][0] = P.mouthColor  // Left
+        pixels[1][2] = P.mouthColor  // Right
+        pixels[0][1] = P.mouthColor  // Bottom
 
-        return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 2)
+        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 3)
     }
 
-    /// Generates a musical note texture for whistle effect
-    /// Note size: 5x7 pixels - white with black stroke
+    /// Generates a musical note texture using actual music symbol
+    /// Renders smooth anti-aliased note symbol
     static func generateMusicNoteTexture() -> SKTexture {
-        var pixels = Array(repeating: Array(repeating: P.clear, count: 5), count: 7)
+        return generateMusicSymbolTexture(symbol: "♪")
+    }
 
-        let fill = P.eyeWhite
-        let stroke = P.eyePupil
+    /// Generates a double note texture
+    static func generateDoubleNoteTexture() -> SKTexture {
+        return generateMusicSymbolTexture(symbol: "♫")
+    }
 
-        // Note head - outline
-        pixels[0][0] = stroke
-        pixels[0][1] = stroke
-        pixels[0][2] = stroke
-        pixels[1][0] = stroke
-        pixels[1][3] = stroke
-        pixels[2][1] = stroke
-        pixels[2][2] = stroke
-        pixels[2][3] = stroke
+    /// Helper to generate any music symbol texture with orange gradient and black outline
+    private static func generateMusicSymbolTexture(symbol: String) -> SKTexture {
+        let size = CGSize(width: 32, height: 32)
 
-        // Note head - fill
-        pixels[1][1] = fill
-        pixels[1][2] = fill
+        // Colors
+        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)      // Dark outline
+        let highlightColor = NSColor(red: 255/255, green: 200/255, blue: 140/255, alpha: 1.0) // Light orange
+        let mainColor = NSColor(red: 255/255, green: 153/255, blue: 51/255, alpha: 1.0)       // #FF9933
+        let shadowColor = NSColor(red: 180/255, green: 80/255, blue: 0/255, alpha: 1.0)       // Dark orange
 
-        // Stem - outline and fill
-        pixels[2][4] = stroke
-        pixels[3][3] = stroke
-        pixels[3][4] = fill
-        pixels[4][3] = stroke
-        pixels[4][4] = fill
-        pixels[5][3] = stroke
-        pixels[5][4] = fill
-        pixels[6][3] = stroke
-        pixels[6][4] = stroke
+        let image = NSImage(size: size, flipped: false) { rect in
+            guard NSGraphicsContext.current != nil else { return false }
 
-        // Flag - outline and fill
-        pixels[6][2] = stroke
-        pixels[5][2] = fill
-        pixels[5][1] = stroke
+            NSColor.clear.setFill()
+            rect.fill()
 
-        return PixelArtGenerator.textureFromPixels(pixels, width: 5, height: 7)
+            let font = NSFont.systemFont(ofSize: 22, weight: .bold)
+
+            let attrString = NSAttributedString(string: symbol, attributes: [.font: font])
+            let stringSize = attrString.size()
+            let drawPoint = CGPoint(
+                x: (size.width - stringSize.width) / 2,
+                y: (size.height - stringSize.height) / 2
+            )
+
+            // Draw black outline (multiple offsets for thickness)
+            let outlineAttrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: outlineColor
+            ]
+            let offsets: [(CGFloat, CGFloat)] = [
+                (-1, -1), (-1, 0), (-1, 1),
+                (0, -1),          (0, 1),
+                (1, -1),  (1, 0),  (1, 1),
+                (-1.5, 0), (1.5, 0), (0, -1.5), (0, 1.5)
+            ]
+            for offset in offsets {
+                NSAttributedString(string: symbol, attributes: outlineAttrs)
+                    .draw(at: CGPoint(x: drawPoint.x + offset.0, y: drawPoint.y + offset.1))
+            }
+
+            // Draw shadow layer (offset down-right)
+            let shadowAttrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: shadowColor
+            ]
+            NSAttributedString(string: symbol, attributes: shadowAttrs)
+                .draw(at: CGPoint(x: drawPoint.x + 1, y: drawPoint.y - 1))
+
+            // Draw main color layer
+            let mainAttrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: mainColor
+            ]
+            NSAttributedString(string: symbol, attributes: mainAttrs)
+                .draw(at: drawPoint)
+
+            // Draw highlight layer (offset up-left, semi-transparent)
+            let highlightAttrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: highlightColor.withAlphaComponent(0.5)
+            ]
+            NSAttributedString(string: symbol, attributes: highlightAttrs)
+                .draw(at: CGPoint(x: drawPoint.x - 0.5, y: drawPoint.y + 0.5))
+
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create music note image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .linear
+        return texture
     }
 
     // MARK: - Effect Textures
 
-    /// Generates a heart texture for happy reactions
-    /// Size: 5x5 pixels
+    /// Generates a pixel-art heart texture with orange gradient and black outline
     static func generateHeartTexture() -> SKTexture {
-        var pixels = Array(repeating: Array(repeating: P.clear, count: 5), count: 5)
+        // 7x7 pixel heart with outline, scaled up for smooth rendering
+        let pixelSize: CGFloat = 4
+        let width = 7
+        let height = 7
+        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
 
-        let heart = P.primary  // Orange heart to match character
+        // Colors
+        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)
+        let highlightColor = NSColor(red: 255/255, green: 200/255, blue: 140/255, alpha: 1.0)
+        let mainColor = NSColor(red: 255/255, green: 153/255, blue: 51/255, alpha: 1.0)
+        let shadowColor = NSColor(red: 180/255, green: 80/255, blue: 0/255, alpha: 1.0)
 
-        // Heart shape
-        pixels[4][1] = heart
-        pixels[4][3] = heart
-        pixels[3][0] = heart
-        pixels[3][1] = heart
-        pixels[3][2] = heart
-        pixels[3][3] = heart
-        pixels[3][4] = heart
-        pixels[2][0] = heart
-        pixels[2][1] = heart
-        pixels[2][2] = heart
-        pixels[2][3] = heart
-        pixels[2][4] = heart
-        pixels[1][1] = heart
-        pixels[1][2] = heart
-        pixels[1][3] = heart
-        pixels[0][2] = heart
+        // Heart pattern (1 = outline, 2 = highlight, 3 = main, 4 = shadow)
+        let pattern: [[Int]] = [
+            [0, 1, 1, 0, 1, 1, 0],
+            [1, 2, 3, 1, 2, 3, 1],
+            [1, 3, 3, 3, 3, 4, 1],
+            [1, 3, 3, 3, 3, 4, 1],
+            [0, 1, 3, 3, 4, 1, 0],
+            [0, 0, 1, 3, 1, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0],
+        ]
 
-        return PixelArtGenerator.textureFromPixels(pixels, width: 5, height: 5)
+        let image = NSImage(size: size, flipped: true) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
+
+            for row in 0..<height {
+                for col in 0..<width {
+                    let value = pattern[row][col]
+                    guard value > 0 else { continue }
+
+                    let color: NSColor
+                    switch value {
+                    case 1: color = outlineColor
+                    case 2: color = highlightColor
+                    case 3: color = mainColor
+                    case 4: color = shadowColor
+                    default: continue
+                    }
+
+                    color.setFill()
+                    let pixelRect = CGRect(
+                        x: CGFloat(col) * pixelSize,
+                        y: CGFloat(row) * pixelSize,
+                        width: pixelSize,
+                        height: pixelSize
+                    )
+                    pixelRect.fill()
+                }
+            }
+
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create heart image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .nearest  // Keep crisp pixels
+        return texture
     }
 
-    /// Generates a "Z" texture for sleeping animation
-    /// Size: 4x5 pixels
+    /// Generates a "Z" texture for sleeping animation with orange gradient and black outline
     static func generateZzzTexture() -> SKTexture {
-        var pixels = Array(repeating: Array(repeating: P.clear, count: 4), count: 5)
+        let size = CGSize(width: 28, height: 28)
 
-        let z = P.eyeWhite
+        // Colors
+        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)      // Dark outline
+        let highlightColor = NSColor(red: 255/255, green: 200/255, blue: 140/255, alpha: 1.0) // Light orange
+        let mainColor = NSColor(red: 255/255, green: 153/255, blue: 51/255, alpha: 1.0)       // #FF9933
+        let shadowColor = NSColor(red: 180/255, green: 80/255, blue: 0/255, alpha: 1.0)       // Dark orange
 
-        // Z shape
-        pixels[4][0] = z
-        pixels[4][1] = z
-        pixels[4][2] = z
-        pixels[4][3] = z
-        pixels[3][2] = z
-        pixels[2][1] = z
-        pixels[1][0] = z
-        pixels[0][0] = z
-        pixels[0][1] = z
-        pixels[0][2] = z
-        pixels[0][3] = z
+        let image = NSImage(size: size, flipped: false) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
 
-        return PixelArtGenerator.textureFromPixels(pixels, width: 4, height: 5)
+            let font = NSFont.systemFont(ofSize: 20, weight: .heavy)
+            let symbol = "Z"
+
+            let attrString = NSAttributedString(string: symbol, attributes: [.font: font])
+            let stringSize = attrString.size()
+            let drawPoint = CGPoint(
+                x: (size.width - stringSize.width) / 2,
+                y: (size.height - stringSize.height) / 2
+            )
+
+            // Draw black outline (multiple offsets for thickness)
+            let outlineAttrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: outlineColor
+            ]
+            let offsets: [(CGFloat, CGFloat)] = [
+                (-1, -1), (-1, 0), (-1, 1),
+                (0, -1),          (0, 1),
+                (1, -1),  (1, 0),  (1, 1),
+                (-1.5, 0), (1.5, 0), (0, -1.5), (0, 1.5)
+            ]
+            for offset in offsets {
+                NSAttributedString(string: symbol, attributes: outlineAttrs)
+                    .draw(at: CGPoint(x: drawPoint.x + offset.0, y: drawPoint.y + offset.1))
+            }
+
+            // Draw shadow layer (offset down-right)
+            let shadowAttrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: shadowColor
+            ]
+            NSAttributedString(string: symbol, attributes: shadowAttrs)
+                .draw(at: CGPoint(x: drawPoint.x + 1, y: drawPoint.y - 1))
+
+            // Draw main color layer
+            let mainAttrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: mainColor
+            ]
+            NSAttributedString(string: symbol, attributes: mainAttrs)
+                .draw(at: drawPoint)
+
+            // Draw highlight layer (offset up-left, semi-transparent)
+            let highlightAttrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: highlightColor.withAlphaComponent(0.5)
+            ]
+            NSAttributedString(string: symbol, attributes: highlightAttrs)
+                .draw(at: CGPoint(x: drawPoint.x - 0.5, y: drawPoint.y + 0.5))
+
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create Z image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .linear
+        return texture
     }
 
     /// Generates a yawn mouth texture (filled oval)

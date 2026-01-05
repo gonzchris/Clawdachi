@@ -12,6 +12,7 @@ class ClawdachiScene: SKScene {
 
     private var clawdachi: ClawdachiSprite!
     private var isSleeping = false
+    private var musicMonitor: MusicPlaybackMonitor!
 
     // MARK: - Initialization
 
@@ -32,6 +33,7 @@ class ClawdachiScene: SKScene {
 
     override func didMove(to view: SKView) {
         setupCharacter()
+        setupMusicMonitor()
 
         // Watch for app losing focus to cancel drag
         NotificationCenter.default.addObserver(
@@ -40,6 +42,24 @@ class ClawdachiScene: SKScene {
             name: NSApplication.didResignActiveNotification,
             object: nil
         )
+    }
+
+    private func setupMusicMonitor() {
+        musicMonitor = MusicPlaybackMonitor()
+        musicMonitor.onPlaybackStateChanged = { [weak self] isPlaying in
+            self?.handleMusicPlaybackChanged(isPlaying)
+        }
+    }
+
+    private func handleMusicPlaybackChanged(_ isPlaying: Bool) {
+        // Don't dance while sleeping
+        guard !isSleeping else { return }
+
+        if isPlaying {
+            clawdachi.startDancing()
+        } else {
+            clawdachi.stopDancing()
+        }
     }
 
     private func setupCharacter() {
@@ -100,7 +120,12 @@ class ClawdachiScene: SKScene {
         if !isDragging {
             if isSleeping {
                 isSleeping = false
-                clawdachi.wakeUp()
+                clawdachi.wakeUp { [weak self] in
+                    // Resume dancing if music is playing after wake animation completes
+                    if self?.musicMonitor.isPlaying == true {
+                        self?.clawdachi.startDancing()
+                    }
+                }
             } else {
                 clawdachi.triggerClickReaction()
             }
@@ -173,8 +198,15 @@ class ClawdachiScene: SKScene {
     @objc private func toggleSleep() {
         if isSleeping {
             isSleeping = false
-            clawdachi.wakeUp()
+            clawdachi.wakeUp { [weak self] in
+                // Resume dancing if music is playing after wake animation completes
+                if self?.musicMonitor.isPlaying == true {
+                    self?.clawdachi.startDancing()
+                }
+            }
         } else {
+            // Stop dancing before sleeping
+            clawdachi.stopDancing()
             isSleeping = true
             clawdachi.startSleeping()
         }

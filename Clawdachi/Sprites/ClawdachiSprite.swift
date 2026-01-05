@@ -35,6 +35,7 @@ class ClawdachiSprite: SKNode {
     var blinkFrames: [SKTexture] = []
     var whistleMouthTexture: SKTexture!
     var musicNoteTexture: SKTexture!
+    var doubleNoteTexture: SKTexture!
     var heartTexture: SKTexture!
     var zzzTexture: SKTexture!
     var smileMouthTexture: SKTexture!
@@ -48,6 +49,7 @@ class ClawdachiSprite: SKNode {
     var isPerformingAction = false
     var isLookingAround = false
     var isDragging = false
+    var isDancing = false
 
     // MARK: - Eye Tracking State
 
@@ -109,6 +111,7 @@ class ClawdachiSprite: SKNode {
         eyeSquintTexture = ClawdachiFaceSprites.generateEyeTexture(state: .squint)
         whistleMouthTexture = ClawdachiFaceSprites.generateWhistleMouthTexture()
         musicNoteTexture = ClawdachiFaceSprites.generateMusicNoteTexture()
+        doubleNoteTexture = ClawdachiFaceSprites.generateDoubleNoteTexture()
 
         heartTexture = ClawdachiFaceSprites.generateHeartTexture()
         zzzTexture = ClawdachiFaceSprites.generateZzzTexture()
@@ -182,10 +185,10 @@ class ClawdachiSprite: SKNode {
         rightEyeNode.zPosition = 2
         addChild(rightEyeNode)
 
-        // Mouth (Layer 2) - hidden by default
+        // Mouth (Layer 2) - hidden by default, positioned to right for side whistle
         mouthNode = SKSpriteNode(texture: whistleMouthTexture)
-        mouthNode.size = CGSize(width: 2, height: 2)
-        mouthNode.position = CGPoint(x: 0, y: -4)
+        mouthNode.size = CGSize(width: 3, height: 3)
+        mouthNode.position = CGPoint(x: 5, y: -2)
         mouthNode.zPosition = 2
         mouthNode.alpha = 0
         addChild(mouthNode)

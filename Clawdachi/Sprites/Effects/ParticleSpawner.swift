@@ -232,11 +232,11 @@ enum ParticleSpawner {
 
         let config = ParticleConfig(
             texture: texture,
-            size: CGSize(width: 3, height: 5),
-            startPosition: CGPoint(x: 4, y: -2),
+            size: CGSize(width: 8, height: 8),
+            startPosition: CGPoint(x: 5, y: 0),
             zPosition: SpriteZPositions.effects,
-            initialScale: 0.6,
-            targetScale: 1.0,
+            initialScale: 0.5,
+            targetScale: 0.9,
             popInDuration: 0.12,
             movementDuration: 1.0,
             movementDelta: CGPoint(x: path.dx, y: path.dy),
@@ -267,7 +267,7 @@ enum ParticleSpawner {
         parent: SKNode
     ) -> SKSpriteNode {
         let heart = SKSpriteNode(texture: texture)
-        heart.size = CGSize(width: 5 * size, height: 5 * size)
+        heart.size = CGSize(width: 12 * size, height: 12 * size)
         heart.position = CGPoint(x: offsetX, y: offsetY)
         heart.alpha = 0
         heart.zPosition = SpriteZPositions.effects + 1
@@ -324,16 +324,16 @@ enum ParticleSpawner {
         parent: SKNode
     ) -> SKSpriteNode {
         let z = SKSpriteNode(texture: texture)
-        z.size = CGSize(width: 4, height: 5)
-        z.position = CGPoint(x: 5, y: 5)
+        z.size = CGSize(width: 12, height: 12)
+        z.position = CGPoint(x: 7, y: 8)
         z.alpha = 0
         z.zPosition = SpriteZPositions.effects + 1
-        z.setScale(0.5)
+        z.setScale(0.4)
         parent.addChild(z)
 
         let fadeIn = SKAction.fadeIn(withDuration: 0.4)
 
-        let floatUp = SKAction.moveBy(x: 5, y: 12, duration: 2.0)
+        let floatUp = SKAction.moveBy(x: 6, y: 14, duration: 2.0)
         floatUp.timingMode = .easeOut
 
         let grow = SKAction.scale(to: 1.0, duration: 2.0)
