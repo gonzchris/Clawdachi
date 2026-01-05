@@ -549,7 +549,7 @@ class ClawdachiFaceSprites {
     /// Generates a small orange thinking dot (2x2 pixels)
     static func generateThinkingDotSmall() -> SKTexture {
         let P = ClawdachiPalette.self
-        var pixels: [[PixelColor]] = [
+        let pixels: [[PixelColor]] = [
             [P.primaryOrange, P.highlightOrange],
             [P.shadowOrange, P.primaryOrange],
         ]
@@ -559,7 +559,7 @@ class ClawdachiFaceSprites {
     /// Generates a medium orange thinking dot (3x3 pixels)
     static func generateThinkingDotMedium() -> SKTexture {
         let P = ClawdachiPalette.self
-        var pixels: [[PixelColor]] = [
+        let pixels: [[PixelColor]] = [
             [P.clear, P.highlightOrange, P.clear],
             [P.highlightOrange, P.primaryOrange, P.shadowOrange],
             [P.clear, P.shadowOrange, P.clear],
@@ -570,7 +570,7 @@ class ClawdachiFaceSprites {
     /// Generates a large orange thinking dot (4x4 pixels)
     static func generateThinkingDotLarge() -> SKTexture {
         let P = ClawdachiPalette.self
-        var pixels: [[PixelColor]] = [
+        let pixels: [[PixelColor]] = [
             [P.clear, P.highlightOrange, P.highlightOrange, P.clear],
             [P.highlightOrange, P.primaryOrange, P.primaryOrange, P.shadowOrange],
             [P.highlightOrange, P.primaryOrange, P.primaryOrange, P.shadowOrange],
