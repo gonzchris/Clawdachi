@@ -257,8 +257,8 @@ extension ClawdachiSprite {
 
         let mark = SKSpriteNode(texture: Self.questionMarkTexture)
         mark.name = Self.questionMarkName
-        mark.size = CGSize(width: 7, height: 12)
-        mark.position = CGPoint(x: 0, y: 15)
+        mark.size = CGSize(width: 5, height: 9)
+        mark.position = CGPoint(x: 0, y: 14)
         mark.alpha = 0
         mark.zPosition = SpriteZPositions.effects + 1
         mark.setScale(0.3)

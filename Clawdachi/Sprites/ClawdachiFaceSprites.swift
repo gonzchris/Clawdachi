@@ -480,30 +480,28 @@ class ClawdachiFaceSprites {
     // MARK: - Question Mark Texture
 
     /// Generates a pixel-art question mark texture for "waiting for input" state
-    /// Size: 5x9 pixels - matches lightbulb proportions
+    /// Size: 5x8 pixels - white with dark outline
     static func generateQuestionMarkTexture() -> SKTexture {
         let pixelSize: CGFloat = 4
         let width = 5
-        let height = 9
+        let height = 8
         let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
 
-        // Question mark colors (matching lightbulb palette)
+        // Question mark colors - white with dark outline
         let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)       // #222222
-        let highlightColor = NSColor(red: 255/255, green: 250/255, blue: 180/255, alpha: 1.0) // #FFFAB4
-        let mainColor = NSColor(red: 255/255, green: 230/255, blue: 100/255, alpha: 1.0)      // #FFE664 yellow
-        let shadowColor = NSColor(red: 220/255, green: 180/255, blue: 50/255, alpha: 1.0)     // #DCB432 golden
+        let whiteColor = NSColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 1.0)     // #FFFFFF
+        let grayColor = NSColor(red: 200/255, green: 200/255, blue: 200/255, alpha: 1.0)      // #C8C8C8 light shadow
 
-        // Question mark pattern (1=outline, 2=highlight, 3=main, 4=shadow)
+        // Question mark pattern (1=outline, 2=white, 3=gray shadow)
         let pattern: [[Int]] = [
             [0, 1, 1, 1, 0],  // top curve
-            [1, 2, 3, 3, 1],  // upper curve
-            [1, 4, 1, 3, 1],  // curve with hole
-            [0, 0, 1, 3, 1],  // right side
-            [0, 1, 3, 4, 1],  // curve down
-            [0, 1, 3, 1, 0],  // stem
-            [0, 0, 1, 0, 0],  // gap
-            [0, 1, 3, 1, 0],  // dot top
-            [0, 0, 1, 0, 0],  // dot bottom
+            [1, 2, 2, 2, 1],  // upper bulb
+            [1, 3, 1, 2, 1],  // curve with hole
+            [0, 0, 1, 2, 1],  // right side going down
+            [0, 1, 2, 3, 1],  // curving left
+            [0, 1, 2, 1, 0],  // stem
+            [0, 0, 0, 0, 0],  // gap
+            [0, 1, 2, 1, 0],  // dot
         ]
 
         let image = NSImage(size: size, flipped: true) { rect in
@@ -518,9 +516,8 @@ class ClawdachiFaceSprites {
                     let color: NSColor
                     switch value {
                     case 1: color = outlineColor
-                    case 2: color = highlightColor
-                    case 3: color = mainColor
-                    case 4: color = shadowColor
+                    case 2: color = whiteColor
+                    case 3: color = grayColor
                     default: continue
                     }
 
