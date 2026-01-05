@@ -136,7 +136,12 @@ extension ClawdachiSprite {
     }
 
     func performWhistle() {
-        guard !isWhistling && !isPerformingAction && !isDragging else { return }
+        // Don't whistle during Claude states or other actions
+        guard !isWhistling && !isPerformingAction && !isDragging &&
+              !isClaudeThinking && !isQuestionMarkVisible && !isLightbulbVisible else {
+            scheduleNextWhistle()
+            return
+        }
         isWhistling = true
 
         mouthNode.setScale(0.8)
