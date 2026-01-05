@@ -105,4 +105,21 @@ enum AnimationTimings {
 
     /// Maximum age of session file before considered stale (seconds)
     static let sessionStalenessThreshold: TimeInterval = 60.0
+
+    // MARK: - Smoking Animation
+
+    /// Minimum interval between smoking animations
+    static let smokingMinInterval: TimeInterval = 30.0
+
+    /// Maximum interval between smoking animations
+    static let smokingMaxInterval: TimeInterval = 60.0
+
+    /// Duration of the smoking animation
+    static let smokingDuration: TimeInterval = 18.0
+
+    /// Interval between puffs during smoking
+    static let smokePuffInterval: TimeInterval = 3.0
+
+    /// Duration of smoke particle float
+    static let smokeFloatDuration: TimeInterval = 1.5
 }

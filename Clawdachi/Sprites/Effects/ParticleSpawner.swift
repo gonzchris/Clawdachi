@@ -233,7 +233,7 @@ enum ParticleSpawner {
         let config = ParticleConfig(
             texture: texture,
             size: CGSize(width: 8, height: 8),
-            startPosition: CGPoint(x: 5, y: 0),
+            startPosition: CGPoint(x: 5, y: -3),
             zPosition: SpriteZPositions.effects,
             initialScale: 0.5,
             targetScale: 0.9,
@@ -376,5 +376,75 @@ enum ParticleSpawner {
             rotation: rotation,
             parent: parent
         )
+    }
+
+    /// Spawn a smoke particle (floating up, expanding)
+    /// - Parameters:
+    ///   - texture: Smoke texture
+    ///   - startPosition: Where to spawn (typically near mouth)
+    ///   - variation: 0, 1, or 2 for different trajectories
+    ///   - delay: Delay before spawning
+    ///   - parent: Parent node to add to
+    @discardableResult
+    static func spawnSmoke(
+        texture: SKTexture,
+        startPosition: CGPoint = CGPoint(x: 3, y: 2),
+        variation: Int = 0,
+        delay: TimeInterval = 0,
+        parent: SKNode
+    ) -> SKSpriteNode {
+        // Different smoke paths for variety
+        let paths: [(dx: CGFloat, dy: CGFloat, rotation: CGFloat)] = [
+            (CGFloat.random(in: -2...2), CGFloat.random(in: 10...14), 0.3),
+            (CGFloat.random(in: -3...1), CGFloat.random(in: 9...12), -0.2),
+            (CGFloat.random(in: 0...4), CGFloat.random(in: 11...15), 0.4)
+        ]
+        let path = paths[variation % paths.count]
+
+        let smoke = SKSpriteNode(texture: texture)
+        smoke.size = CGSize(width: 6, height: 6)
+        smoke.position = startPosition
+        smoke.alpha = 0
+        smoke.zPosition = SpriteZPositions.effects
+        smoke.setScale(0.4)
+        parent.addChild(smoke)
+
+        var actions: [SKAction] = []
+
+        if delay > 0 {
+            actions.append(SKAction.wait(forDuration: delay))
+        }
+
+        // Fade in
+        let fadeIn = SKAction.fadeAlpha(to: 0.7, duration: 0.15)
+        actions.append(fadeIn)
+
+        // Float up while expanding (smoke dissipates)
+        let floatDuration = AnimationTimings.smokeFloatDuration
+        let floatUp = SKAction.moveBy(x: path.dx, y: path.dy, duration: floatDuration)
+        floatUp.timingMode = .easeOut
+
+        // Smoke expands as it rises
+        let expand = SKAction.scale(to: 1.4, duration: floatDuration)
+        expand.timingMode = .easeOut
+
+        // Wobble rotation
+        let wobble = SKAction.sequence([
+            SKAction.rotate(byAngle: path.rotation, duration: floatDuration / 2),
+            SKAction.rotate(byAngle: -path.rotation, duration: floatDuration / 2)
+        ])
+
+        // Fade out near end
+        let fadeOut = SKAction.sequence([
+            SKAction.wait(forDuration: floatDuration * 0.5),
+            SKAction.fadeOut(withDuration: floatDuration * 0.5)
+        ])
+
+        actions.append(SKAction.group([floatUp, expand, wobble, fadeOut]))
+        actions.append(SKAction.removeFromParent())
+
+        smoke.run(SKAction.sequence(actions))
+
+        return smoke
     }
 }

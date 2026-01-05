@@ -18,6 +18,11 @@ It's a small piece of joy that makes your desktop feel a little more alive.
 - **Breathing:** Gentle 4-frame breathing cycle
 - **Blinking:** Random blinks every 2.5-6 seconds
 - **Whistling:** Occasionally whistles with floating music notes (side-mouth style)
+- **Smoking:** Rare cigarette break animation (humorous)
+  - Pixel-art cigarette with ember glow
+  - Arm raises to mouth, exhales smoke
+  - Cigarette shrinks with each puff
+  - Subtle tip smoke wisps
 - **Eye tracking:** Eyes follow your mouse cursor
 - **Looking around:** Eyes wander curiously when idle
 
@@ -117,7 +122,8 @@ Clawdachi/
     │   ├── ClawdachiSprite+Drag.swift       # Drag interaction
     │   ├── ClawdachiSprite+Idle.swift       # Breathing, blinking, whistling
     │   ├── ClawdachiSprite+Interaction.swift # Click reactions
-    │   └── ClawdachiSprite+Sleep.swift      # Sleep mode
+    │   ├── ClawdachiSprite+Sleep.swift      # Sleep mode
+    │   └── ClawdachiSprite+Smoking.swift    # Smoking idle animation
     ├── Constants/
     │   ├── AnimationTimings.swift  # All timing values
     │   └── SpritePositions.swift   # Position and z-order constants
@@ -146,6 +152,9 @@ All idle animations run continuously and independently:
 - Breathing cycle: 3.0s
 - Blink interval: 2.5-6.0s
 - Whistle interval: 12-25s
+- Smoking interval: 30-60s (rare)
+- Smoking duration: 18s
+- Smoking puff interval: 3.0s
 - Look around interval: 5-12s
 - Dance sway: 0.6s
 - Dance music note spawn: 0.8s
@@ -160,6 +169,7 @@ Reusable spawner for floating effects:
 - Sleep Z's (sleep mode)
 - Sweat drops (dragging)
 - Thinking dots (Claude working)
+- Smoke particles (smoking animation)
 
 ---
 

@@ -17,6 +17,7 @@ extension ClawdachiSprite {
         scheduleNextBlink()
         scheduleNextWhistle()
         scheduleNextLookAround()
+        scheduleNextSmoking()
     }
 
     // MARK: - Breathing
@@ -136,8 +137,8 @@ extension ClawdachiSprite {
     }
 
     func performWhistle() {
-        // Don't whistle during Claude states or other actions
-        guard !isWhistling && !isPerformingAction && !isDragging &&
+        // Don't whistle during Claude states, smoking, or other actions
+        guard !isWhistling && !isPerformingAction && !isDragging && !isSmoking &&
               !isClaudeThinking && !isQuestionMarkVisible && !isLightbulbVisible else {
             scheduleNextWhistle()
             return
@@ -195,12 +196,17 @@ extension ClawdachiSprite {
         removeAction(forKey: "whistleSchedule")
         removeAction(forKey: "blinkSchedule")
         removeAction(forKey: "lookAroundSchedule")
+        removeAction(forKey: "smokingSchedule")
         // Stop any currently running blink animation on eye nodes
         // (prevents restore: true from overwriting thinking eye textures)
         leftEyeNode.removeAction(forKey: "blink")
         rightEyeNode.removeAction(forKey: "blink")
         isWhistling = false
         isLookingAround = false
+        // Stop smoking if in progress
+        if isSmoking {
+            stopSmoking()
+        }
     }
 
     func resumeIdleAnimations() {
@@ -210,5 +216,6 @@ extension ClawdachiSprite {
         scheduleNextBlink()
         scheduleNextWhistle()
         scheduleNextLookAround()
+        scheduleNextSmoking()
     }
 }

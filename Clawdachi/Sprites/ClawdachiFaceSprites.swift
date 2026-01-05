@@ -578,4 +578,163 @@ class ClawdachiFaceSprites {
         ]
         return PixelArtGenerator.textureFromPixels(pixels, width: 4, height: 4)
     }
+
+    // MARK: - Smoking Textures
+
+    /// Generates a pixel-art cigarette texture
+    /// Size: 2x8 pixels - vertical cigarette with paper, tobacco, and ash
+    static func generateCigaretteTexture() -> SKTexture {
+        let pixelSize: CGFloat = 3
+        let width = 2
+        let height = 8
+        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
+
+        // Cigarette colors
+        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)       // #222222
+        let paperColor = NSColor(red: 245/255, green: 240/255, blue: 230/255, alpha: 1.0)     // Off-white paper
+        let paperShadow = NSColor(red: 220/255, green: 215/255, blue: 205/255, alpha: 1.0)    // Slightly darker
+        let tobaccoColor = NSColor(red: 180/255, green: 100/255, blue: 40/255, alpha: 1.0)    // Brown tobacco
+        let ashColor = NSColor(red: 180/255, green: 180/255, blue: 175/255, alpha: 1.0)       // Gray ash
+        let emberColor = NSColor(red: 255/255, green: 120/255, blue: 50/255, alpha: 1.0)      // Orange ember glow
+
+        // Cigarette pattern (1=outline, 2=paper, 3=paperShadow, 4=tobacco, 5=ash, 6=ember)
+        let pattern: [[Int]] = [
+            [5, 5],  // ash tip (top)
+            [6, 5],  // ember glow
+            [4, 4],  // tobacco
+            [2, 3],  // paper body
+            [2, 3],  // paper body
+            [2, 3],  // paper body
+            [2, 3],  // paper body
+            [2, 3],  // paper body (bottom, held here)
+        ]
+
+        let image = NSImage(size: size, flipped: true) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
+
+            // Draw outline first (expand by 1 pixel)
+            outlineColor.setFill()
+            for row in 0..<height {
+                for col in 0..<width {
+                    let value = pattern[row][col]
+                    guard value > 0 else { continue }
+                    // Draw outline pixels around this pixel
+                    let offsets: [(Int, Int)] = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+                    for offset in offsets {
+                        let pixelRect = CGRect(
+                            x: CGFloat(col + offset.0) * pixelSize,
+                            y: CGFloat(row + offset.1) * pixelSize,
+                            width: pixelSize,
+                            height: pixelSize
+                        )
+                        pixelRect.fill()
+                    }
+                }
+            }
+
+            // Draw main colors
+            for row in 0..<height {
+                for col in 0..<width {
+                    let value = pattern[row][col]
+                    guard value > 0 else { continue }
+
+                    let color: NSColor
+                    switch value {
+                    case 1: color = outlineColor
+                    case 2: color = paperColor
+                    case 3: color = paperShadow
+                    case 4: color = tobaccoColor
+                    case 5: color = ashColor
+                    case 6: color = emberColor
+                    default: continue
+                    }
+
+                    color.setFill()
+                    let pixelRect = CGRect(
+                        x: CGFloat(col) * pixelSize,
+                        y: CGFloat(row) * pixelSize,
+                        width: pixelSize,
+                        height: pixelSize
+                    )
+                    pixelRect.fill()
+                }
+            }
+
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create cigarette image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .nearest
+        return texture
+    }
+
+    /// Generates a smoke particle texture - wispy cloud shape
+    /// Size: 6x6 pixels - irregular cloud with gradient
+    static func generateSmokeParticleTexture() -> SKTexture {
+        let pixelSize: CGFloat = 3
+        let width = 6
+        let height = 6
+        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
+
+        // Smoke colors - light gray gradient
+        let outlineColor = NSColor(red: 80/255, green: 80/255, blue: 80/255, alpha: 0.6)      // Dark gray outline
+        let lightSmoke = NSColor(red: 220/255, green: 220/255, blue: 220/255, alpha: 0.8)    // Light gray
+        let midSmoke = NSColor(red: 180/255, green: 180/255, blue: 180/255, alpha: 0.7)      // Medium gray
+        let darkSmoke = NSColor(red: 140/255, green: 140/255, blue: 140/255, alpha: 0.5)     // Darker gray
+
+        // Wispy cloud pattern (1=outline, 2=light, 3=mid, 4=dark)
+        let pattern: [[Int]] = [
+            [0, 0, 1, 1, 0, 0],
+            [0, 1, 2, 2, 1, 0],
+            [1, 2, 3, 2, 2, 1],
+            [1, 3, 3, 3, 2, 1],
+            [0, 1, 2, 3, 1, 0],
+            [0, 0, 1, 1, 0, 0],
+        ]
+
+        let image = NSImage(size: size, flipped: true) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
+
+            for row in 0..<height {
+                for col in 0..<width {
+                    let value = pattern[row][col]
+                    guard value > 0 else { continue }
+
+                    let color: NSColor
+                    switch value {
+                    case 1: color = outlineColor
+                    case 2: color = lightSmoke
+                    case 3: color = midSmoke
+                    case 4: color = darkSmoke
+                    default: continue
+                    }
+
+                    color.setFill()
+                    let pixelRect = CGRect(
+                        x: CGFloat(col) * pixelSize,
+                        y: CGFloat(row) * pixelSize,
+                        width: pixelSize,
+                        height: pixelSize
+                    )
+                    pixelRect.fill()
+                }
+            }
+
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create smoke image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .nearest
+        return texture
+    }
 }
