@@ -195,6 +195,10 @@ extension ClawdachiSprite {
         removeAction(forKey: "whistleSchedule")
         removeAction(forKey: "blinkSchedule")
         removeAction(forKey: "lookAroundSchedule")
+        // Stop any currently running blink animation on eye nodes
+        // (prevents restore: true from overwriting thinking eye textures)
+        leftEyeNode.removeAction(forKey: "blink")
+        rightEyeNode.removeAction(forKey: "blink")
         isWhistling = false
         isLookingAround = false
     }
