@@ -1,6 +1,6 @@
 //
 //  AppDelegate.swift
-//  Claudachi
+//  Clawdachi
 //
 
 import Cocoa
@@ -14,9 +14,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var localEventMonitor: Any?
 
     private enum Keys {
-        static let windowX = "claudachi.window.x"
-        static let windowY = "claudachi.window.y"
-        static let hasStoredPosition = "claudachi.window.hasStoredPosition"
+        static let windowX = "clawdachi.window.x"
+        static let windowY = "clawdachi.window.y"
+        static let hasStoredPosition = "clawdachi.window.hasStoredPosition"
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -41,7 +41,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         skView.allowsTransparency = true
 
         // Create and present scene
-        let scene = ClaudachiScene()
+        let scene = ClawdachiScene()
         skView.presentScene(scene)
 
         // Set as window content

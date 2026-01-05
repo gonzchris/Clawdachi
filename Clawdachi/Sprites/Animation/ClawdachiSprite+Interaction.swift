@@ -1,13 +1,13 @@
 //
-//  ClaudachiSprite+Interaction.swift
-//  Claudachi
+//  ClawdachiSprite+Interaction.swift
+//  Clawdachi
 //
 //  Interaction animations: click reactions, wave, bounce, heart
 //
 
 import SpriteKit
 
-extension ClaudachiSprite {
+extension ClawdachiSprite {
 
     // MARK: - Public Methods
 

@@ -1,13 +1,13 @@
 //
-//  ClaudachiSprite+Drag.swift
-//  Claudachi
+//  ClawdachiSprite+Drag.swift
+//  Clawdachi
 //
 //  Drag animations: wiggling limbs, sweat drops
 //
 
 import SpriteKit
 
-extension ClaudachiSprite {
+extension ClawdachiSprite {
 
     // MARK: - Drag Animation
 

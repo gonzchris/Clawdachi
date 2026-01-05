@@ -1,14 +1,14 @@
 //
-//  ClaudachiFaceSprites.swift
-//  Claudachi
+//  ClawdachiFaceSprites.swift
+//  Clawdachi
 //
 
 import SpriteKit
 
 /// Generates face element textures (eyes, mouth) with animation frames
-class ClaudachiFaceSprites {
+class ClawdachiFaceSprites {
 
-    private typealias P = ClaudachiPalette
+    private typealias P = ClawdachiPalette
 
     // MARK: - Eye States
 

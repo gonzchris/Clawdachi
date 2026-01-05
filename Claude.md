@@ -1,4 +1,4 @@
-# Claudachi
+# Clawdachi
 
 A cute pixel art desktop pet for macOS. A friendly orange blob that lives on your screen, breathes, blinks, whistles, and reacts when you interact with it.
 
@@ -6,7 +6,7 @@ A cute pixel art desktop pet for macOS. A friendly orange blob that lives on you
 
 ## What It Does
 
-Claudachi is a tiny pixel mascot that floats on your desktop. It has a life of its own - breathing gently, blinking randomly, occasionally whistling a tune with little music notes floating up. Click on it and it'll wave or bounce happily. Drag it around and watch it sweat nervously. Put it to sleep when you need focus time.
+Clawdachi is a tiny pixel mascot that floats on your desktop. It has a life of its own - breathing gently, blinking randomly, occasionally whistling a tune with little music notes floating up. Click on it and it'll wave or bounce happily. Drag it around and watch it sweat nervously. Put it to sleep when you need focus time.
 
 It's a small piece of joy that makes your desktop feel a little more alive.
 
@@ -69,29 +69,29 @@ It's a small piece of joy that makes your desktop feel a little more alive.
 ## Project Structure
 
 ```
-Claudachi/
+Clawdachi/
 ├── App/
 │   └── AppDelegate.swift           # Window setup, keyboard shortcuts
-├── ClaudachiApp.swift              # App entry point
+├── ClawdachiApp.swift              # App entry point
 ├── Recording/
 │   ├── AnimationRecorder.swift     # GIF frame capture
 │   └── GIFExporter.swift           # GIF file creation
 └── Sprites/
     ├── Animation/
-    │   ├── ClaudachiSprite+Drag.swift       # Drag interaction
-    │   ├── ClaudachiSprite+Idle.swift       # Breathing, blinking, whistling
-    │   ├── ClaudachiSprite+Interaction.swift # Click reactions
-    │   └── ClaudachiSprite+Sleep.swift      # Sleep mode
+    │   ├── ClawdachiSprite+Drag.swift       # Drag interaction
+    │   ├── ClawdachiSprite+Idle.swift       # Breathing, blinking, whistling
+    │   ├── ClawdachiSprite+Interaction.swift # Click reactions
+    │   └── ClawdachiSprite+Sleep.swift      # Sleep mode
     ├── Constants/
     │   ├── AnimationTimings.swift  # All timing values
     │   └── SpritePositions.swift   # Position and z-order constants
     ├── Effects/
     │   └── ParticleSpawner.swift   # Music notes, hearts, sweat drops, Z's
-    ├── ClaudachiBodySprites.swift  # Body texture generation
-    ├── ClaudachiFaceSprites.swift  # Face/effect texture generation
-    ├── ClaudachiPalette.swift      # Color definitions
-    ├── ClaudachiScene.swift        # SKScene, input handling, context menu
-    ├── ClaudachiSprite.swift       # Main sprite node, setup
+    ├── ClawdachiBodySprites.swift  # Body texture generation
+    ├── ClawdachiFaceSprites.swift  # Face/effect texture generation
+    ├── ClawdachiPalette.swift      # Color definitions
+    ├── ClawdachiScene.swift        # SKScene, input handling, context menu
+    ├── ClawdachiSprite.swift       # Main sprite node, setup
     └── PixelArtGenerator.swift     # Pixel array → SKTexture utility
 ```
 

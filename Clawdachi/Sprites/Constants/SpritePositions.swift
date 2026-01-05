@@ -1,13 +1,13 @@
 //
 //  SpritePositions.swift
-//  Claudachi
+//  Clawdachi
 //
 //  Centralized sprite positioning and z-ordering constants
 //
 
 import CoreGraphics
 
-/// Position constants for Claudachi sprite composition
+/// Position constants for Clawdachi sprite composition
 enum SpritePositions {
 
     // MARK: - Face Elements
@@ -50,7 +50,7 @@ enum SpritePositions {
     static let sleepZ = CGPoint(x: 5, y: 5)
 }
 
-/// Z-position layer ordering for Claudachi sprites
+/// Z-position layer ordering for Clawdachi sprites
 enum SpriteZPositions {
 
     // MARK: - Character Layers

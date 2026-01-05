@@ -1,13 +1,13 @@
 //
-//  ClaudachiSprite+Sleep.swift
-//  Claudachi
+//  ClawdachiSprite+Sleep.swift
+//  Clawdachi
 //
 //  Sleep animations: entering sleep, Z spawning, waking up
 //
 
 import SpriteKit
 
-extension ClaudachiSprite {
+extension ClawdachiSprite {
 
     // MARK: - Sleep Animation
 

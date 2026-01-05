@@ -7,13 +7,13 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		834DB1C02F0A053C002CBBD0 /* Claudachi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Claudachi.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		834DB1C02F0A053C002CBBD0 /* Clawdachi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Clawdachi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		834DB1C22F0A053C002CBBD0 /* Claudachi */ = {
+		834DB1C22F0A053C002CBBD0 /* Clawdachi */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = Claudachi;
+			path = Clawdachi;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -32,7 +32,7 @@
 		834DB1B72F0A053C002CBBD0 = {
 			isa = PBXGroup;
 			children = (
-				834DB1C22F0A053C002CBBD0 /* Claudachi */,
+				834DB1C22F0A053C002CBBD0 /* Clawdachi */,
 				834DB1C12F0A053C002CBBD0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -40,7 +40,7 @@
 		834DB1C12F0A053C002CBBD0 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				834DB1C02F0A053C002CBBD0 /* Claudachi.app */,
+				834DB1C02F0A053C002CBBD0 /* Clawdachi.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,9 +48,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		834DB1BF2F0A053C002CBBD0 /* Claudachi */ = {
+		834DB1BF2F0A053C002CBBD0 /* Clawdachi */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 834DB1CB2F0A053D002CBBD0 /* Build configuration list for PBXNativeTarget "Claudachi" */;
+			buildConfigurationList = 834DB1CB2F0A053D002CBBD0 /* Build configuration list for PBXNativeTarget "Clawdachi" */;
 			buildPhases = (
 				834DB1BC2F0A053C002CBBD0 /* Sources */,
 				834DB1BD2F0A053C002CBBD0 /* Frameworks */,
@@ -61,13 +61,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				834DB1C22F0A053C002CBBD0 /* Claudachi */,
+				834DB1C22F0A053C002CBBD0 /* Clawdachi */,
 			);
-			name = Claudachi;
+			name = Clawdachi;
 			packageProductDependencies = (
 			);
-			productName = Claudachi;
-			productReference = 834DB1C02F0A053C002CBBD0 /* Claudachi.app */;
+			productName = Clawdachi;
+			productReference = 834DB1C02F0A053C002CBBD0 /* Clawdachi.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -85,7 +85,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 834DB1BB2F0A053C002CBBD0 /* Build configuration list for PBXProject "Claudachi" */;
+			buildConfigurationList = 834DB1BB2F0A053C002CBBD0 /* Build configuration list for PBXProject "Clawdachi" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -99,7 +99,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				834DB1BF2F0A053C002CBBD0 /* Claudachi */,
+				834DB1BF2F0A053C002CBBD0 /* Clawdachi */,
 			);
 		};
 /* End PBXProject section */
@@ -248,10 +248,10 @@
 		834DB1CC2F0A053D002CBBD0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = Claudachi;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Clawdachi;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = Claudachi/Claudachi.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Clawdachi/Clawdachi.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -267,7 +267,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.solobuilt.Claudachi;
+				PRODUCT_BUNDLE_IDENTIFIER = co.solobuilt.Clawdachi;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -282,10 +282,10 @@
 		834DB1CD2F0A053D002CBBD0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = Claudachi;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Clawdachi;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = Claudachi/Claudachi.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Clawdachi/Clawdachi.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -301,7 +301,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = co.solobuilt.Claudachi;
+				PRODUCT_BUNDLE_IDENTIFIER = co.solobuilt.Clawdachi;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -316,7 +316,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		834DB1BB2F0A053C002CBBD0 /* Build configuration list for PBXProject "Claudachi" */ = {
+		834DB1BB2F0A053C002CBBD0 /* Build configuration list for PBXProject "Clawdachi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				834DB1C92F0A053D002CBBD0 /* Debug */,
@@ -325,7 +325,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		834DB1CB2F0A053D002CBBD0 /* Build configuration list for PBXNativeTarget "Claudachi" */ = {
+		834DB1CB2F0A053D002CBBD0 /* Build configuration list for PBXNativeTarget "Clawdachi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				834DB1CC2F0A053D002CBBD0 /* Debug */,

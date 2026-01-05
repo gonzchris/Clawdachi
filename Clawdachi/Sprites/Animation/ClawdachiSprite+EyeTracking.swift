@@ -1,6 +1,6 @@
 //
-//  ClaudachiSprite+EyeTracking.swift
-//  Claudachi
+//  ClawdachiSprite+EyeTracking.swift
+//  Clawdachi
 //
 //  Eyes follow the mouse cursor with smooth interpolation
 //
@@ -8,7 +8,7 @@
 import SpriteKit
 import AppKit
 
-extension ClaudachiSprite {
+extension ClawdachiSprite {
 
     // MARK: - Eye Tracking Update
 

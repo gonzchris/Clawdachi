@@ -1,6 +1,6 @@
 //
 //  GIFExporter.swift
-//  Claudachi
+//  Clawdachi
 //
 
 import Foundation
@@ -87,7 +87,7 @@ class GIFExporter {
     static func generateOutputURL() -> URL {
         let timestamp = ISO8601DateFormatter().string(from: Date())
             .replacingOccurrences(of: ":", with: "-")
-        let filename = "Claudachi-\(timestamp).gif"
+        let filename = "Clawdachi-\(timestamp).gif"
 
         // Try Desktop first, fall back to Documents, then temp directory
         if let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first {

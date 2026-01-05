@@ -1,14 +1,14 @@
 //
-//  ClaudachiBodySprites.swift
-//  Claudachi
+//  ClawdachiBodySprites.swift
+//  Clawdachi
 //
 
 import SpriteKit
 
-/// Generates body textures for Claudachi with breathing animation frames
-class ClaudachiBodySprites {
+/// Generates body textures for Clawdachi with breathing animation frames
+class ClawdachiBodySprites {
 
-    private typealias P = ClaudachiPalette
+    private typealias P = ClawdachiPalette
 
     /// Generates all breathing animation frames
     /// - Returns: Array of 4 textures: contracted, neutral (expanding), expanded, neutral (contracting)

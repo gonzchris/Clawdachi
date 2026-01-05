@@ -1,13 +1,13 @@
 //
-//  ClaudachiSprite+Idle.swift
-//  Claudachi
+//  ClawdachiSprite+Idle.swift
+//  Clawdachi
 //
 //  Idle animations: breathing, blinking, whistling, looking around
 //
 
 import SpriteKit
 
-extension ClaudachiSprite {
+extension ClawdachiSprite {
 
     // MARK: - Start All Idle Animations
 

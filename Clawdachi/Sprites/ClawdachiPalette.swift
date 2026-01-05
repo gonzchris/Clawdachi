@@ -1,12 +1,12 @@
 //
-//  ClaudachiPalette.swift
-//  Claudachi
+//  ClawdachiPalette.swift
+//  Clawdachi
 //
 
 import Foundation
 
-/// Color palette for Claudachi, matching Clawd's warm orange/amber aesthetic
-struct ClaudachiPalette {
+/// Color palette for Clawdachi, matching Clawd's warm orange/amber aesthetic
+struct ClawdachiPalette {
     // Primary orange/amber (Clawd's main color)
     static let primaryOrange = PixelColor(r: 255, g: 153, b: 51)    // #FF9933
     static let primary = primaryOrange  // Alias for convenience

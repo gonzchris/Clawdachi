@@ -1,15 +1,15 @@
 //
-//  ClaudachiSprite.swift
-//  Claudachi
+//  ClawdachiSprite.swift
+//  Clawdachi
 //
-//  Main Claudachi character sprite with layered composition.
+//  Main Clawdachi character sprite with layered composition.
 //  Animation methods are in extension files under Animation/
 //
 
 import SpriteKit
 
-/// Main Claudachi character sprite with layered composition and polished animations
-class ClaudachiSprite: SKNode {
+/// Main Clawdachi character sprite with layered composition and polished animations
+class ClawdachiSprite: SKNode {
 
     // MARK: - Sprite Layers (internal for extension access)
 
@@ -88,7 +88,7 @@ class ClaudachiSprite: SKNode {
         super.init()
         generateTextures()
         setupSprites()
-        startAnimations()  // Defined in ClaudachiSprite+Idle.swift
+        startAnimations()  // Defined in ClawdachiSprite+Idle.swift
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -102,59 +102,59 @@ class ClaudachiSprite: SKNode {
     // MARK: - Setup
 
     private func generateTextures() {
-        breathingFrames = ClaudachiBodySprites.generateBreathingFrames()
-        blinkFrames = ClaudachiFaceSprites.generateBlinkFrames()
-        eyeOpenTexture = ClaudachiFaceSprites.generateEyeTexture(state: .open)
-        eyeClosedTexture = ClaudachiFaceSprites.generateEyeTexture(state: .closed)
-        eyeSquintTexture = ClaudachiFaceSprites.generateEyeTexture(state: .squint)
-        whistleMouthTexture = ClaudachiFaceSprites.generateWhistleMouthTexture()
-        musicNoteTexture = ClaudachiFaceSprites.generateMusicNoteTexture()
+        breathingFrames = ClawdachiBodySprites.generateBreathingFrames()
+        blinkFrames = ClawdachiFaceSprites.generateBlinkFrames()
+        eyeOpenTexture = ClawdachiFaceSprites.generateEyeTexture(state: .open)
+        eyeClosedTexture = ClawdachiFaceSprites.generateEyeTexture(state: .closed)
+        eyeSquintTexture = ClawdachiFaceSprites.generateEyeTexture(state: .squint)
+        whistleMouthTexture = ClawdachiFaceSprites.generateWhistleMouthTexture()
+        musicNoteTexture = ClawdachiFaceSprites.generateMusicNoteTexture()
 
-        heartTexture = ClaudachiFaceSprites.generateHeartTexture()
-        zzzTexture = ClaudachiFaceSprites.generateZzzTexture()
-        smileMouthTexture = ClaudachiFaceSprites.generateSmileMouthTexture()
-        yawnMouthTexture = ClaudachiFaceSprites.generateYawnMouthTexture()
-        sweatDropTexture = ClaudachiFaceSprites.generateSweatDropTexture()
+        heartTexture = ClawdachiFaceSprites.generateHeartTexture()
+        zzzTexture = ClawdachiFaceSprites.generateZzzTexture()
+        smileMouthTexture = ClawdachiFaceSprites.generateSmileMouthTexture()
+        yawnMouthTexture = ClawdachiFaceSprites.generateYawnMouthTexture()
+        sweatDropTexture = ClawdachiFaceSprites.generateSweatDropTexture()
     }
 
     private func setupSprites() {
         // Limbs first (Layer 0) - behind body
-        leftArmNode = SKSpriteNode(texture: ClaudachiBodySprites.generateLeftArmTexture())
+        leftArmNode = SKSpriteNode(texture: ClawdachiBodySprites.generateLeftArmTexture())
         leftArmNode.size = CGSize(width: 3, height: 3)
         leftArmNode.position = leftArmBasePos
         leftArmNode.anchorPoint = CGPoint(x: 1.0, y: 0.5)
         leftArmNode.zPosition = 0
         addChild(leftArmNode)
 
-        rightArmNode = SKSpriteNode(texture: ClaudachiBodySprites.generateRightArmTexture())
+        rightArmNode = SKSpriteNode(texture: ClawdachiBodySprites.generateRightArmTexture())
         rightArmNode.size = CGSize(width: 3, height: 3)
         rightArmNode.position = rightArmBasePos
         rightArmNode.anchorPoint = CGPoint(x: 0.0, y: 0.5)
         rightArmNode.zPosition = 0
         addChild(rightArmNode)
 
-        outerLeftLegNode = SKSpriteNode(texture: ClaudachiBodySprites.generateLeftLegTexture())
+        outerLeftLegNode = SKSpriteNode(texture: ClawdachiBodySprites.generateLeftLegTexture())
         outerLeftLegNode.size = CGSize(width: 2, height: 5)
         outerLeftLegNode.position = outerLeftLegBasePos
         outerLeftLegNode.anchorPoint = CGPoint(x: 0.5, y: 1.0)
         outerLeftLegNode.zPosition = 0
         addChild(outerLeftLegNode)
 
-        innerLeftLegNode = SKSpriteNode(texture: ClaudachiBodySprites.generateLeftLegTexture())
+        innerLeftLegNode = SKSpriteNode(texture: ClawdachiBodySprites.generateLeftLegTexture())
         innerLeftLegNode.size = CGSize(width: 2, height: 5)
         innerLeftLegNode.position = innerLeftLegBasePos
         innerLeftLegNode.anchorPoint = CGPoint(x: 0.5, y: 1.0)
         innerLeftLegNode.zPosition = 0
         addChild(innerLeftLegNode)
 
-        innerRightLegNode = SKSpriteNode(texture: ClaudachiBodySprites.generateRightLegTexture())
+        innerRightLegNode = SKSpriteNode(texture: ClawdachiBodySprites.generateRightLegTexture())
         innerRightLegNode.size = CGSize(width: 2, height: 5)
         innerRightLegNode.position = innerRightLegBasePos
         innerRightLegNode.anchorPoint = CGPoint(x: 0.5, y: 1.0)
         innerRightLegNode.zPosition = 0
         addChild(innerRightLegNode)
 
-        outerRightLegNode = SKSpriteNode(texture: ClaudachiBodySprites.generateRightLegTexture())
+        outerRightLegNode = SKSpriteNode(texture: ClawdachiBodySprites.generateRightLegTexture())
         outerRightLegNode.size = CGSize(width: 2, height: 5)
         outerRightLegNode.position = outerRightLegBasePos
         outerRightLegNode.anchorPoint = CGPoint(x: 0.5, y: 1.0)

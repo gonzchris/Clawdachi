@@ -1,16 +1,16 @@
 //
-//  ClaudachiScene.swift
-//  Claudachi
+//  ClawdachiScene.swift
+//  Clawdachi
 //
 
 import SpriteKit
 import AppKit
 
-class ClaudachiScene: SKScene {
+class ClawdachiScene: SKScene {
 
     // MARK: - Properties
 
-    private var claudachi: ClaudachiSprite!
+    private var clawdachi: ClawdachiSprite!
     private var isSleeping = false
 
     // MARK: - Initialization
@@ -43,16 +43,16 @@ class ClaudachiScene: SKScene {
     }
 
     private func setupCharacter() {
-        claudachi = ClaudachiSprite()
-        claudachi.position = CGPoint(x: 24, y: 24)
-        addChild(claudachi)
+        clawdachi = ClawdachiSprite()
+        clawdachi.position = CGPoint(x: 24, y: 24)
+        addChild(clawdachi)
     }
 
     // MARK: - Update Loop
 
     override func update(_ currentTime: TimeInterval) {
         guard !isSleeping else { return }
-        claudachi.updateEyeTracking(globalMouse: NSEvent.mouseLocation, currentTime: currentTime)
+        clawdachi.updateEyeTracking(globalMouse: NSEvent.mouseLocation, currentTime: currentTime)
     }
 
     // MARK: - Interaction
@@ -69,7 +69,7 @@ class ClaudachiScene: SKScene {
         longPressTimer?.invalidate()
         longPressTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
             guard let self = self, !self.isDragging, !self.isSleeping else { return }
-            self.claudachi.performHeartReaction()
+            self.clawdachi.performHeartReaction()
         }
     }
 
@@ -81,9 +81,9 @@ class ClaudachiScene: SKScene {
         // Start drag animation only on first movement
         if !isDragging {
             if isSleeping {
-                claudachi.startSleepyDrag()  // Annoyed squint when disturbed
+                clawdachi.startSleepyDrag()  // Annoyed squint when disturbed
             } else {
-                claudachi.startDragWiggle()
+                clawdachi.startDragWiggle()
             }
         }
         isDragging = true
@@ -100,9 +100,9 @@ class ClaudachiScene: SKScene {
         if !isDragging {
             if isSleeping {
                 isSleeping = false
-                claudachi.wakeUp()
+                clawdachi.wakeUp()
             } else {
-                claudachi.triggerClickReaction()
+                clawdachi.triggerClickReaction()
             }
         }
 
@@ -120,9 +120,9 @@ class ClaudachiScene: SKScene {
 
     private func endDragIfNeeded() {
         if isSleeping {
-            claudachi.stopSleepyDrag()
+            clawdachi.stopSleepyDrag()
         } else {
-            claudachi.stopDragWiggle()
+            clawdachi.stopDragWiggle()
         }
         isDragging = false
     }
@@ -136,10 +136,10 @@ class ClaudachiScene: SKScene {
     private func showContextMenu(with event: NSEvent) {
         guard let view = self.view else { return }
 
-        let menu = NSMenu(title: "Claudachi")
+        let menu = NSMenu(title: "Clawdachi")
 
         // Header
-        let headerItem = NSMenuItem(title: "Claudachi", action: nil, keyEquivalent: "")
+        let headerItem = NSMenuItem(title: "Clawdachi", action: nil, keyEquivalent: "")
         headerItem.isEnabled = false
         menu.addItem(headerItem)
 
@@ -158,7 +158,7 @@ class ClaudachiScene: SKScene {
 
         // Quit
         let quitItem = NSMenuItem(
-            title: "Quit Claudachi",
+            title: "Quit Clawdachi",
             action: #selector(quitApp),
             keyEquivalent: "q"
         )
@@ -173,10 +173,10 @@ class ClaudachiScene: SKScene {
     @objc private func toggleSleep() {
         if isSleeping {
             isSleeping = false
-            claudachi.wakeUp()
+            clawdachi.wakeUp()
         } else {
             isSleeping = true
-            claudachi.startSleeping()
+            clawdachi.startSleeping()
         }
     }
 

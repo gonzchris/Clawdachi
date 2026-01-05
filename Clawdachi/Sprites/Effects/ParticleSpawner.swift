@@ -1,6 +1,6 @@
 //
 //  ParticleSpawner.swift
-//  Claudachi
+//  Clawdachi
 //
 //  Reusable particle effect spawning utilities
 //

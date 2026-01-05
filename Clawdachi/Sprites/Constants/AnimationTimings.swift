@@ -1,13 +1,13 @@
 //
 //  AnimationTimings.swift
-//  Claudachi
+//  Clawdachi
 //
 //  Centralized animation timing constants for easy tuning
 //
 
 import Foundation
 
-/// Animation timing constants for Claudachi
+/// Animation timing constants for Clawdachi
 enum AnimationTimings {
 
     // MARK: - Idle Animations

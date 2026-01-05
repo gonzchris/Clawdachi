@@ -1,6 +1,6 @@
 //
 //  PixelArtGenerator.swift
-//  Claudachi
+//  Clawdachi
 //
 
 import SpriteKit
