@@ -20,6 +20,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Set up Claude Code integration on first launch
+        ClaudeIntegrationSetup.setupIfNeeded()
+
         // Create borderless window (48x48 scene at 6x scale = 288x288)
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 288, height: 288),
