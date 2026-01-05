@@ -45,6 +45,10 @@ case "$EVENT_TYPE" in
       STATUS="tools"
     fi
     ;;
+  "permission_request")
+    # Permission dialog shown to user - set waiting status
+    STATUS="waiting"
+    ;;
   "tool_end")
     STATUS="thinking"
     ;;
