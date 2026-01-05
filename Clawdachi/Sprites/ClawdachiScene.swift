@@ -55,8 +55,9 @@ class ClawdachiScene: SKScene {
     }
 
     private func handleMusicPlaybackChanged(_ isPlaying: Bool) {
-        // Don't dance while sleeping or when Claude is thinking
-        guard !isSleeping, !clawdachi.isClaudeThinking else { return }
+        // Don't dance while sleeping or during any Claude Code activity
+        guard !isSleeping, !clawdachi.isClaudeThinking,
+              !clawdachi.isQuestionMarkVisible, !clawdachi.isLightbulbVisible else { return }
 
         if isPlaying {
             clawdachi.startDancing()
@@ -85,14 +86,11 @@ class ClawdachiScene: SKScene {
         } else if isActive && status == "waiting" {
             // Claude stopped responding - waiting for user input
             clawdachi.stopClaudeThinking()
+            clawdachi.stopDancing()  // Stop dancing while waiting
             clawdachi.dismissLightbulb()
             clawdachi.showQuestionMark()
             // Keep wasClaudeActive true - still in session
-
-            // Resume dancing if music is playing
-            if musicMonitor.isPlaying && !clawdachi.isPerformingAction {
-                clawdachi.startDancing()
-            }
+            // Don't resume dancing - question mark means user interaction needed
         } else {
             // Claude session truly ended - show completion
             clawdachi.stopClaudeThinking()
@@ -103,11 +101,8 @@ class ClawdachiScene: SKScene {
                 clawdachi.showCompletionLightbulb()
                 wasClaudeActive = false
             }
-
-            // Resume dancing if music is playing
-            if musicMonitor.isPlaying && !clawdachi.isPerformingAction {
-                clawdachi.startDancing()
-            }
+            // Don't resume dancing here - MusicPlaybackMonitor will do it
+            // after lightbulb fades (guards will allow it then)
         }
     }
 

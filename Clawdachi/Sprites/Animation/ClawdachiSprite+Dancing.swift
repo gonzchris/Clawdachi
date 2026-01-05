@@ -12,7 +12,9 @@ extension ClawdachiSprite {
     // MARK: - Dance Animation
 
     func startDancing() {
-        guard !isDancing, !isPerformingAction else { return }
+        // Don't dance during Claude Code activity
+        guard !isDancing, !isPerformingAction,
+              !isClaudeThinking, !isQuestionMarkVisible, !isLightbulbVisible else { return }
         isDancing = true
 
         // Pause competing idle animations (whistle, look-around)
