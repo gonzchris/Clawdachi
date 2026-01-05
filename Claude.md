@@ -1,12 +1,12 @@
 # Clawdachi
 
-A cute pixel art desktop pet for macOS. A friendly orange blob that lives on your screen, breathes, blinks, whistles, and reacts when you interact with it.
+A cute pixel art desktop pet for macOS. A friendly orange blob that lives on your screen, breathes, blinks, whistles, dances to your music, and reacts when you interact with it.
 
 ---
 
 ## What It Does
 
-Clawdachi is a tiny pixel mascot that floats on your desktop. It has a life of its own - breathing gently, blinking randomly, occasionally whistling a tune with little music notes floating up. Click on it and it'll wave or bounce happily. Drag it around and watch it sweat nervously. Put it to sleep when you need focus time.
+Clawdachi is a tiny pixel mascot that floats on your desktop. It has a life of its own - breathing gently, blinking randomly, occasionally whistling a tune with little music notes floating up. Play some music in Spotify or Apple Music and watch it groove along! Click on it and it'll wave or bounce happily. Drag it around and watch it sweat nervously. Put it to sleep when you need focus time.
 
 It's a small piece of joy that makes your desktop feel a little more alive.
 
@@ -17,11 +17,21 @@ It's a small piece of joy that makes your desktop feel a little more alive.
 ### Idle Animations
 - **Breathing:** Gentle 4-frame breathing cycle
 - **Blinking:** Random blinks every 2.5-6 seconds
-- **Whistling:** Occasionally whistles with floating music notes
-- **Looking around:** Eyes wander curiously
+- **Whistling:** Occasionally whistles with floating music notes (side-mouth style)
+- **Eye tracking:** Eyes follow your mouse cursor
+- **Looking around:** Eyes wander curiously when idle
+
+### Music-Reactive Dancing
+- **Automatic detection:** Monitors Spotify and Apple Music playback
+- **Dance animation:** When music plays:
+  - Body sways side to side
+  - Arms wave up and down alternately
+  - Legs tap in rhythm
+  - Music notes (♪/♫) float up from both sides
+- **Smart behavior:** Stops dancing when sleeping, resumes after waking
 
 ### Interactions
-- **Click:** Triggers random reactions (wave, bounce, heart)
+- **Click:** Triggers random reactions (wave, bounce, pixel heart)
 - **Drag:** Pick up and reposition anywhere on screen
   - Sweat drops appear (it's nervous!)
   - Arms wiggle anxiously
@@ -33,6 +43,13 @@ It's a small piece of joy that makes your desktop feel a little more alive.
 - **Sleep mode:** Closes eyes, spawns floating Z's
 - **GIF recording:** Capture animations with Cmd+Shift+R
 - **Window position:** Remembers where you left it
+
+### Visual Effects
+All floating effects feature consistent styling:
+- **Orange gradient** matching sprite palette (highlight → main → shadow)
+- **Black outline** for visibility
+- **Smooth anti-aliased** rendering for notes and Z's
+- **Pixel-art hearts** with shading
 
 ---
 
@@ -76,8 +93,11 @@ Clawdachi/
 ├── Recording/
 │   ├── AnimationRecorder.swift     # GIF frame capture
 │   └── GIFExporter.swift           # GIF file creation
+├── Services/
+│   └── MusicPlaybackMonitor.swift  # Spotify/Apple Music detection via AppleScript
 └── Sprites/
     ├── Animation/
+    │   ├── ClawdachiSprite+Dancing.swift    # Music-reactive dance animations
     │   ├── ClawdachiSprite+Drag.swift       # Drag interaction
     │   ├── ClawdachiSprite+Idle.swift       # Breathing, blinking, whistling
     │   ├── ClawdachiSprite+Interaction.swift # Click reactions
@@ -111,6 +131,8 @@ All idle animations run continuously and independently:
 - Blink interval: 2.5-6.0s
 - Whistle interval: 12-25s
 - Look around interval: 5-12s
+- Dance sway: 0.6s
+- Dance music note spawn: 0.8s
 
 ### Particle Effects
 Reusable spawner for floating effects:
@@ -152,7 +174,6 @@ Reusable spawner for floating effects:
 ## Future Ideas
 
 - More click reactions
-- Cursor tracking (eyes follow mouse)
 - Time-of-day awareness (sleepy at night)
 - Weather reactions
 - Multiple personality modes
