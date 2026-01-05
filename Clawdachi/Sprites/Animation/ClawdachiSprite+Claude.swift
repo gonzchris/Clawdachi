@@ -34,8 +34,16 @@ extension ClawdachiSprite {
         ClawdachiFaceSprites.generateLightbulbTexture()
     }()
 
+    /// Cached texture for question mark (waiting for input)
+    private static var questionMarkTexture: SKTexture = {
+        ClawdachiFaceSprites.generateQuestionMarkTexture()
+    }()
+
     /// Name for the lightbulb node
     private static let lightbulbName = "completionLightbulb"
+
+    /// Name for the question mark node
+    private static let questionMarkName = "waitingQuestionMark"
 
     // MARK: - Thinking Animation
 
@@ -238,5 +246,54 @@ extension ClawdachiSprite {
     /// Check if lightbulb is currently visible
     var isLightbulbVisible: Bool {
         childNode(withName: Self.lightbulbName) != nil
+    }
+
+    // MARK: - Question Mark (Waiting for Input)
+
+    /// Show the question mark above the sprite's head (waiting for user input)
+    func showQuestionMark() {
+        // Remove any existing question mark
+        childNode(withName: Self.questionMarkName)?.removeFromParent()
+
+        let mark = SKSpriteNode(texture: Self.questionMarkTexture)
+        mark.name = Self.questionMarkName
+        mark.size = CGSize(width: 7, height: 12)
+        mark.position = CGPoint(x: 0, y: 15)
+        mark.alpha = 0
+        mark.zPosition = SpriteZPositions.effects + 1
+        mark.setScale(0.3)
+        addChild(mark)
+
+        // Pop in animation
+        let popIn = SKAction.group([
+            SKAction.fadeIn(withDuration: 0.15),
+            SKAction.scale(to: 1.2, duration: 0.15)
+        ])
+        let settle = SKAction.scale(to: 1.0, duration: 0.1)
+        settle.timingMode = .easeOut
+
+        // Gentle floating bob while visible
+        let bobUp = SKAction.moveBy(x: 0, y: 1.0, duration: 0.6)
+        let bobDown = SKAction.moveBy(x: 0, y: -1.0, duration: 0.6)
+        bobUp.timingMode = .easeInEaseOut
+        bobDown.timingMode = .easeInEaseOut
+        let floatLoop = SKAction.repeatForever(SKAction.sequence([bobUp, bobDown]))
+
+        mark.run(SKAction.sequence([popIn, settle, floatLoop]))
+    }
+
+    /// Dismiss the question mark with a fade out
+    func dismissQuestionMark() {
+        guard let mark = childNode(withName: Self.questionMarkName) else { return }
+
+        mark.removeAllActions()
+        let fadeOut = SKAction.fadeOut(withDuration: 0.2)
+        let remove = SKAction.removeFromParent()
+        mark.run(SKAction.sequence([fadeOut, remove]))
+    }
+
+    /// Check if question mark is currently visible
+    var isQuestionMarkVisible: Bool {
+        childNode(withName: Self.questionMarkName) != nil
     }
 }

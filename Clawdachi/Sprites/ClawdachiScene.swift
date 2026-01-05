@@ -78,14 +78,27 @@ class ClawdachiScene: SKScene {
 
         if isActive && (status == "thinking" || status == "tools") {
             // Claude is working - show thinking pose
-            clawdachi.dismissLightbulb()  // Dismiss any existing lightbulb
+            clawdachi.dismissLightbulb()
+            clawdachi.dismissQuestionMark()
             clawdachi.startClaudeThinking()
             wasClaudeActive = true
-        } else {
-            // Claude is idle - stop thinking
+        } else if isActive && status == "waiting" {
+            // Claude stopped responding - waiting for user input
             clawdachi.stopClaudeThinking()
+            clawdachi.dismissLightbulb()
+            clawdachi.showQuestionMark()
+            // Keep wasClaudeActive true - still in session
 
-            // Show lightbulb when transitioning from active → idle
+            // Resume dancing if music is playing
+            if musicMonitor.isPlaying && !clawdachi.isPerformingAction {
+                clawdachi.startDancing()
+            }
+        } else {
+            // Claude session truly ended - show completion
+            clawdachi.stopClaudeThinking()
+            clawdachi.dismissQuestionMark()
+
+            // Show lightbulb when transitioning from active → complete
             if wasClaudeActive {
                 clawdachi.showCompletionLightbulb()
                 wasClaudeActive = false
@@ -154,8 +167,9 @@ class ClawdachiScene: SKScene {
 
         // If it was a click (not a drag), trigger reaction or wake up
         if !isDragging {
-            // Dismiss lightbulb on any click
+            // Dismiss indicators on any click
             clawdachi.dismissLightbulb()
+            clawdachi.dismissQuestionMark()
 
             if isSleeping {
                 isSleeping = false
@@ -177,7 +191,8 @@ class ClawdachiScene: SKScene {
         longPressTimer?.invalidate()
         longPressTimer = nil
         endDragIfNeeded()
-        clawdachi.dismissLightbulb()  // Dismiss on right click too
+        clawdachi.dismissLightbulb()
+        clawdachi.dismissQuestionMark()
         showContextMenu(with: event)
     }
 
