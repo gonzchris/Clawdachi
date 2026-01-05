@@ -235,13 +235,18 @@ extension ClawdachiSprite {
     }
 
     /// Dismiss the lightbulb with a fade out
-    func dismissLightbulb() {
-        guard let bulb = childNode(withName: Self.lightbulbName) else { return }
+    /// - Parameter completion: Called after lightbulb is fully removed
+    func dismissLightbulb(completion: (() -> Void)? = nil) {
+        guard let bulb = childNode(withName: Self.lightbulbName) else {
+            completion?()
+            return
+        }
 
         bulb.removeAllActions()
         let fadeOut = SKAction.fadeOut(withDuration: 0.2)
         let remove = SKAction.removeFromParent()
-        bulb.run(SKAction.sequence([fadeOut, remove]))
+        let callCompletion = SKAction.run { completion?() }
+        bulb.run(SKAction.sequence([fadeOut, remove, callCompletion]))
     }
 
     /// Check if lightbulb is currently visible
@@ -284,13 +289,18 @@ extension ClawdachiSprite {
     }
 
     /// Dismiss the question mark with a fade out
-    func dismissQuestionMark() {
-        guard let mark = childNode(withName: Self.questionMarkName) else { return }
+    /// - Parameter completion: Called after question mark is fully removed
+    func dismissQuestionMark(completion: (() -> Void)? = nil) {
+        guard let mark = childNode(withName: Self.questionMarkName) else {
+            completion?()
+            return
+        }
 
         mark.removeAllActions()
         let fadeOut = SKAction.fadeOut(withDuration: 0.2)
         let remove = SKAction.removeFromParent()
-        mark.run(SKAction.sequence([fadeOut, remove]))
+        let callCompletion = SKAction.run { completion?() }
+        mark.run(SKAction.sequence([fadeOut, remove, callCompletion]))
     }
 
     /// Check if question mark is currently visible
