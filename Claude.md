@@ -35,7 +35,7 @@ It's a small piece of joy that makes your desktop feel a little more alive.
   - Focused eyes: `> <` expression with occasional blinks
   - Gentle head bob
   - Orange dots float upward and pop at the top
-- **Waiting question mark:** Yellow pixel question mark appears when Claude is waiting for user input (dismisses on click or when Claude starts again)
+- **Waiting question mark:** White pixel question mark appears when Claude is waiting for user input (dismisses on click or when Claude starts again)
 - **Completion lightbulb:** Yellow pixel lightbulb appears above head when Claude session ends (dismisses on click or when Claude starts again)
 - **File-based hooks:** Monitors `~/.clawdachi/sessions/` for status files
 - **Smart behavior:** Pauses dancing/idle animations while thinking
