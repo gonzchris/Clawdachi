@@ -7,6 +7,26 @@
 
 import Foundation
 
+/// Public session info for UI display
+struct SessionInfo: Equatable {
+    let id: String
+    let status: String
+    let timestamp: Double
+    let cwd: String?
+
+    /// Display name for the session (project folder name or truncated ID)
+    var displayName: String {
+        if let cwd = cwd {
+            return (cwd as NSString).lastPathComponent
+        }
+        // Fallback to truncated session ID
+        let idWithoutPrefix = id.hasPrefix("claude-session-")
+            ? String(id.dropFirst("claude-session-".count))
+            : id
+        return String(idWithoutPrefix.prefix(8))
+    }
+}
+
 /// Monitors Claude Code session status by watching session files
 class ClaudeSessionMonitor {
 
@@ -18,8 +38,22 @@ class ClaudeSessionMonitor {
     /// Current status from most recent session ("thinking", "tools", etc.)
     private(set) var currentStatus: String?
 
+    /// All currently active sessions (non-stale)
+    private(set) var activeSessions: [SessionInfo] = []
+
+    /// User-selected session ID to monitor (nil = auto/most recent)
+    var selectedSessionId: String? {
+        didSet {
+            // Re-check status immediately when selection changes
+            checkSessionStatus()
+        }
+    }
+
     /// Callback when session status changes
     var onStatusChanged: ((Bool, String?) -> Void)?
+
+    /// Callback when the list of active sessions changes
+    var onSessionListChanged: (([SessionInfo]) -> Void)?
 
     /// Polling timer
     private var pollTimer: Timer?
@@ -69,19 +103,23 @@ class ClaudeSessionMonitor {
             let result = self.readSessionFiles()
 
             DispatchQueue.main.async {
-                self.updateStatus(isActive: result.isActive, status: result.status)
+                self.updateStatus(
+                    isActive: result.isActive,
+                    status: result.status,
+                    allSessions: result.allSessions
+                )
             }
         }
     }
 
     // MARK: - Session File Reading
 
-    private func readSessionFiles() -> (isActive: Bool, status: String?) {
+    private func readSessionFiles() -> (isActive: Bool, status: String?, allSessions: [SessionInfo]) {
         let fileManager = FileManager.default
 
         // Ensure directory exists
         guard fileManager.fileExists(atPath: sessionsPath.path) else {
-            return (false, nil)
+            return (false, nil, [])
         }
 
         do {
@@ -94,12 +132,11 @@ class ClaudeSessionMonitor {
             let jsonFiles = files.filter { $0.pathExtension == "json" }
 
             if jsonFiles.isEmpty {
-                return (false, nil)
+                return (false, nil, [])
             }
 
-            // Find most recent session by timestamp in file contents
-            var mostRecentStatus: String?
-            var mostRecentTimestamp: Double = 0
+            // Collect all non-stale sessions
+            var sessions: [SessionInfo] = []
             let now = Date().timeIntervalSince1970
 
             for file in jsonFiles {
@@ -109,28 +146,42 @@ class ClaudeSessionMonitor {
                     if age > AnimationTimings.sessionStalenessThreshold {
                         continue
                     }
-
-                    if session.timestamp > mostRecentTimestamp {
-                        mostRecentTimestamp = session.timestamp
-                        mostRecentStatus = session.status
-                    }
+                    sessions.append(session)
                 }
             }
 
-            // Only active if we found a non-stale session
-            let hasActiveSession = mostRecentTimestamp > 0
-            return (hasActiveSession, mostRecentStatus)
+            // Sort by timestamp (most recent first)
+            sessions.sort { $0.timestamp > $1.timestamp }
+
+            // Determine which session to monitor
+            let monitoredSession: SessionInfo?
+            if let selectedId = selectedSessionId {
+                // User selected a specific session
+                monitoredSession = sessions.first { $0.id == selectedId }
+                // If selected session is gone, fall back to nil (will trigger callback)
+            } else {
+                // Auto mode: use most recent session
+                monitoredSession = sessions.first
+            }
+
+            let hasActiveSession = monitoredSession != nil
+            return (hasActiveSession, monitoredSession?.status, sessions)
 
         } catch {
-            return (false, nil)
+            return (false, nil, [])
         }
     }
 
-    private func parseSessionFile(at url: URL) -> SessionData? {
+    private func parseSessionFile(at url: URL) -> SessionInfo? {
         do {
             let data = try Data(contentsOf: url)
             let session = try JSONDecoder().decode(SessionData.self, from: data)
-            return session
+            return SessionInfo(
+                id: session.session_id ?? url.deletingPathExtension().lastPathComponent,
+                status: session.status,
+                timestamp: session.timestamp,
+                cwd: session.cwd
+            )
         } catch {
             return nil
         }
@@ -138,8 +189,21 @@ class ClaudeSessionMonitor {
 
     // MARK: - State Update
 
-    private func updateStatus(isActive: Bool, status: String?) {
-        // Only fire callback if state actually changed
+    private func updateStatus(isActive: Bool, status: String?, allSessions: [SessionInfo]) {
+        // Check if session list changed
+        let sessionsChanged = activeSessions != allSessions
+        if sessionsChanged {
+            activeSessions = allSessions
+            onSessionListChanged?(allSessions)
+
+            // If selected session no longer exists, clear selection (auto mode)
+            if let selectedId = selectedSessionId,
+               !allSessions.contains(where: { $0.id == selectedId }) {
+                selectedSessionId = nil
+            }
+        }
+
+        // Only fire status callback if state actually changed
         guard isActive != self.isActive || status != self.currentStatus else { return }
 
         self.isActive = isActive
@@ -148,7 +212,7 @@ class ClaudeSessionMonitor {
     }
 }
 
-// MARK: - Session Data Model
+// MARK: - Session Data Model (internal JSON parsing)
 
 private struct SessionData: Codable {
     let status: String

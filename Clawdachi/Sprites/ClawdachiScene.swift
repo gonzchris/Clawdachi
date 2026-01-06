@@ -69,6 +69,12 @@ class ClawdachiScene: SKScene {
 
     private func setupClaudeMonitor() {
         claudeMonitor = ClaudeSessionMonitor()
+
+        // Load saved preference
+        if let savedId = UserDefaults.standard.string(forKey: "clawdachi.monitoring.instanceId") {
+            claudeMonitor.selectedSessionId = savedId
+        }
+
         claudeMonitor.onStatusChanged = { [weak self] isActive, status in
             self?.handleClaudeStatusChanged(isActive: isActive, status: status)
         }
@@ -84,6 +90,11 @@ class ClawdachiScene: SKScene {
             clawdachi.dismissQuestionMark()
             clawdachi.dismissPartyCelebration()
             clawdachi.startClaudeThinking()
+
+            // Show thinking message only when first starting
+            if !wasClaudeActive {
+                showChatBubble(randomThinkingMessage(), duration: 3.0)
+            }
             wasClaudeActive = true
         } else if isActive && status == "waiting" {
             // Claude stopped responding - waiting for user input
@@ -92,6 +103,9 @@ class ClawdachiScene: SKScene {
             clawdachi.dismissLightbulb()
             clawdachi.dismissPartyCelebration()
             clawdachi.showQuestionMark()
+
+            // Show waiting message
+            showChatBubble(randomWaitingMessage(), duration: 4.0)
             // Keep wasClaudeActive true - still in session
             // Don't resume dancing - question mark means user interaction needed
         } else {
@@ -103,9 +117,51 @@ class ClawdachiScene: SKScene {
             // Persists until user clicks sprite or new CLI status
             if wasClaudeActive {
                 clawdachi.showPartyCelebration()
+                showChatBubble(randomCompletionMessage(), duration: 4.0)
                 wasClaudeActive = false
             }
         }
+    }
+
+    // MARK: - Claude Event Messages
+
+    private func randomThinkingMessage() -> String {
+        let messages = [
+            "hmm, let me think...",
+            "on it!",
+            "working on it...",
+            "let's see...",
+            "thinking...",
+            "one sec...",
+            "i got this!",
+            "brb coding..."
+        ]
+        return messages.randomElement() ?? "thinking..."
+    }
+
+    private func randomWaitingMessage() -> String {
+        let messages = [
+            "your turn!",
+            "whatcha think?",
+            "need your input!",
+            "over to you!",
+            "waiting on you~",
+            "yes? no? maybe?"
+        ]
+        return messages.randomElement() ?? "your turn!"
+    }
+
+    private func randomCompletionMessage() -> String {
+        let messages = [
+            "all done!",
+            "ta-da!",
+            "finished!",
+            "nailed it!",
+            "done and done!",
+            "woohoo!",
+            "mission complete!"
+        ]
+        return messages.randomElement() ?? "all done!"
     }
 
     private func setupCharacter() {
@@ -322,6 +378,15 @@ class ClawdachiScene: SKScene {
 
         menu.addItem(NSMenuItem.separator())
 
+        // Monitor Instance submenu
+        let instanceItem = NSMenuItem(title: "Monitor Instance", action: nil, keyEquivalent: "")
+        let instanceSubmenu = NSMenu(title: "Monitor Instance")
+        buildInstanceSubmenu(instanceSubmenu)
+        instanceItem.submenu = instanceSubmenu
+        menu.addItem(instanceItem)
+
+        menu.addItem(NSMenuItem.separator())
+
         // Quit
         let quitItem = NSMenuItem(
             title: "Quit Clawdachi",
@@ -334,6 +399,91 @@ class ClawdachiScene: SKScene {
         // Show menu at click location
         let locationInView = event.locationInWindow
         menu.popUp(positioning: nil, at: locationInView, in: view)
+    }
+
+    private func buildInstanceSubmenu(_ menu: NSMenu) {
+        let sessions = claudeMonitor.activeSessions
+        let selectedId = claudeMonitor.selectedSessionId
+
+        // Auto option (always present)
+        let autoItem = NSMenuItem(
+            title: "Auto (Most Recent)",
+            action: #selector(selectAutoInstance),
+            keyEquivalent: ""
+        )
+        autoItem.target = self
+        autoItem.state = (selectedId == nil) ? .on : .off
+        menu.addItem(autoItem)
+
+        // Separator if there are sessions
+        if !sessions.isEmpty {
+            menu.addItem(NSMenuItem.separator())
+        }
+
+        // Individual sessions
+        // Track display names for duplicate detection
+        var displayNameCounts: [String: Int] = [:]
+        for session in sessions {
+            displayNameCounts[session.displayName, default: 0] += 1
+        }
+
+        for session in sessions {
+            var title = session.displayName
+            // Append ID suffix if duplicate names exist
+            if displayNameCounts[session.displayName, default: 0] > 1 {
+                let shortId = String(session.id.suffix(6))
+                title = "\(title) (\(shortId))"
+            }
+
+            // Append status indicator
+            let statusLabel = statusDisplayLabel(for: session.status)
+            if !statusLabel.isEmpty {
+                title = "\(title) \(statusLabel)"
+            }
+
+            let item = NSMenuItem(
+                title: title,
+                action: #selector(selectInstance(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.representedObject = session.id
+            item.state = (selectedId == session.id) ? .on : .off
+            menu.addItem(item)
+        }
+    }
+
+    private func statusDisplayLabel(for status: String) -> String {
+        switch status {
+        case "thinking", "tools":
+            return "(thinking...)"
+        case "waiting":
+            return "(waiting)"
+        case "error":
+            return "(error)"
+        default:
+            return ""
+        }
+    }
+
+    @objc private func selectAutoInstance() {
+        claudeMonitor.selectedSessionId = nil
+        saveMonitorPreference(nil)
+    }
+
+    @objc private func selectInstance(_ sender: NSMenuItem) {
+        guard let sessionId = sender.representedObject as? String else { return }
+        claudeMonitor.selectedSessionId = sessionId
+        saveMonitorPreference(sessionId)
+    }
+
+    private func saveMonitorPreference(_ sessionId: String?) {
+        let defaults = UserDefaults.standard
+        if let sessionId = sessionId {
+            defaults.set(sessionId, forKey: "clawdachi.monitoring.instanceId")
+        } else {
+            defaults.removeObject(forKey: "clawdachi.monitoring.instanceId")
+        }
     }
 
     @objc private func toggleSleep() {
@@ -384,6 +534,9 @@ class ClawdachiScene: SKScene {
     func showChatBubble(_ message: String, duration: TimeInterval? = 5.0) {
         guard let window = view?.window else { return }
         ChatBubbleWindow.show(message: message, relativeTo: window, duration: duration)
+
+        // Trigger speaking animation on the sprite
+        clawdachi.startSpeaking(duration: min(duration ?? 2.0, 2.5))
     }
 
     /// Dismiss any visible chat bubble
