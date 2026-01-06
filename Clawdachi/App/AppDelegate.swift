@@ -10,6 +10,9 @@ import UserNotifications
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
     private var animationRecorder: AnimationRecorder?
+
+    /// Public accessor for the sprite window (used by ChatBubbleWindow)
+    var spriteWindow: NSWindow { window }
     private var globalEventMonitor: Any?
     private var localEventMonitor: Any?
 

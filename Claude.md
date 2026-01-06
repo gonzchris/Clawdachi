@@ -50,6 +50,18 @@ It's a small piece of joy that makes your desktop feel a little more alive.
 - **File-based hooks:** Monitors `~/.clawdachi/sessions/` for status files
 - **Smart behavior:** Pauses dancing/idle animations during all Claude states (thinking, question mark, party celebration)
 
+### Chat Bubbles
+- **RPG-style message system:** Stacking speech bubbles above sprite
+- **Pixel-art styling:** White fill, black outline, gray drop shadow
+- **Triangular tail:** Points down from bottom-left of bubble
+- **Multi-message support:** Up to 4 bubbles stack vertically
+  - Newest message appears at bottom (with tail)
+  - Older messages slide up (no tail)
+  - Oldest auto-dismisses when 5th message arrives
+- **Animations:** Pop-in with overshoot, fade-out on dismiss
+- **Dismissal:** Click any bubble to dismiss, or auto-dismiss after 5 seconds
+- **Font:** Press Start 2P pixel font for retro look
+
 ### Interactions
 - **Click:** Triggers random reactions (wave, bounce, pixel heart)
 - **Drag:** Pick up and reposition anywhere on screen
@@ -57,6 +69,7 @@ It's a small piece of joy that makes your desktop feel a little more alive.
   - Arms wiggle anxiously
 - **Right-click menu:**
   - Sleep Mode / Wake Up
+  - Test Chat Bubble
   - Quit
 
 ### Other
@@ -114,11 +127,18 @@ Clawdachi/
 │   ├── AnimationRecorder.swift     # GIF frame capture
 │   └── GIFExporter.swift           # GIF file creation
 ├── Resources/
-│   └── claude-status.sh            # Hook script bundled for auto-setup
+│   ├── claude-status.sh            # Hook script bundled for auto-setup
+│   └── Fonts/                      # Custom pixel fonts (Press Start 2P, etc.)
 ├── Services/
 │   ├── ClaudeIntegrationSetup.swift # Auto-setup hooks on first launch
 │   ├── ClaudeSessionMonitor.swift   # Claude Code status via file polling
 │   └── MusicPlaybackMonitor.swift   # Spotify/Apple Music detection via AppleScript
+├── UI/
+│   ├── ChatBubbleManager.swift     # Manages stacking bubble queue (max 4)
+│   ├── ChatBubbleWindow.swift      # Individual bubble NSWindow
+│   ├── ChatBubbleView.swift        # Custom NSView for bubble rendering
+│   ├── ChatBubbleTextures.swift    # Pixel-art bubble image generation
+│   └── PixelFontLoader.swift       # Custom font loading and caching
 └── Sprites/
     ├── Animation/
     │   ├── ClawdachiSprite+Claude.swift     # Claude Code thinking animation
@@ -129,8 +149,9 @@ Clawdachi/
     │   ├── ClawdachiSprite+Sleep.swift      # Sleep mode
     │   └── ClawdachiSprite+Smoking.swift    # Smoking idle animation
     ├── Constants/
-    │   ├── AnimationTimings.swift  # All timing values
-    │   └── SpritePositions.swift   # Position and z-order constants
+    │   ├── AnimationTimings.swift    # All timing values
+    │   ├── ChatBubbleConstants.swift # Chat bubble sizing, colors, timing
+    │   └── SpritePositions.swift     # Position and z-order constants
     ├── Effects/
     │   └── ParticleSpawner.swift   # Music notes, hearts, sweat drops, Z's
     ├── ClawdachiBodySprites.swift  # Body texture generation
@@ -152,7 +173,7 @@ All idle animations run continuously and independently:
 - Whistling: Random trigger, shows mouth + spawns music notes
 - Looking around: Eyes shift position randomly
 
-### Animation Timings (see AnimationTimings.swift)
+### Animation Timings (see AnimationTimings.swift, ChatBubbleConstants.swift)
 - Breathing cycle: 3.0s
 - Blink interval: 2.5-6.0s
 - Whistle interval: 12-25s
@@ -165,6 +186,10 @@ All idle animations run continuously and independently:
 - Claude thinking bob: 2.0s
 - Claude thinking dot spawn: 0.6-1.0s
 - Claude thinking blink: 4-7s
+- Chat bubble pop-in: 0.15s (with 1.1x overshoot)
+- Chat bubble fade-out: 0.2s
+- Chat bubble auto-dismiss: 5.0s
+- Chat bubble stack slide: 0.25s
 
 ### Particle Effects
 Reusable spawner for floating effects:
@@ -174,6 +199,25 @@ Reusable spawner for floating effects:
 - Sweat drops (dragging)
 - Thinking dots (Claude working)
 - Smoke particles (smoking animation)
+
+### Chat Bubble System
+Separate floating NSWindow system (not SpriteKit) for text rendering:
+- **Architecture:** ChatBubbleManager (singleton) → ChatBubbleWindow[] → ChatBubbleView
+- **Rendering:** NSBezierPath for bubble shapes (GPU-accelerated)
+- **Caching:** LRU image cache (12 entries), font caching, attributed string caching
+- **Positioning:** Tracks sprite window, recalculates on window move
+
+API:
+```swift
+// Show a message (managed by ChatBubbleManager)
+ChatBubbleWindow.show(message: "Hello!", relativeTo: spriteWindow)
+
+// Or via scene
+clawdachiScene.showChatBubble("Hello!", duration: 5.0)
+
+// Dismiss all
+ChatBubbleWindow.dismiss(animated: true)
+```
 
 ---
 
@@ -212,3 +256,6 @@ Reusable spawner for floating effects:
 - Weather reactions
 - Multiple personality modes
 - Companion pets
+- Chat bubble typing animation (character by character)
+- Different bubble styles/colors
+- Sound effects for interactions

@@ -311,6 +311,17 @@ class ClawdachiScene: SKScene {
 
         menu.addItem(NSMenuItem.separator())
 
+        // Test chat bubble (temporary for testing)
+        let chatItem = NSMenuItem(
+            title: "Test Chat Bubble",
+            action: #selector(testChatBubble),
+            keyEquivalent: ""
+        )
+        chatItem.target = self
+        menu.addItem(chatItem)
+
+        menu.addItem(NSMenuItem.separator())
+
         // Quit
         let quitItem = NSMenuItem(
             title: "Quit Clawdachi",
@@ -346,5 +357,37 @@ class ClawdachiScene: SKScene {
 
     @objc private func quitApp() {
         NSApplication.shared.terminate(nil)
+    }
+
+    @objc private func testChatBubble() {
+        // Test multiple stacking messages
+        let messages = [
+            "hi, i'm clawdachi",
+            "i love music!",
+            "pet me please?",
+            "zzz... sleepy..."
+        ]
+
+        for (index, message) in messages.enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 1.2) { [weak self] in
+                self?.showChatBubble(message)
+            }
+        }
+    }
+
+    // MARK: - Chat Bubble
+
+    /// Show a chat bubble with the given message
+    /// - Parameters:
+    ///   - message: Text to display in the bubble
+    ///   - duration: Auto-dismiss duration (default 5s, nil = manual only)
+    func showChatBubble(_ message: String, duration: TimeInterval? = 5.0) {
+        guard let window = view?.window else { return }
+        ChatBubbleWindow.show(message: message, relativeTo: window, duration: duration)
+    }
+
+    /// Dismiss any visible chat bubble
+    func dismissChatBubble() {
+        ChatBubbleWindow.dismiss(animated: true)
     }
 }
