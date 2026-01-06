@@ -965,4 +965,42 @@ class ClawdachiFaceSprites {
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 1)
     }
+
+    // MARK: - Lightbulb Spark Textures (Yellow/White)
+
+    /// Yellow/white color palette for lightbulb sparks
+    private static let sparkWhite = PixelColor(r: 255, g: 255, b: 255)
+    private static let sparkYellow = PixelColor(r: 255, g: 245, b: 150)
+    private static let sparkYellowBright = PixelColor(r: 255, g: 255, b: 200)
+    private static let sparkYellowDark = PixelColor(r: 255, g: 220, b: 80)
+
+    /// Generates a small yellow/white spark (2x2 pixels)
+    static func generateSparkSmall() -> SKTexture {
+        let pixels: [[PixelColor]] = [
+            [sparkYellow, sparkWhite],
+            [sparkYellowDark, sparkYellow],
+        ]
+        return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 2)
+    }
+
+    /// Generates a medium yellow/white spark (3x3 pixels)
+    static func generateSparkMedium() -> SKTexture {
+        let pixels: [[PixelColor]] = [
+            [P.clear, sparkWhite, P.clear],
+            [sparkYellowBright, sparkYellow, sparkYellowDark],
+            [P.clear, sparkYellowDark, P.clear],
+        ]
+        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 3)
+    }
+
+    /// Generates a large yellow/white spark (4x4 pixels)
+    static func generateSparkLarge() -> SKTexture {
+        let pixels: [[PixelColor]] = [
+            [P.clear, sparkWhite, sparkYellowBright, P.clear],
+            [sparkWhite, sparkYellow, sparkYellow, sparkYellowDark],
+            [sparkYellowBright, sparkYellow, sparkYellow, sparkYellowDark],
+            [P.clear, sparkYellowDark, sparkYellowDark, P.clear],
+        ]
+        return PixelArtGenerator.textureFromPixels(pixels, width: 4, height: 4)
+    }
 }

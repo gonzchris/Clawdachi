@@ -20,6 +20,15 @@ extension ClawdachiSprite {
         ]
     }()
 
+    /// Cached textures for lightbulb sparks (small, medium, large yellow/white)
+    private static var sparkTextures: [(texture: SKTexture, size: CGSize)] = {
+        [
+            (ClawdachiFaceSprites.generateSparkSmall(), CGSize(width: 2, height: 2)),
+            (ClawdachiFaceSprites.generateSparkMedium(), CGSize(width: 3, height: 3)),
+            (ClawdachiFaceSprites.generateSparkLarge(), CGSize(width: 4, height: 4))
+        ]
+    }()
+
     /// Focused eye textures for thinking: > <
     private static var focusedLeftEyeTexture: SKTexture = {
         ClawdachiFaceSprites.generateEyeTexture(state: .squint)  // >
@@ -65,13 +74,10 @@ extension ClawdachiSprite {
     // MARK: - Planning Animation
 
     /// Start the planning animation (when Claude is in plan mode)
-    /// Combines thinking pose with lightbulb - designing a solution
+    /// Shows lightbulb with flickering sparks - designing a solution
     func startClaudePlanning() {
         guard !isClaudePlanning, !isDragging else { return }
         isClaudePlanning = true
-
-        // Also set thinking flag since planning uses thinking animations
-        isClaudeThinking = true
 
         // Pause competing animations
         pauseIdleAnimations()
@@ -89,38 +95,35 @@ extension ClawdachiSprite {
         // Subtle body tilt forward (concentrating)
         let tiltForward = SKAction.scaleY(to: 0.97, duration: 0.3)
         tiltForward.timingMode = .easeInEaseOut
-        run(tiltForward, withKey: "thinkingTilt")
+        run(tiltForward, withKey: "planningTilt")
 
-        // Gentle head bob loop (thinking rhythm)
+        // Gentle head bob loop
         let bobHalfDuration = AnimationTimings.thinkingBobDuration / 2
         let bobUp = SKAction.moveBy(x: 0, y: 0.5, duration: bobHalfDuration)
         let bobDown = SKAction.moveBy(x: 0, y: -0.5, duration: bobHalfDuration)
         bobUp.timingMode = .easeInEaseOut
         bobDown.timingMode = .easeInEaseOut
         let bobCycle = SKAction.repeatForever(SKAction.sequence([bobUp, bobDown]))
-        run(bobCycle, withKey: "thinkingBob")
-
-        // Start spawning thinking particles
-        startThinkingParticles()
+        run(bobCycle, withKey: "planningBob")
 
         // Start occasional blinks
-        startThinkingBlinks()
+        startPlanningBlinks()
 
-        // Show lightbulb above head (the "planning idea" indicator)
+        // Show lightbulb with flickering sparks
         showPlanningLightbulb()
+        startLightbulbSparks()
     }
 
     /// Stop the planning animation and return to normal
     func stopClaudePlanning() {
         guard isClaudePlanning else { return }
         isClaudePlanning = false
-        isClaudeThinking = false
 
-        // Stop thinking animations
-        removeAction(forKey: "thinkingTilt")
-        removeAction(forKey: "thinkingBob")
-        removeAction(forKey: "thinkingParticleSpawner")
-        removeAction(forKey: "thinkingBlink")
+        // Stop planning animations
+        removeAction(forKey: "planningTilt")
+        removeAction(forKey: "planningBob")
+        removeAction(forKey: "planningBlink")
+        removeAction(forKey: "lightbulbSparkSpawner")
 
         // Dismiss the planning lightbulb
         dismissLightbulb()
@@ -139,6 +142,87 @@ extension ClawdachiSprite {
 
         // Resume idle animations
         resumeIdleAnimations()
+    }
+
+    // MARK: - Planning Blinks
+
+    private func startPlanningBlinks() {
+        let blinkAction = SKAction.run { [weak self] in
+            guard let self = self, self.isClaudePlanning else { return }
+            self.performPlanningBlink()
+        }
+        let wait = SKAction.wait(forDuration: TimeInterval.random(in: 4.0...7.0))
+        let loop = SKAction.repeatForever(SKAction.sequence([wait, blinkAction]))
+        run(loop, withKey: "planningBlink")
+    }
+
+    private func performPlanningBlink() {
+        let close = SKAction.run { [weak self] in
+            self?.leftEyeNode.texture = self?.eyeClosedTexture
+            self?.rightEyeNode.texture = self?.eyeClosedTexture
+        }
+        let open = SKAction.run { [weak self] in
+            guard let self = self, self.isClaudePlanning else { return }
+            self.leftEyeNode.texture = Self.focusedLeftEyeTexture
+            self.rightEyeNode.texture = Self.focusedRightEyeTexture
+        }
+        let blinkSequence = SKAction.sequence([
+            close,
+            SKAction.wait(forDuration: 0.1),
+            open
+        ])
+        run(blinkSequence)
+    }
+
+    // MARK: - Lightbulb Sparks
+
+    private func startLightbulbSparks() {
+        let spawnAction = SKAction.run { [weak self] in
+            guard let self = self, self.isClaudePlanning else { return }
+            self.spawnLightbulbSpark()
+        }
+        let wait = SKAction.wait(forDuration: TimeInterval.random(in: 0.15...0.35))
+        let loop = SKAction.repeatForever(SKAction.sequence([spawnAction, wait]))
+        run(loop, withKey: "lightbulbSparkSpawner")
+    }
+
+    private func spawnLightbulbSpark() {
+        // Pick a random yellow/white spark texture
+        let sparkData = Self.sparkTextures.randomElement()!
+
+        let spark = SKSpriteNode(texture: sparkData.texture)
+        spark.size = CGSize(width: sparkData.size.width * 0.6, height: sparkData.size.height * 0.6)
+
+        // Position around the lightbulb (which is at y: 15)
+        let angle = CGFloat.random(in: 0...(2 * .pi))
+        let radius = CGFloat.random(in: 3...6)
+        let offsetX = cos(angle) * radius
+        let offsetY = sin(angle) * radius + 15  // 15 is lightbulb Y position
+
+        spark.position = CGPoint(x: offsetX, y: offsetY)
+        spark.alpha = 0
+        spark.zPosition = SpriteZPositions.effects + 2
+        spark.setScale(0.3)
+        addChild(spark)
+
+        // Quick flicker animation: pop in, hold briefly, fade out
+        let fadeIn = SKAction.fadeAlpha(to: 0.9, duration: 0.05)
+        let grow = SKAction.scale(to: 0.8, duration: 0.05)
+        let popIn = SKAction.group([fadeIn, grow])
+
+        let hold = SKAction.wait(forDuration: TimeInterval.random(in: 0.08...0.15))
+
+        let fadeOut = SKAction.fadeOut(withDuration: 0.1)
+        let shrink = SKAction.scale(to: 0.4, duration: 0.1)
+        let popOut = SKAction.group([fadeOut, shrink])
+
+        let sequence = SKAction.sequence([
+            popIn,
+            hold,
+            popOut,
+            SKAction.removeFromParent()
+        ])
+        spark.run(sequence)
     }
 
     /// Show a glowing lightbulb for planning mode
