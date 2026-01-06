@@ -216,7 +216,7 @@ extension ClawdachiSprite {
         guard isSmoking else { return }
 
         // Spawn 2-3 smoke particles from mouth area with staggered timing
-        let smokePosition = CGPoint(x: 3, y: -5)  // At mouth position (2px left)
+        let smokePosition = CGPoint(x: 2, y: -4)  // Near center mouth position
 
         ParticleSpawner.spawnSmoke(
             texture: smokeTexture,

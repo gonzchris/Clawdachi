@@ -137,15 +137,17 @@ extension ClawdachiSprite {
     }
 
     func performWhistle() {
-        // Don't whistle during Claude states, smoking, or other actions
+        // Don't whistle during Claude states, smoking, speaking, or other actions
         guard !isWhistling && !isPerformingAction && !isDragging && !isSmoking &&
-              !isClaudeThinking && !isQuestionMarkVisible && !isLightbulbVisible &&
-              !isPartyCelebrationVisible else {
+              !isSpeaking && !isClaudeThinking && !isQuestionMarkVisible &&
+              !isLightbulbVisible && !isPartyCelebrationVisible else {
             scheduleNextWhistle()
             return
         }
         isWhistling = true
 
+        // Move mouth to side position for whistle
+        mouthNode.position = CGPoint(x: 5, y: -5)
         mouthNode.setScale(0.8)
         let popIn = SKAction.group([
             SKAction.fadeIn(withDuration: 0.1),
@@ -157,7 +159,10 @@ extension ClawdachiSprite {
             SKAction.fadeOut(withDuration: 0.15),
             SKAction.scale(to: 0.8, duration: 0.15)
         ])
-        mouthNode.run(SKAction.sequence([popIn, settle, hold, popOut]))
+        let resetPosition = SKAction.run { [weak self] in
+            self?.mouthNode.position = SpritePositions.mouth
+        }
+        mouthNode.run(SKAction.sequence([popIn, settle, hold, popOut, resetPosition]))
 
         spawnMusicNote(delay: 0.2, variation: 0)
         spawnMusicNote(delay: 0.7, variation: 1)

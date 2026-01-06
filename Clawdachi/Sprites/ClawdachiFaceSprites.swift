@@ -939,4 +939,30 @@ class ClawdachiFaceSprites {
         texture.filteringMode = .nearest
         return texture
     }
+
+    // MARK: - Speaking Mouth Textures
+
+    /// Generate open mouth texture for speaking (hollow O shape)
+    static func generateSpeakingOpenMouthTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 3)
+
+        // Hollow O shape - only outline, no center
+        pixels[2][1] = P.mouthColor  // Top
+        pixels[1][0] = P.mouthColor  // Left
+        pixels[1][2] = P.mouthColor  // Right
+        pixels[0][1] = P.mouthColor  // Bottom
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 3)
+    }
+
+    /// Generate closed mouth texture for speaking (horizontal line)
+    static func generateSpeakingClosedMouthTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 1)
+
+        pixels[0][0] = P.mouthColor
+        pixels[0][1] = P.mouthColor
+        pixels[0][2] = P.mouthColor
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 1)
+    }
 }

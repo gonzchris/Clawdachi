@@ -12,7 +12,7 @@ import CoreText
 enum PixelFontLoader {
 
     /// The name of the pixel font after registration
-    static let pixelFontName = "Press Start 2P"
+    static let pixelFontName = "Silkscreen"
 
     /// Whether the font has been loaded
     private static var isLoaded = false
@@ -25,16 +25,16 @@ enum PixelFontLoader {
     static func loadFonts() {
         guard !isLoaded else { return }
 
-        // Load Press Start 2P (bold chunky pixel font)
-        if let fontURL = Bundle.main.url(forResource: "PressStart2P-Regular", withExtension: "ttf") {
+        // Load Silkscreen (clean, thin pixel font)
+        if let fontURL = Bundle.main.url(forResource: "Silkscreen-Regular", withExtension: "ttf") {
             var error: Unmanaged<CFError>?
             if CTFontManagerRegisterFontsForURL(fontURL as CFURL, .process, &error) {
-                print("[PixelFontLoader] Successfully loaded VT323 font")
+                print("[PixelFontLoader] Successfully loaded Silkscreen font")
             } else {
-                print("[PixelFontLoader] Failed to load VT323: \(error?.takeRetainedValue().localizedDescription ?? "unknown error")")
+                print("[PixelFontLoader] Failed to load Silkscreen: \(error?.takeRetainedValue().localizedDescription ?? "unknown error")")
             }
         } else {
-            print("[PixelFontLoader] VT323 not found in bundle")
+            print("[PixelFontLoader] Silkscreen not found in bundle")
         }
         isLoaded = true
     }

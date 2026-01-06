@@ -43,6 +43,8 @@ class ClawdachiSprite: SKNode {
     var sweatDropTexture: SKTexture!
     var cigaretteTexture: SKTexture!
     var smokeTexture: SKTexture!
+    var speakingOpenMouthTexture: SKTexture!
+    var speakingClosedMouthTexture: SKTexture!
 
     // MARK: - Animation State (internal for extension access)
 
@@ -54,6 +56,7 @@ class ClawdachiSprite: SKNode {
     var isDancing = false
     var isClaudeThinking = false
     var isSmoking = false
+    var isSpeaking = false
 
     // Smoking animation node (created/destroyed during animation)
     var cigaretteNode: SKSpriteNode?
@@ -131,6 +134,8 @@ class ClawdachiSprite: SKNode {
         sweatDropTexture = ClawdachiFaceSprites.generateSweatDropTexture()
         cigaretteTexture = ClawdachiFaceSprites.generateCigaretteTexture()
         smokeTexture = ClawdachiFaceSprites.generateSmokeParticleTexture()
+        speakingOpenMouthTexture = ClawdachiFaceSprites.generateSpeakingOpenMouthTexture()
+        speakingClosedMouthTexture = ClawdachiFaceSprites.generateSpeakingClosedMouthTexture()
     }
 
     private func setupSprites() {
@@ -201,7 +206,7 @@ class ClawdachiSprite: SKNode {
         // Mouth (Layer 2) - hidden by default, positioned to right for side whistle
         mouthNode = SKSpriteNode(texture: whistleMouthTexture)
         mouthNode.size = CGSize(width: 3, height: 3)
-        mouthNode.position = CGPoint(x: 5, y: -5)
+        mouthNode.position = SpritePositions.mouth  // Default center position
         mouthNode.zPosition = 2
         mouthNode.alpha = 0
         addChild(mouthNode)

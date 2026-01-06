@@ -64,7 +64,7 @@ class ChatBubbleWindow: NSWindow {
         // Configure window properties
         isOpaque = false
         backgroundColor = .clear
-        level = .floating
+        level = NSWindow.Level(rawValue: NSWindow.Level.floating.rawValue + 1)
         hasShadow = false  // We draw our own pixel shadow
         collectionBehavior = [.canJoinAllSpaces, .stationary]
         ignoresMouseEvents = false  // Allow click to dismiss

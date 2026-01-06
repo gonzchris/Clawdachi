@@ -57,7 +57,7 @@ enum ChatBubbleConstants {
     // MARK: - Text
 
     /// Font size for bubble text
-    static let fontSize: CGFloat = 14
+    static let fontSize: CGFloat = 12
 
     /// Text color
     static let textColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)

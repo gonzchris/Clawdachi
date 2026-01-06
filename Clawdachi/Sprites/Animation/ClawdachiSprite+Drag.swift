@@ -79,6 +79,7 @@ extension ClawdachiSprite {
 
     private func startDragMouthAnimation() {
         mouthNode.removeAction(forKey: "faceBreathing")
+        mouthNode.position = SpritePositions.mouth  // Center on face
         mouthNode.texture = whistleMouthTexture
         mouthNode.setScale(0.8)
         mouthNode.alpha = 0
