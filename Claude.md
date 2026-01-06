@@ -51,16 +51,22 @@ It's a small piece of joy that makes your desktop feel a little more alive.
 - **Smart behavior:** Pauses dancing/idle animations during all Claude states (thinking, question mark, party celebration)
 
 ### Chat Bubbles
-- **RPG-style message system:** Stacking speech bubbles above sprite
+- **RPG-style message system:** Stacking speech bubbles beside sprite
+- **Positioning:** Appears at mouth level, to the right of sprite
 - **Pixel-art styling:** White fill, black outline, gray drop shadow
-- **Triangular tail:** Points down from bottom-left of bubble
+- **Triangular tail:** Points LEFT toward sprite from left edge of bubble
+- **Always on top:** Window level above sprite for visibility
 - **Multi-message support:** Up to 4 bubbles stack vertically
   - Newest message appears at bottom (with tail)
-  - Older messages slide up (no tail)
+  - Older messages slide up (tail removed, left-aligned)
   - Oldest auto-dismisses when 5th message arrives
+  - 2px spacing between stacked messages
+- **Speaking animation:** Sprite mouth animates when bubble appears
+  - "-O-O" pattern with 4 random variations
+  - Hollow O shape for open mouth
 - **Animations:** Pop-in with overshoot, fade-out on dismiss
 - **Dismissal:** Click any bubble to dismiss, or auto-dismiss after 5 seconds
-- **Font:** Press Start 2P pixel font for retro look
+- **Font:** Silkscreen pixel font (12pt) for clean retro look
 
 ### Interactions
 - **Click:** Triggers random reactions (wave, bounce, pixel heart)
@@ -128,7 +134,7 @@ Clawdachi/
 │   └── GIFExporter.swift           # GIF file creation
 ├── Resources/
 │   ├── claude-status.sh            # Hook script bundled for auto-setup
-│   └── Fonts/                      # Custom pixel fonts (Press Start 2P, etc.)
+│   └── Fonts/                      # Custom pixel fonts (Silkscreen, etc.)
 ├── Services/
 │   ├── ClaudeIntegrationSetup.swift # Auto-setup hooks on first launch
 │   ├── ClaudeSessionMonitor.swift   # Claude Code status via file polling
@@ -147,7 +153,8 @@ Clawdachi/
     │   ├── ClawdachiSprite+Idle.swift       # Breathing, blinking, whistling
     │   ├── ClawdachiSprite+Interaction.swift # Click reactions
     │   ├── ClawdachiSprite+Sleep.swift      # Sleep mode
-    │   └── ClawdachiSprite+Smoking.swift    # Smoking idle animation
+    │   ├── ClawdachiSprite+Smoking.swift    # Smoking idle animation
+    │   └── ClawdachiSprite+Speaking.swift   # Speaking mouth animation
     ├── Constants/
     │   ├── AnimationTimings.swift    # All timing values
     │   ├── ChatBubbleConstants.swift # Chat bubble sizing, colors, timing
@@ -176,8 +183,8 @@ All idle animations run continuously and independently:
 ### Animation Timings (see AnimationTimings.swift, ChatBubbleConstants.swift)
 - Breathing cycle: 3.0s
 - Blink interval: 2.5-6.0s
-- Whistle interval: 12-25s
-- Smoking interval: 30-60s (rare)
+- Whistle interval: 18-35s
+- Smoking interval: 20-40s
 - Smoking duration: 18s
 - Smoking puff interval: 3.0s
 - Look around interval: 5-12s
@@ -190,6 +197,7 @@ All idle animations run continuously and independently:
 - Chat bubble fade-out: 0.2s
 - Chat bubble auto-dismiss: 5.0s
 - Chat bubble stack slide: 0.25s
+- Speaking mouth pattern: ~0.6-0.8s (varies by pattern)
 
 ### Particle Effects
 Reusable spawner for floating effects:
@@ -203,9 +211,11 @@ Reusable spawner for floating effects:
 ### Chat Bubble System
 Separate floating NSWindow system (not SpriteKit) for text rendering:
 - **Architecture:** ChatBubbleManager (singleton) → ChatBubbleWindow[] → ChatBubbleView
-- **Rendering:** NSBezierPath for bubble shapes (GPU-accelerated)
+- **Rendering:** NSBezierPath for rounded rect body + triangular left-pointing tail
+- **Tail position:** Points LEFT from left edge of bubble toward sprite
+- **Z-order:** Window level above sprite's floating level
 - **Caching:** LRU image cache (12 entries), font caching, attributed string caching
-- **Positioning:** Tracks sprite window, recalculates on window move
+- **Positioning:** At mouth level, right of sprite center (horizontal offset 42px)
 
 API:
 ```swift
