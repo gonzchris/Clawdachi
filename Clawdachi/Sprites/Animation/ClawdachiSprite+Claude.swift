@@ -148,7 +148,7 @@ extension ClawdachiSprite {
 
         let bulb = SKSpriteNode(texture: Self.lightbulbTexture)
         bulb.name = Self.lightbulbName
-        bulb.size = CGSize(width: 8.5, height: 12)
+        bulb.size = CGSize(width: 6.8, height: 9.6)  // 20% smaller
         bulb.position = CGPoint(x: 0, y: 15)
         bulb.alpha = 0
         bulb.zPosition = SpriteZPositions.effects + 1
@@ -345,7 +345,7 @@ extension ClawdachiSprite {
 
         let bulb = SKSpriteNode(texture: Self.lightbulbTexture)
         bulb.name = Self.lightbulbName
-        bulb.size = CGSize(width: 8.5, height: 12)
+        bulb.size = CGSize(width: 6.8, height: 9.6)  // 20% smaller
         bulb.position = CGPoint(x: 0, y: 15)
         bulb.alpha = 0
         bulb.zPosition = SpriteZPositions.effects + 1
