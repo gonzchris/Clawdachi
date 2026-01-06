@@ -39,11 +39,28 @@ extension ClawdachiSprite {
         ClawdachiFaceSprites.generateQuestionMarkTexture()
     }()
 
+    /// Cached textures for party celebration
+    private static var partyHatTexture: SKTexture = {
+        ClawdachiFaceSprites.generatePartyHatTexture()
+    }()
+
+    private static var partyBlowerRetractedTexture: SKTexture = {
+        ClawdachiFaceSprites.generatePartyBlowerRetractedTexture()
+    }()
+
+    private static var partyBlowerExtendedTexture: SKTexture = {
+        ClawdachiFaceSprites.generatePartyBlowerExtendedTexture()
+    }()
+
     /// Name for the lightbulb node
     private static let lightbulbName = "completionLightbulb"
 
     /// Name for the question mark node
     private static let questionMarkName = "waitingQuestionMark"
+
+    /// Names for party celebration nodes
+    private static let partyHatName = "partyHat"
+    private static let partyBlowerName = "partyBlower"
 
     // MARK: - Thinking Animation
 
@@ -306,5 +323,213 @@ extension ClawdachiSprite {
     /// Check if question mark is currently visible
     var isQuestionMarkVisible: Bool {
         childNode(withName: Self.questionMarkName) != nil
+    }
+
+    // MARK: - Party Celebration
+
+    /// Show the party celebration - hat on head and blower cycling
+    /// Persists until dismissed by user click or new CLI activity
+    func showPartyCelebration() {
+        // Remove any existing celebration
+        childNode(withName: Self.partyHatName)?.removeFromParent()
+        childNode(withName: Self.partyBlowerName)?.removeFromParent()
+
+        // Create party hat
+        let hat = SKSpriteNode(texture: Self.partyHatTexture)
+        hat.name = Self.partyHatName
+        hat.size = CGSize(width: 7, height: 9)
+        hat.position = CGPoint(x: 0, y: 12)  // On top of head
+        hat.alpha = 0
+        hat.zPosition = SpriteZPositions.effects + 1
+        hat.setScale(0.3)
+        addChild(hat)
+
+        // Create party blower (starts retracted, positioned at side of mouth like whistle)
+        let blower = SKSpriteNode(texture: Self.partyBlowerRetractedTexture)
+        blower.name = Self.partyBlowerName
+        blower.size = CGSize(width: 4, height: 3)
+        blower.anchorPoint = CGPoint(x: 0, y: 0.5)  // Anchor at mouthpiece end
+        blower.position = CGPoint(x: 3, y: -4)  // Side of mouth (similar to whistle)
+        blower.alpha = 0
+        blower.zPosition = SpriteZPositions.effects
+        blower.setScale(0.3)
+        addChild(blower)
+
+        // Pop in hat animation
+        let hatPopIn = SKAction.group([
+            SKAction.fadeIn(withDuration: 0.15),
+            SKAction.scale(to: 1.2, duration: 0.15)
+        ])
+        let hatSettle = SKAction.scale(to: 1.0, duration: 0.1)
+        hatSettle.timingMode = .easeOut
+
+        // Gentle hat wobble while celebrating
+        let hatWobbleLeft = SKAction.rotate(byAngle: 0.08, duration: 0.4)
+        let hatWobbleRight = SKAction.rotate(byAngle: -0.08, duration: 0.4)
+        hatWobbleLeft.timingMode = .easeInEaseOut
+        hatWobbleRight.timingMode = .easeInEaseOut
+        let hatWobbleLoop = SKAction.repeatForever(SKAction.sequence([hatWobbleLeft, hatWobbleRight]))
+
+        hat.run(SKAction.sequence([hatPopIn, hatSettle, hatWobbleLoop]))
+
+        // Pop in blower animation
+        let blowerPopIn = SKAction.group([
+            SKAction.fadeIn(withDuration: 0.15),
+            SKAction.scale(to: 1.0, duration: 0.15)
+        ])
+
+        // Start blower cycling after pop-in
+        let startCycling = SKAction.run { [weak self] in
+            self?.startPartyBlowerCycle()
+        }
+
+        blower.run(SKAction.sequence([blowerPopIn, startCycling]))
+    }
+
+    /// Cycle the party blower - appear, blow, disappear, wait, repeat
+    private func startPartyBlowerCycle() {
+        guard let blower = childNode(withName: Self.partyBlowerName) as? SKSpriteNode else { return }
+
+        let cycleAction = SKAction.run { [weak self] in
+            self?.performBlowerCycle()
+        }
+
+        // First cycle immediately, then repeat
+        blower.run(SKAction.sequence([cycleAction]))
+    }
+
+    /// Perform one full blower cycle: appear → blow → retract → disappear → wait
+    private func performBlowerCycle() {
+        guard let blower = childNode(withName: Self.partyBlowerName) as? SKSpriteNode else { return }
+
+        // Reset state
+        blower.texture = Self.partyBlowerRetractedTexture
+        blower.size = CGSize(width: 4, height: 3)
+        blower.zRotation = 0
+        blower.xScale = 1.0
+
+        // Pop in
+        blower.alpha = 0
+        blower.setScale(0.5)
+        let popIn = SKAction.group([
+            SKAction.fadeIn(withDuration: 0.1),
+            SKAction.scale(to: 1.0, duration: 0.1)
+        ])
+
+        // Extend: swap texture and grow width
+        let extend = SKAction.run {
+            blower.texture = Self.partyBlowerExtendedTexture
+            blower.size = CGSize(width: 10, height: 3)
+        }
+
+        // Quick extend with upward rotation kick
+        let extendScale = SKAction.scaleX(to: 1.1, duration: 0.12)
+        let rotateKick = SKAction.rotate(toAngle: 0.15, duration: 0.12)
+        extendScale.timingMode = .easeOut
+        rotateKick.timingMode = .easeOut
+        let extendGroup = SKAction.group([extendScale, rotateKick])
+
+        // Flutter wobble while extended
+        let wobbleUp = SKAction.rotate(toAngle: 0.2, duration: 0.08)
+        let wobbleDown = SKAction.rotate(toAngle: 0.08, duration: 0.08)
+        wobbleUp.timingMode = .easeInEaseOut
+        wobbleDown.timingMode = .easeInEaseOut
+        let wobbleCycle = SKAction.sequence([wobbleUp, wobbleDown, wobbleUp, wobbleDown, wobbleUp, wobbleDown])
+
+        // Hold extended for a moment
+        let holdExtended = SKAction.wait(forDuration: 0.7)
+
+        // Retract: swap texture back and shrink
+        let retract = SKAction.run {
+            blower.texture = Self.partyBlowerRetractedTexture
+            blower.size = CGSize(width: 4, height: 3)
+        }
+
+        // Quick retract with rotation reset
+        let retractScale = SKAction.scaleX(to: 1.0, duration: 0.08)
+        let rotateBack = SKAction.rotate(toAngle: 0, duration: 0.08)
+        retractScale.timingMode = .easeIn
+        rotateBack.timingMode = .easeIn
+        let retractGroup = SKAction.group([retractScale, rotateBack])
+
+        // Fade out after retract
+        let fadeOut = SKAction.fadeOut(withDuration: 0.15)
+
+        // Wait 1 second while invisible
+        let waitInvisible = SKAction.wait(forDuration: 1.0)
+
+        // Schedule next cycle
+        let nextCycle = SKAction.run { [weak self] in
+            self?.performBlowerCycle()
+        }
+
+        blower.run(SKAction.sequence([
+            popIn,
+            extend,
+            extendGroup,
+            wobbleCycle,
+            holdExtended,
+            retract,
+            retractGroup,
+            fadeOut,
+            waitInvisible,
+            nextCycle
+        ]), withKey: "blowerCycle")
+
+        // Small body bounce for tactile feedback (toot!)
+        let bounceUp = SKAction.moveBy(x: 0, y: 0.8, duration: 0.08)
+        let bounceDown = SKAction.moveBy(x: 0, y: -0.8, duration: 0.12)
+        bounceUp.timingMode = .easeOut
+        bounceDown.timingMode = .easeIn
+        run(SKAction.sequence([bounceUp, bounceDown]), withKey: "partyBounce")
+
+        // Arms up during the toot!
+        let armsUp = SKAction.rotate(toAngle: 0.6, duration: 0.1)
+        let armsDown = SKAction.rotate(toAngle: 0, duration: 0.15)
+        armsUp.timingMode = .easeOut
+        armsDown.timingMode = .easeInEaseOut
+        let armsCelebrate = SKAction.sequence([armsUp, armsDown])
+        leftArmNode.run(armsCelebrate, withKey: "partyArm")
+        rightArmNode.run(SKAction.sequence([
+            SKAction.rotate(toAngle: -0.6, duration: 0.1),
+            SKAction.rotate(toAngle: 0, duration: 0.15)
+        ]), withKey: "partyArm")
+    }
+
+    /// Dismiss the party celebration with a fade out
+    /// - Parameter completion: Called after celebration is fully removed
+    func dismissPartyCelebration(completion: (() -> Void)? = nil) {
+        let hat = childNode(withName: Self.partyHatName)
+        let blower = childNode(withName: Self.partyBlowerName)
+
+        guard hat != nil || blower != nil else {
+            completion?()
+            return
+        }
+
+        let fadeOut = SKAction.fadeOut(withDuration: 0.2)
+        let remove = SKAction.removeFromParent()
+        let fadeAndRemove = SKAction.sequence([fadeOut, remove])
+
+        hat?.removeAllActions()
+        blower?.removeAllActions()
+        removeAction(forKey: "partyBounce")
+        leftArmNode.removeAction(forKey: "partyArm")
+        rightArmNode.removeAction(forKey: "partyArm")
+        leftArmNode.zRotation = 0
+        rightArmNode.zRotation = 0
+
+        // Determine which node should call completion (prefer blower, fallback to hat)
+        if let blower = blower {
+            hat?.run(fadeAndRemove)
+            blower.run(SKAction.sequence([fadeAndRemove, SKAction.run { completion?() }]))
+        } else if let hat = hat {
+            hat.run(SKAction.sequence([fadeAndRemove, SKAction.run { completion?() }]))
+        }
+    }
+
+    /// Check if party celebration is currently visible
+    var isPartyCelebrationVisible: Bool {
+        childNode(withName: Self.partyHatName) != nil || childNode(withName: Self.partyBlowerName) != nil
     }
 }

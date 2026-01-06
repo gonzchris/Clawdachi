@@ -57,7 +57,8 @@ class ClawdachiScene: SKScene {
     private func handleMusicPlaybackChanged(_ isPlaying: Bool) {
         // Don't dance while sleeping or during any Claude Code activity
         guard !isSleeping, !clawdachi.isClaudeThinking,
-              !clawdachi.isQuestionMarkVisible, !clawdachi.isLightbulbVisible else { return }
+              !clawdachi.isQuestionMarkVisible, !clawdachi.isLightbulbVisible,
+              !clawdachi.isPartyCelebrationVisible else { return }
 
         if isPlaying {
             clawdachi.startDancing()
@@ -81,6 +82,7 @@ class ClawdachiScene: SKScene {
             // Claude is working - show thinking pose
             clawdachi.dismissLightbulb()
             clawdachi.dismissQuestionMark()
+            clawdachi.dismissPartyCelebration()
             clawdachi.startClaudeThinking()
             wasClaudeActive = true
         } else if isActive && status == "waiting" {
@@ -88,18 +90,19 @@ class ClawdachiScene: SKScene {
             clawdachi.stopClaudeThinking()
             clawdachi.stopDancing()  // Stop dancing while waiting
             clawdachi.dismissLightbulb()
+            clawdachi.dismissPartyCelebration()
             clawdachi.showQuestionMark()
             // Keep wasClaudeActive true - still in session
             // Don't resume dancing - question mark means user interaction needed
         } else {
-            // Claude session truly ended - show completion
+            // Claude session truly ended - show completion celebration
             clawdachi.stopClaudeThinking()
             clawdachi.dismissQuestionMark()
 
-            // Show lightbulb when transitioning from active → complete
-            // Lightbulb persists until user clicks sprite or new CLI status
+            // Show party celebration when transitioning from active → complete
+            // Persists until user clicks sprite or new CLI status
             if wasClaudeActive {
-                clawdachi.showCompletionLightbulb()
+                clawdachi.showPartyCelebration()
                 wasClaudeActive = false
             }
         }
@@ -207,13 +210,15 @@ class ClawdachiScene: SKScene {
 
         // If it was a click (not a drag) on the sprite, trigger reaction or wake up
         if !isDragging && dragStartedOnSprite {
-            // Check if lightbulb or question mark is visible before dismissing
+            // Check if any overlay is visible before dismissing
             let hadLightbulb = clawdachi.isLightbulbVisible
             let hadQuestionMark = clawdachi.isQuestionMarkVisible
+            let hadPartyCelebration = clawdachi.isPartyCelebrationVisible
 
             if isSleeping {
                 clawdachi.dismissLightbulb()
                 clawdachi.dismissQuestionMark()
+                clawdachi.dismissPartyCelebration()
                 isSleeping = false
                 clawdachi.wakeUp { [weak self] in
                     // Resume dancing if music is playing after wake animation completes
@@ -231,6 +236,13 @@ class ClawdachiScene: SKScene {
             } else if hadQuestionMark {
                 // Click was to dismiss question mark - resume dancing after fade completes
                 clawdachi.dismissQuestionMark { [weak self] in
+                    if self?.musicMonitor.isPlaying == true {
+                        self?.clawdachi.startDancing()
+                    }
+                }
+            } else if hadPartyCelebration {
+                // Click was to dismiss party celebration - resume dancing after fade completes
+                clawdachi.dismissPartyCelebration { [weak self] in
                     if self?.musicMonitor.isPlaying == true {
                         self?.clawdachi.startDancing()
                     }
@@ -255,6 +267,7 @@ class ClawdachiScene: SKScene {
 
         clawdachi.dismissLightbulb()
         clawdachi.dismissQuestionMark()
+        clawdachi.dismissPartyCelebration()
         showContextMenu(with: event)
     }
 

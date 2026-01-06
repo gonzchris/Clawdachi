@@ -737,4 +737,206 @@ class ClawdachiFaceSprites {
         texture.filteringMode = .nearest
         return texture
     }
+
+    // MARK: - Party Celebration Textures
+
+    /// Generates a pixel-art party hat texture - striped triangular hat
+    /// Size: 7x9 pixels - festive party hat with stripes
+    static func generatePartyHatTexture() -> SKTexture {
+        let pixelSize: CGFloat = 4
+        let width = 7
+        let height = 9
+        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
+
+        // Party hat colors - festive purple and gold stripes
+        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)        // #222222
+        let purpleMain = NSColor(red: 150/255, green: 80/255, blue: 180/255, alpha: 1.0)       // Purple
+        let purpleShadow = NSColor(red: 110/255, green: 50/255, blue: 140/255, alpha: 1.0)     // Dark purple
+        let goldMain = NSColor(red: 255/255, green: 215/255, blue: 80/255, alpha: 1.0)         // Gold
+        let goldShadow = NSColor(red: 220/255, green: 170/255, blue: 40/255, alpha: 1.0)       // Dark gold
+        let pompomColor = NSColor(red: 255/255, green: 230/255, blue: 100/255, alpha: 1.0)     // Bright yellow pompom
+
+        // Party hat pattern (1=outline, 2=purple, 3=purpleShadow, 4=gold, 5=goldShadow, 6=pompom)
+        let pattern: [[Int]] = [
+            [0, 0, 0, 6, 0, 0, 0],  // pompom top
+            [0, 0, 0, 1, 0, 0, 0],  // tip
+            [0, 0, 1, 2, 1, 0, 0],  // purple stripe
+            [0, 0, 1, 4, 1, 0, 0],  // gold stripe
+            [0, 1, 2, 2, 3, 1, 0],  // purple stripe wider
+            [0, 1, 4, 4, 5, 1, 0],  // gold stripe wider
+            [1, 2, 2, 2, 3, 3, 1],  // purple stripe
+            [1, 4, 4, 4, 5, 5, 1],  // gold stripe
+            [1, 1, 1, 1, 1, 1, 1],  // brim outline
+        ]
+
+        let image = NSImage(size: size, flipped: true) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
+
+            for row in 0..<height {
+                for col in 0..<width {
+                    let value = pattern[row][col]
+                    guard value > 0 else { continue }
+
+                    let color: NSColor
+                    switch value {
+                    case 1: color = outlineColor
+                    case 2: color = purpleMain
+                    case 3: color = purpleShadow
+                    case 4: color = goldMain
+                    case 5: color = goldShadow
+                    case 6: color = pompomColor
+                    default: continue
+                    }
+
+                    color.setFill()
+                    let pixelRect = CGRect(
+                        x: CGFloat(col) * pixelSize,
+                        y: CGFloat(row) * pixelSize,
+                        width: pixelSize,
+                        height: pixelSize
+                    )
+                    pixelRect.fill()
+                }
+            }
+
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create party hat image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .nearest
+        return texture
+    }
+
+    /// Generates a party blower texture in retracted state - coiled at mouth
+    /// Size: 4x3 pixels - compact coiled blower
+    static func generatePartyBlowerRetractedTexture() -> SKTexture {
+        let pixelSize: CGFloat = 4
+        let width = 4
+        let height = 3
+        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
+
+        // Party blower colors
+        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)       // #222222
+        let redMain = NSColor(red: 230/255, green: 70/255, blue: 70/255, alpha: 1.0)           // Red
+        let redShadow = NSColor(red: 180/255, green: 40/255, blue: 40/255, alpha: 1.0)         // Dark red
+        let mouthpiece = NSColor(red: 200/255, green: 180/255, blue: 140/255, alpha: 1.0)      // Tan mouthpiece
+
+        // Retracted blower pattern (1=outline, 2=red, 3=redShadow, 4=mouthpiece)
+        let pattern: [[Int]] = [
+            [0, 1, 2, 1],  // coil top
+            [1, 2, 3, 1],  // coil body
+            [4, 1, 1, 0],  // mouthpiece
+        ]
+
+        let image = NSImage(size: size, flipped: true) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
+
+            for row in 0..<height {
+                for col in 0..<width {
+                    let value = pattern[row][col]
+                    guard value > 0 else { continue }
+
+                    let color: NSColor
+                    switch value {
+                    case 1: color = outlineColor
+                    case 2: color = redMain
+                    case 3: color = redShadow
+                    case 4: color = mouthpiece
+                    default: continue
+                    }
+
+                    color.setFill()
+                    let pixelRect = CGRect(
+                        x: CGFloat(col) * pixelSize,
+                        y: CGFloat(row) * pixelSize,
+                        width: pixelSize,
+                        height: pixelSize
+                    )
+                    pixelRect.fill()
+                }
+            }
+
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create party blower retracted image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .nearest
+        return texture
+    }
+
+    /// Generates a party blower texture in extended state - unrolled
+    /// Size: 10x3 pixels - extended blower with stripes
+    static func generatePartyBlowerExtendedTexture() -> SKTexture {
+        let pixelSize: CGFloat = 4
+        let width = 10
+        let height = 3
+        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
+
+        // Party blower colors
+        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)       // #222222
+        let redMain = NSColor(red: 230/255, green: 70/255, blue: 70/255, alpha: 1.0)           // Red
+        let redShadow = NSColor(red: 180/255, green: 40/255, blue: 40/255, alpha: 1.0)         // Dark red
+        let yellowMain = NSColor(red: 255/255, green: 220/255, blue: 80/255, alpha: 1.0)       // Yellow
+        let yellowShadow = NSColor(red: 220/255, green: 180/255, blue: 40/255, alpha: 1.0)     // Dark yellow
+        let mouthpiece = NSColor(red: 200/255, green: 180/255, blue: 140/255, alpha: 1.0)      // Tan mouthpiece
+
+        // Extended blower pattern (1=outline, 2=red, 3=redShadow, 4=yellow, 5=yellowShadow, 6=mouthpiece)
+        let pattern: [[Int]] = [
+            [0, 1, 2, 1, 4, 1, 2, 1, 4, 1],  // top with stripes
+            [1, 2, 3, 4, 5, 2, 3, 4, 5, 1],  // body with stripes
+            [6, 1, 1, 1, 1, 1, 1, 1, 1, 0],  // mouthpiece and bottom
+        ]
+
+        let image = NSImage(size: size, flipped: true) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
+
+            for row in 0..<height {
+                for col in 0..<width {
+                    let value = pattern[row][col]
+                    guard value > 0 else { continue }
+
+                    let color: NSColor
+                    switch value {
+                    case 1: color = outlineColor
+                    case 2: color = redMain
+                    case 3: color = redShadow
+                    case 4: color = yellowMain
+                    case 5: color = yellowShadow
+                    case 6: color = mouthpiece
+                    default: continue
+                    }
+
+                    color.setFill()
+                    let pixelRect = CGRect(
+                        x: CGFloat(col) * pixelSize,
+                        y: CGFloat(row) * pixelSize,
+                        width: pixelSize,
+                        height: pixelSize
+                    )
+                    pixelRect.fill()
+                }
+            }
+
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create party blower extended image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .nearest
+        return texture
+    }
 }

@@ -24,7 +24,7 @@ extension ClawdachiSprite {
         // Don't smoke during other activities
         guard !isSmoking && !isWhistling && !isPerformingAction && !isDragging &&
               !isClaudeThinking && !isQuestionMarkVisible && !isLightbulbVisible &&
-              !isDancing else {
+              !isPartyCelebrationVisible && !isDancing else {
             scheduleNextSmoking()
             return
         }

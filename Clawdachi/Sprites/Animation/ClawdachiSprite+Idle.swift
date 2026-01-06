@@ -139,7 +139,8 @@ extension ClawdachiSprite {
     func performWhistle() {
         // Don't whistle during Claude states, smoking, or other actions
         guard !isWhistling && !isPerformingAction && !isDragging && !isSmoking &&
-              !isClaudeThinking && !isQuestionMarkVisible && !isLightbulbVisible else {
+              !isClaudeThinking && !isQuestionMarkVisible && !isLightbulbVisible &&
+              !isPartyCelebrationVisible else {
             scheduleNextWhistle()
             return
         }

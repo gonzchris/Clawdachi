@@ -42,9 +42,13 @@ It's a small piece of joy that makes your desktop feel a little more alive.
   - Gentle head bob
   - Orange dots float upward and pop at the top
 - **Waiting question mark:** White pixel question mark appears when Claude is waiting for user input or permission approval (dismisses on click or when Claude starts again)
-- **Completion lightbulb:** Yellow pixel lightbulb appears above head when Claude session ends (persists until clicked or new CLI activity)
+- **Party celebration:** When Claude session ends, shows party hat on head with cycling party blower animation:
+  - Purple/gold striped party hat wobbles gently
+  - Party blower pops in, extends with flutter, retracts, disappears, repeats
+  - Arms shoot up on each "toot"
+  - Persists until clicked or new CLI activity
 - **File-based hooks:** Monitors `~/.clawdachi/sessions/` for status files
-- **Smart behavior:** Pauses dancing/idle animations during all Claude states (thinking, question mark, lightbulb)
+- **Smart behavior:** Pauses dancing/idle animations during all Claude states (thinking, question mark, party celebration)
 
 ### Interactions
 - **Click:** Triggers random reactions (wave, bounce, pixel heart)
@@ -77,7 +81,7 @@ All floating effects feature consistent styling:
 - SpriteKit for rendering and animation
 
 ### Window
-- Borderless transparent window (288x288 points)
+- Borderless transparent window (288x384 points)
 - Floating level (stays above other windows)
 - Supports all Spaces
 - Draggable anywhere on screen
