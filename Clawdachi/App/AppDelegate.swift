@@ -23,9 +23,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Set up Claude Code integration on first launch
         ClaudeIntegrationSetup.setupIfNeeded()
 
-        // Create borderless window (48x48 scene at 6x scale = 288x288)
+        // Create borderless window (48x64 scene at 6x scale = 288x384)
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 288, height: 288),
+            contentRect: NSRect(x: 0, y: 0, width: 288, height: 384),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
@@ -36,11 +36,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.backgroundColor = .clear
         window.level = .floating
         window.hasShadow = true
-        window.isMovableByWindowBackground = true
+        window.isMovableByWindowBackground = false  // Drag handled by scene for sprite-only dragging
         window.collectionBehavior = [.canJoinAllSpaces, .stationary]
 
         // Create SpriteKit view
-        let skView = SKView(frame: NSRect(x: 0, y: 0, width: 288, height: 288))
+        let skView = SKView(frame: NSRect(x: 0, y: 0, width: 288, height: 384))
         skView.allowsTransparency = true
 
         // Create and present scene

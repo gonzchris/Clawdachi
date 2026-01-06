@@ -19,7 +19,7 @@ class ClawdachiScene: SKScene {
     // MARK: - Initialization
 
     override init() {
-        super.init(size: CGSize(width: 48, height: 48))
+        super.init(size: CGSize(width: 48, height: 64))
         scaleMode = .aspectFill
         backgroundColor = .clear
     }
@@ -121,18 +121,49 @@ class ClawdachiScene: SKScene {
     // MARK: - Interaction
 
     private var isDragging = false
-    private var dragStartLocation: CGPoint = .zero
+    private var dragStartLocationInScreen: CGPoint = .zero  // Screen coords to avoid jitter
+    private var dragStartedOnSprite = false
+    private var initialWindowOrigin: CGPoint = .zero
     private var longPressTimer: Timer?
 
+    /// Check if a point in scene coordinates hits the sprite (body or nearby elements)
+    private func isPointOnSprite(_ point: CGPoint) -> Bool {
+        // Check if point hits any node in the sprite hierarchy
+        let hitNodes = nodes(at: point)
+        for node in hitNodes {
+            // Check if this node is the sprite or a child of the sprite
+            var current: SKNode? = node
+            while current != nil {
+                if current === clawdachi {
+                    return true
+                }
+                current = current?.parent
+            }
+        }
+        return false
+    }
+
     override func mouseDown(with event: NSEvent) {
-        dragStartLocation = event.locationInWindow
+        // Use screen coordinates to avoid jitter during drag
+        dragStartLocationInScreen = NSEvent.mouseLocation
         isDragging = false
 
-        // Start long-press timer for heart reaction (3 seconds)
+        // Check if click is on the sprite
+        let locationInScene = event.location(in: self)
+        dragStartedOnSprite = isPointOnSprite(locationInScene)
+
+        // Store initial window position for manual dragging
+        if let window = view?.window {
+            initialWindowOrigin = window.frame.origin
+        }
+
+        // Only start long-press timer if clicked on sprite
         longPressTimer?.invalidate()
-        longPressTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
-            guard let self = self, !self.isDragging, !self.isSleeping else { return }
-            self.clawdachi.performHeartReaction()
+        if dragStartedOnSprite {
+            longPressTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
+                guard let self = self, !self.isDragging, !self.isSleeping else { return }
+                self.clawdachi.performHeartReaction()
+            }
         }
     }
 
@@ -140,6 +171,9 @@ class ClawdachiScene: SKScene {
         // Cancel long-press timer when dragging
         longPressTimer?.invalidate()
         longPressTimer = nil
+
+        // Only handle drag if it started on the sprite
+        guard dragStartedOnSprite else { return }
 
         // Start drag animation only on first movement
         if !isDragging {
@@ -150,6 +184,18 @@ class ClawdachiScene: SKScene {
             }
         }
         isDragging = true
+
+        // Manually move the window using screen coordinates (avoids jitter)
+        if let window = view?.window {
+            let currentLocationInScreen = NSEvent.mouseLocation
+            let deltaX = currentLocationInScreen.x - dragStartLocationInScreen.x
+            let deltaY = currentLocationInScreen.y - dragStartLocationInScreen.y
+            let newOrigin = CGPoint(
+                x: initialWindowOrigin.x + deltaX,
+                y: initialWindowOrigin.y + deltaY
+            )
+            window.setFrameOrigin(newOrigin)
+        }
     }
 
     override func mouseUp(with event: NSEvent) {
@@ -159,8 +205,8 @@ class ClawdachiScene: SKScene {
 
         endDragIfNeeded()
 
-        // If it was a click (not a drag), trigger reaction or wake up
-        if !isDragging {
+        // If it was a click (not a drag) on the sprite, trigger reaction or wake up
+        if !isDragging && dragStartedOnSprite {
             // Check if lightbulb or question mark is visible before dismissing
             let hadLightbulb = clawdachi.isLightbulbVisible
             let hadQuestionMark = clawdachi.isQuestionMarkVisible
@@ -195,12 +241,18 @@ class ClawdachiScene: SKScene {
         }
 
         isDragging = false
+        dragStartedOnSprite = false
     }
 
     override func rightMouseDown(with event: NSEvent) {
         longPressTimer?.invalidate()
         longPressTimer = nil
         endDragIfNeeded()
+
+        // Only show context menu if right-clicked on sprite
+        let locationInScene = event.location(in: self)
+        guard isPointOnSprite(locationInScene) else { return }
+
         clawdachi.dismissLightbulb()
         clawdachi.dismissQuestionMark()
         showContextMenu(with: event)
