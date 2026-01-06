@@ -135,7 +135,7 @@ class ChatBubbleWindow: NSWindow {
             CGAffineTransform(scaleX: C.popInInitialScale, y: C.popInInitialScale)
         )
 
-        makeKeyAndOrderFront(nil)
+        orderFront(nil)  // Don't try to become key (borderless windows can't)
 
         // Animate alpha
         NSAnimationContext.runAnimationGroup { context in

@@ -404,17 +404,6 @@ class ClawdachiScene: SKScene {
 
         menu.addItem(NSMenuItem.separator())
 
-        // Test chat bubble (temporary for testing)
-        let chatItem = NSMenuItem(
-            title: "Test Chat Bubble",
-            action: #selector(testChatBubble),
-            keyEquivalent: ""
-        )
-        chatItem.target = self
-        menu.addItem(chatItem)
-
-        menu.addItem(NSMenuItem.separator())
-
         // Monitor Instance submenu
         let instanceItem = NSMenuItem(title: "Monitor Instance", action: nil, keyEquivalent: "")
         let instanceSubmenu = NSMenu(title: "Monitor Instance")
@@ -548,22 +537,6 @@ class ClawdachiScene: SKScene {
         NSApplication.shared.terminate(nil)
     }
 
-    @objc private func testChatBubble() {
-        // Test multiple stacking messages
-        let messages = [
-            "hi, i'm clawdachi",
-            "i love music!",
-            "pet me please?",
-            "zzz so sleepy"
-        ]
-
-        for (index, message) in messages.enumerated() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 1.2) { [weak self] in
-                self?.showChatBubble(message)
-            }
-        }
-    }
-
     // MARK: - Chat Bubble
 
     /// Show a chat bubble with the given message
@@ -581,5 +554,143 @@ class ClawdachiScene: SKScene {
     /// Dismiss any visible chat bubble
     func dismissChatBubble() {
         ChatBubbleWindow.dismiss(animated: true)
+    }
+
+    // MARK: - Debug Animation Methods
+
+    func debugTriggerBlink() {
+        clawdachi.triggerBlink()
+    }
+
+    func debugTriggerWhistle() {
+        guard !isSleeping else { return }
+        clawdachi.performWhistleAnimation()
+    }
+
+    func debugTriggerSmoking() {
+        guard !isSleeping else { return }
+        clawdachi.performSmokingAnimation()
+    }
+
+    func debugTriggerLookAround() {
+        guard !isSleeping else { return }
+        clawdachi.performLookAround()
+    }
+
+    func debugTriggerWave() {
+        guard !isSleeping else { return }
+        clawdachi.performWave()
+    }
+
+    func debugTriggerBounce() {
+        guard !isSleeping else { return }
+        clawdachi.performBounce()
+    }
+
+    func debugTriggerHeart() {
+        guard !isSleeping else { return }
+        clawdachi.performHeartReaction()
+    }
+
+    func debugTriggerRandomReaction() {
+        guard !isSleeping else { return }
+        clawdachi.triggerClickReaction()
+    }
+
+    func debugTriggerThinking(duration: TimeInterval) {
+        guard !isSleeping else { return }
+        clawdachi.stopDancing()
+        clawdachi.startClaudeThinking()
+        showChatBubble(randomThinkingMessage(), duration: 3.0)
+
+        // Auto-stop after duration
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
+            self?.clawdachi.stopClaudeThinking()
+        }
+    }
+
+    func debugTriggerPlanning(duration: TimeInterval) {
+        guard !isSleeping else { return }
+        clawdachi.stopDancing()
+        clawdachi.startClaudePlanning()
+        showChatBubble(randomPlanningMessage(), duration: 3.0)
+
+        // Auto-stop after duration
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
+            self?.clawdachi.stopClaudePlanning()
+        }
+    }
+
+    func debugTriggerQuestionMark() {
+        guard !isSleeping else { return }
+        clawdachi.stopDancing()
+        clawdachi.stopClaudeThinking()
+        clawdachi.stopClaudePlanning()
+        clawdachi.showQuestionMark()
+        showChatBubble(randomWaitingMessage(), duration: 4.0)
+    }
+
+    func debugTriggerPartyCelebration() {
+        guard !isSleeping else { return }
+        clawdachi.stopDancing()
+        clawdachi.stopClaudeThinking()
+        clawdachi.stopClaudePlanning()
+        clawdachi.dismissQuestionMark()
+        clawdachi.showPartyCelebration()
+        showChatBubble(randomCompletionMessage(), duration: 4.0)
+    }
+
+    func debugClearClaudeStates() {
+        clawdachi.stopClaudeThinking()
+        clawdachi.stopClaudePlanning()
+        clawdachi.dismissQuestionMark()
+        clawdachi.dismissPartyCelebration()
+        clawdachi.dismissLightbulb()
+        clawdachi.resumeIdleAnimations()
+    }
+
+    func debugStartDancing() {
+        guard !isSleeping else { return }
+        clawdachi.startDancing()
+    }
+
+    func debugStopDancing() {
+        clawdachi.stopDancing()
+    }
+
+    func debugStartSleeping() {
+        clawdachi.stopDancing()
+        clawdachi.stopClaudeThinking()
+        clawdachi.stopClaudePlanning()
+        clawdachi.dismissQuestionMark()
+        clawdachi.dismissPartyCelebration()
+        wasClaudeActive = false
+        isSleeping = true
+        clawdachi.startSleeping()
+    }
+
+    func debugWakeUp() {
+        guard isSleeping else { return }
+        isSleeping = false
+        clawdachi.wakeUp { [weak self] in
+            if self?.musicMonitor.isPlaying == true {
+                self?.clawdachi.startDancing()
+            }
+        }
+    }
+
+    func debugTestMultipleBubbles() {
+        let messages = [
+            "hi, i'm clawdachi",
+            "i love music!",
+            "pet me please?",
+            "zzz so sleepy"
+        ]
+
+        for (index, message) in messages.enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 1.2) { [weak self] in
+                self?.showChatBubble(message)
+            }
+        }
     }
 }

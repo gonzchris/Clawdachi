@@ -77,7 +77,7 @@ enum AnimationHelpers {
         duration: TimeInterval = 0.15,
         settleDuration: TimeInterval = 0.1
     ) -> SKAction {
-        let setup = SKAction.run { }  // Placeholder - caller should set scale to 0 first
+        // Note: Caller should set scale to 0 before running this action
         let popIn = SKAction.group([
             SKAction.fadeIn(withDuration: duration),
             SKAction.scale(to: overshoot, duration: duration)
@@ -170,14 +170,6 @@ enum AnimationHelpers {
         max maxInterval: TimeInterval,
         action: @escaping () -> Void
     ) -> SKAction {
-        func createCycle() -> SKAction {
-            let wait = SKAction.wait(forDuration: TimeInterval.random(in: minInterval...maxInterval))
-            let run = SKAction.run(action)
-            let next = SKAction.run { }  // Will be replaced by recursion
-            return SKAction.sequence([wait, run])
-        }
-
-        // Create repeating version
         return SKAction.repeatForever(
             SKAction.sequence([
                 SKAction.wait(forDuration: TimeInterval.random(in: minInterval...maxInterval)),

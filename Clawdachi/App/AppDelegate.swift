@@ -53,9 +53,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Set as window content
         window.contentView = skView
 
+        // Set up debug menu
+        DebugMenuController.shared.setupDebugMenu(scene: scene)
+
         // Restore saved position or center window
         restoreWindowPosition()
-        window.makeKeyAndOrderFront(nil)
+        window.orderFront(nil)  // Don't try to become key (borderless windows can't)
 
         // Observe window movement to save position
         NotificationCenter.default.addObserver(

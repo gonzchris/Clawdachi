@@ -73,6 +73,9 @@ class ClaudeSessionMonitor {
     /// Cached parsed sessions (filename -> SessionInfo)
     private var cachedSessions: [String: SessionInfo] = [:]
 
+    /// Serial queue for thread-safe cache access
+    private let cacheQueue = DispatchQueue(label: "com.clawdachi.sessioncache")
+
     // MARK: - Initialization
 
     init() {
@@ -105,8 +108,8 @@ class ClaudeSessionMonitor {
     }
 
     private func checkSessionStatus() {
-        // Check on background thread to avoid blocking main thread
-        DispatchQueue.global(qos: .utility).async { [weak self] in
+        // Check on serial queue to avoid blocking main thread and ensure thread safety
+        cacheQueue.async { [weak self] in
             guard let self = self else { return }
 
             let result = self.readSessionFiles()

@@ -224,8 +224,8 @@ extension ClawdachiSprite {
     func performWhistleAnimation() {
         isWhistling = true
 
-        // Move mouth to side position for whistle
-        mouthNode.position = CGPoint(x: 5, y: -5)
+        // Move mouth to side position for whistle (matches smoking position)
+        mouthNode.position = CGPoint(x: 2, y: -4)
         mouthNode.setScale(0.8)
         let popIn = SKAction.group([
             SKAction.fadeIn(withDuration: 0.1),
