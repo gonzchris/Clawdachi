@@ -41,14 +41,23 @@ It's a small piece of joy that makes your desktop feel a little more alive.
   - Focused eyes: `> <` expression with occasional blinks
   - Gentle head bob
   - Orange dots float upward and pop at the top
+  - Chat bubble: "hmm, let me think...", "on it!", "brb coding...", etc.
+- **Planning animation:** When Claude is in plan mode (designing implementation):
+  - Same focused eyes and head bob as thinking
+  - Orange dots float upward
+  - Glowing lightbulb above head with pulsing yellow glow
+  - Chat bubble: "planning it out...", "got an idea!", "designing...", etc.
+  - Triggered by EnterPlanMode tool, ends with ExitPlanMode
 - **Waiting question mark:** White pixel question mark appears when Claude is waiting for user input or permission approval (dismisses on click or when Claude starts again)
+  - Chat bubble: "your turn!", "whatcha think?", "need your input!", etc.
 - **Party celebration:** When Claude session ends, shows party hat on head with cycling party blower animation:
   - Purple/gold striped party hat wobbles gently
   - Party blower pops in, extends with flutter, retracts, disappears, repeats
   - Arms shoot up on each "toot"
   - Persists until clicked or new CLI activity
 - **File-based hooks:** Monitors `~/.clawdachi/sessions/` for status files
-- **Smart behavior:** Pauses dancing/idle animations during all Claude states (thinking, question mark, party celebration)
+  - Plan mode tracked via `~/.clawdachi/planmode/` marker files
+- **Smart behavior:** Pauses dancing/idle animations during all Claude states (thinking, planning, question mark, party celebration)
 
 ### Chat Bubbles
 - **RPG-style message system:** Stacking speech bubbles beside sprite
@@ -133,7 +142,7 @@ Clawdachi/
 │   ├── AnimationRecorder.swift     # GIF frame capture
 │   └── GIFExporter.swift           # GIF file creation
 ├── Resources/
-│   ├── claude-status.sh            # Hook script bundled for auto-setup
+│   ├── claude-status.sh            # Hook script (tracks thinking, planning, waiting)
 │   └── Fonts/                      # Custom pixel fonts (Silkscreen, etc.)
 ├── Services/
 │   ├── ClaudeIntegrationSetup.swift # Auto-setup hooks on first launch
@@ -147,7 +156,7 @@ Clawdachi/
 │   └── PixelFontLoader.swift       # Custom font loading and caching
 └── Sprites/
     ├── Animation/
-    │   ├── ClawdachiSprite+Claude.swift     # Claude Code thinking animation
+    │   ├── ClawdachiSprite+Claude.swift     # Claude Code thinking/planning animations
     │   ├── ClawdachiSprite+Dancing.swift    # Music-reactive dance animations
     │   ├── ClawdachiSprite+Drag.swift       # Drag interaction
     │   ├── ClawdachiSprite+Idle.swift       # Breathing, blinking, whistling

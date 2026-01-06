@@ -62,11 +62,130 @@ extension ClawdachiSprite {
     private static let partyHatName = "partyHat"
     private static let partyBlowerName = "partyBlower"
 
+    // MARK: - Planning Animation
+
+    /// Start the planning animation (when Claude is in plan mode)
+    /// Combines thinking pose with lightbulb - designing a solution
+    func startClaudePlanning() {
+        guard !isClaudePlanning, !isDragging else { return }
+        isClaudePlanning = true
+
+        // Also set thinking flag since planning uses thinking animations
+        isClaudeThinking = true
+
+        // Pause competing animations
+        pauseIdleAnimations()
+        stopDancing()
+
+        // Focused eyes: > <
+        isMouseTrackingEnabled = false
+        leftEyeNode.texture = Self.focusedLeftEyeTexture
+        rightEyeNode.texture = Self.focusedRightEyeTexture
+
+        // Reset eye position to center
+        leftEyeNode.position = leftEyeBasePos
+        rightEyeNode.position = rightEyeBasePos
+
+        // Subtle body tilt forward (concentrating)
+        let tiltForward = SKAction.scaleY(to: 0.97, duration: 0.3)
+        tiltForward.timingMode = .easeInEaseOut
+        run(tiltForward, withKey: "thinkingTilt")
+
+        // Gentle head bob loop (thinking rhythm)
+        let bobHalfDuration = AnimationTimings.thinkingBobDuration / 2
+        let bobUp = SKAction.moveBy(x: 0, y: 0.5, duration: bobHalfDuration)
+        let bobDown = SKAction.moveBy(x: 0, y: -0.5, duration: bobHalfDuration)
+        bobUp.timingMode = .easeInEaseOut
+        bobDown.timingMode = .easeInEaseOut
+        let bobCycle = SKAction.repeatForever(SKAction.sequence([bobUp, bobDown]))
+        run(bobCycle, withKey: "thinkingBob")
+
+        // Start spawning thinking particles
+        startThinkingParticles()
+
+        // Start occasional blinks
+        startThinkingBlinks()
+
+        // Show lightbulb above head (the "planning idea" indicator)
+        showPlanningLightbulb()
+    }
+
+    /// Stop the planning animation and return to normal
+    func stopClaudePlanning() {
+        guard isClaudePlanning else { return }
+        isClaudePlanning = false
+        isClaudeThinking = false
+
+        // Stop thinking animations
+        removeAction(forKey: "thinkingTilt")
+        removeAction(forKey: "thinkingBob")
+        removeAction(forKey: "thinkingParticleSpawner")
+        removeAction(forKey: "thinkingBlink")
+
+        // Dismiss the planning lightbulb
+        dismissLightbulb()
+
+        // Reset body scale
+        let resetScale = SKAction.scaleY(to: 1.0, duration: 0.2)
+        resetScale.timingMode = .easeOut
+        run(resetScale)
+
+        // Reset eyes to open
+        leftEyeNode.texture = eyeOpenTexture
+        rightEyeNode.texture = eyeOpenTexture
+
+        // Re-enable mouse tracking
+        isMouseTrackingEnabled = true
+
+        // Resume idle animations
+        resumeIdleAnimations()
+    }
+
+    /// Show a glowing lightbulb for planning mode
+    private func showPlanningLightbulb() {
+        // Remove any existing lightbulb
+        childNode(withName: Self.lightbulbName)?.removeFromParent()
+
+        let bulb = SKSpriteNode(texture: Self.lightbulbTexture)
+        bulb.name = Self.lightbulbName
+        bulb.size = CGSize(width: 8.5, height: 12)
+        bulb.position = CGPoint(x: 0, y: 15)
+        bulb.alpha = 0
+        bulb.zPosition = SpriteZPositions.effects + 1
+        bulb.setScale(0.3)
+        addChild(bulb)
+
+        // Pop in animation
+        let popIn = SKAction.group([
+            SKAction.fadeIn(withDuration: 0.15),
+            SKAction.scale(to: 1.2, duration: 0.15)
+        ])
+        let settle = SKAction.scale(to: 1.0, duration: 0.1)
+        settle.timingMode = .easeOut
+
+        // Gentle floating bob while visible (synced with body bob)
+        let bobUp = SKAction.moveBy(x: 0, y: 1.0, duration: 0.6)
+        let bobDown = SKAction.moveBy(x: 0, y: -1.0, duration: 0.6)
+        bobUp.timingMode = .easeInEaseOut
+        bobDown.timingMode = .easeInEaseOut
+        let floatLoop = SKAction.repeatForever(SKAction.sequence([bobUp, bobDown]))
+
+        // Add subtle glow pulse while planning
+        let glowUp = SKAction.colorize(with: NSColor.yellow, colorBlendFactor: 0.3, duration: 0.8)
+        let glowDown = SKAction.colorize(withColorBlendFactor: 0.0, duration: 0.8)
+        glowUp.timingMode = .easeInEaseOut
+        glowDown.timingMode = .easeInEaseOut
+        let glowLoop = SKAction.repeatForever(SKAction.sequence([glowUp, glowDown]))
+
+        bulb.run(SKAction.sequence([popIn, settle, SKAction.group([floatLoop, glowLoop])]))
+    }
+
     // MARK: - Thinking Animation
 
     /// Start the thinking pose animation (when Claude is processing)
     func startClaudeThinking() {
-        guard !isClaudeThinking, !isDragging else { return }
+        // Don't start regular thinking if already planning
+        guard !isClaudeThinking, !isClaudePlanning, !isDragging else { return }
         isClaudeThinking = true
 
         // Pause competing animations

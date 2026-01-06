@@ -56,7 +56,7 @@ class ClawdachiScene: SKScene {
 
     private func handleMusicPlaybackChanged(_ isPlaying: Bool) {
         // Don't dance while sleeping or during any Claude Code activity
-        guard !isSleeping, !clawdachi.isClaudeThinking,
+        guard !isSleeping, !clawdachi.isClaudeThinking, !clawdachi.isClaudePlanning,
               !clawdachi.isQuestionMarkVisible, !clawdachi.isLightbulbVisible,
               !clawdachi.isPartyCelebrationVisible else { return }
 
@@ -84,11 +84,32 @@ class ClawdachiScene: SKScene {
         // Don't interrupt sleep
         guard !isSleeping else { return }
 
-        if isActive && (status == "thinking" || status == "tools") {
+        if isActive && status == "planning" {
+            // Claude is in plan mode - show planning pose (thinking + lightbulb)
+            clawdachi.dismissQuestionMark()
+            clawdachi.dismissPartyCelebration()
+
+            // Only start if not already planning
+            if !clawdachi.isClaudePlanning {
+                clawdachi.stopClaudeThinking()  // Stop regular thinking if active
+                clawdachi.startClaudePlanning()
+
+                // Show planning message only when first starting
+                if !wasClaudeActive {
+                    showChatBubble(randomPlanningMessage(), duration: 3.0)
+                }
+            }
+            wasClaudeActive = true
+        } else if isActive && (status == "thinking" || status == "tools") {
             // Claude is working - show thinking pose
             clawdachi.dismissLightbulb()
             clawdachi.dismissQuestionMark()
             clawdachi.dismissPartyCelebration()
+
+            // Stop planning if was planning, then start thinking
+            if clawdachi.isClaudePlanning {
+                clawdachi.stopClaudePlanning()
+            }
             clawdachi.startClaudeThinking()
 
             // Show thinking message only when first starting
@@ -99,8 +120,8 @@ class ClawdachiScene: SKScene {
         } else if isActive && status == "waiting" {
             // Claude stopped responding - waiting for user input
             clawdachi.stopClaudeThinking()
+            clawdachi.stopClaudePlanning()
             clawdachi.stopDancing()  // Stop dancing while waiting
-            clawdachi.dismissLightbulb()
             clawdachi.dismissPartyCelebration()
             clawdachi.showQuestionMark()
 
@@ -111,6 +132,7 @@ class ClawdachiScene: SKScene {
         } else {
             // Claude session truly ended - show completion celebration
             clawdachi.stopClaudeThinking()
+            clawdachi.stopClaudePlanning()
             clawdachi.dismissQuestionMark()
 
             // Show party celebration when transitioning from active → complete
@@ -137,6 +159,19 @@ class ClawdachiScene: SKScene {
             "brb coding..."
         ]
         return messages.randomElement() ?? "thinking..."
+    }
+
+    private func randomPlanningMessage() -> String {
+        let messages = [
+            "planning it out...",
+            "got an idea!",
+            "designing...",
+            "let me plan this",
+            "strategizing...",
+            "mapping it out!",
+            "blueprinting~"
+        ]
+        return messages.randomElement() ?? "planning..."
     }
 
     private func randomWaitingMessage() -> String {
@@ -457,6 +492,8 @@ class ClawdachiScene: SKScene {
         switch status {
         case "thinking", "tools":
             return "(thinking...)"
+        case "planning":
+            return "(planning...)"
         case "waiting":
             return "(waiting)"
         case "error":

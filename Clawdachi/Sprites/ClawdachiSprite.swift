@@ -55,6 +55,7 @@ class ClawdachiSprite: SKNode {
     var isDragging = false
     var isDancing = false
     var isClaudeThinking = false
+    var isClaudePlanning = false
     var isSmoking = false
     var isSpeaking = false
 

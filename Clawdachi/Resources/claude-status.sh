@@ -5,9 +5,11 @@
 set -e
 
 SESSIONS_DIR="$HOME/.clawdachi/sessions"
+PLAN_MODE_DIR="$HOME/.clawdachi/planmode"
 
-# Ensure directory exists
+# Ensure directories exist
 mkdir -p "$SESSIONS_DIR"
+mkdir -p "$PLAN_MODE_DIR"
 
 # Read JSON input from stdin
 INPUT=$(cat)
@@ -28,19 +30,42 @@ fi
 # Session file path
 SESSION_FILE="$SESSIONS_DIR/${SESSION_ID}.json"
 TEMP_FILE="$SESSIONS_DIR/.${SESSION_ID}.tmp"
+PLAN_MODE_FILE="$PLAN_MODE_DIR/${SESSION_ID}.planmode"
 
 # Current timestamp
 TIMESTAMP=$(python3 -c "import time; print(time.time())")
 
 # Determine status based on event
 case "$EVENT_TYPE" in
-  "session_start"|"thinking"|"prompt_submit")
+  "session_start")
+    # Clear any stale plan mode state on new session
+    rm -f "$PLAN_MODE_FILE"
     STATUS="thinking"
     ;;
+  "thinking"|"prompt_submit")
+    # Check if still in plan mode
+    if [ -f "$PLAN_MODE_FILE" ]; then
+      STATUS="planning"
+    else
+      STATUS="thinking"
+    fi
+    ;;
   "tool_start")
-    # Check if this is a question/prompt tool - set waiting status
-    if [ "$TOOL_NAME" = "AskUserQuestion" ]; then
+    # Check for plan mode tools
+    if [ "$TOOL_NAME" = "EnterPlanMode" ]; then
+      # Enter plan mode - create marker file
+      touch "$PLAN_MODE_FILE"
+      STATUS="planning"
+    elif [ "$TOOL_NAME" = "ExitPlanMode" ]; then
+      # Exit plan mode - remove marker file
+      rm -f "$PLAN_MODE_FILE"
+      STATUS="thinking"
+    elif [ "$TOOL_NAME" = "AskUserQuestion" ]; then
+      # Question/prompt tool - set waiting status
       STATUS="waiting"
+    elif [ -f "$PLAN_MODE_FILE" ]; then
+      # In plan mode - maintain planning status
+      STATUS="planning"
     else
       STATUS="tools"
     fi
@@ -50,7 +75,12 @@ case "$EVENT_TYPE" in
     STATUS="waiting"
     ;;
   "tool_end")
-    STATUS="thinking"
+    # Check if still in plan mode
+    if [ -f "$PLAN_MODE_FILE" ]; then
+      STATUS="planning"
+    else
+      STATUS="thinking"
+    fi
     ;;
   "error")
     STATUS="error"
@@ -59,11 +89,13 @@ case "$EVENT_TYPE" in
     # Claude stopped responding - delete session file to signal completion
     # Question mark is only shown via AskUserQuestion tool detection
     rm -f "$SESSION_FILE"
+    rm -f "$PLAN_MODE_FILE"
     exit 0
     ;;
   "session_end"|"idle")
-    # Session truly ended - delete the session file
+    # Session truly ended - delete session and plan mode files
     rm -f "$SESSION_FILE"
+    rm -f "$PLAN_MODE_FILE"
     exit 0
     ;;
   *)
