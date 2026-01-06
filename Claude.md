@@ -43,9 +43,11 @@ It's a small piece of joy that makes your desktop feel a little more alive.
   - Orange dots float upward and pop at the top
   - Chat bubble: "hmm, let me think...", "on it!", "brb coding...", etc.
 - **Planning animation:** When Claude is in plan mode (designing implementation):
-  - Same focused eyes and head bob as thinking
-  - Orange dots float upward
+  - Focused eyes: `> <` with occasional blinks
+  - Gentle head bob (same as thinking)
   - Glowing lightbulb above head with pulsing yellow glow
+  - Yellow/white sparkles flicker around the lightbulb
+  - No orange thinking dots (sparkles replace them)
   - Chat bubble: "planning it out...", "got an idea!", "designing...", etc.
   - Triggered by EnterPlanMode tool, ends with ExitPlanMode
 - **Waiting question mark:** White pixel question mark appears when Claude is waiting for user input or permission approval (dismisses on click or when Claude starts again)
@@ -202,6 +204,8 @@ All idle animations run continuously and independently:
 - Claude thinking bob: 2.0s
 - Claude thinking dot spawn: 0.6-1.0s
 - Claude thinking blink: 4-7s
+- Claude planning spark spawn: 0.15-0.35s
+- Claude planning spark lifetime: ~0.25s
 - Chat bubble pop-in: 0.15s (with 1.1x overshoot)
 - Chat bubble fade-out: 0.2s
 - Chat bubble auto-dismiss: 5.0s
@@ -214,7 +218,8 @@ Reusable spawner for floating effects:
 - Hearts (click reaction)
 - Sleep Z's (sleep mode)
 - Sweat drops (dragging)
-- Thinking dots (Claude working)
+- Thinking dots (Claude working) - orange gradient
+- Lightbulb sparks (Claude planning) - yellow/white
 - Smoke particles (smoking animation)
 
 ### Chat Bubble System

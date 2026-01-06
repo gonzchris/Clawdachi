@@ -21,8 +21,11 @@ This skill guides creation of pixel-art visual elements for Clawdachi, ensuring 
 | Highlight Orange | #FFBB77 | Highlights, emphasis |
 | Dark Outline | #222222 | Outlines, eyes, text |
 | Mouth Brown | #442200 | Mouth shapes |
-| White | #FFFFFF | UI backgrounds, highlights |
+| White | #FFFFFF | UI backgrounds, highlights, sparks |
 | Gray Shadow | #8C8C8C | Drop shadows |
+| Spark Yellow | #FFF596 | Lightbulb sparks main |
+| Spark Yellow Bright | #FFFFC8 | Lightbulb sparks highlight |
+| Spark Yellow Dark | #FFDC50 | Lightbulb sparks shadow |
 
 ### UI Elements (Chat Bubbles, etc.)
 - **Pixel-art styling**: Black outline, gray drop shadow (offset left/bottom), white fill
