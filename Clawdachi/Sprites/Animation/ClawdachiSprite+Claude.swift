@@ -71,12 +71,48 @@ extension ClawdachiSprite {
     private static let partyHatName = "partyHat"
     private static let partyBlowerName = "partyBlower"
 
+    // MARK: - Claude Animation Cleanup
+
+    /// Clean up all Claude-related animations (called before transitioning between Claude states)
+    private func cleanupClaudeAnimations() {
+        // Remove thinking animations
+        removeAction(forKey: "thinkingTilt")
+        removeAction(forKey: "thinkingBob")
+        removeAction(forKey: "thinkingParticleSpawner")
+        removeAction(forKey: "thinkingBlink")
+
+        // Remove planning animations
+        removeAction(forKey: "planningTilt")
+        removeAction(forKey: "planningBob")
+        removeAction(forKey: "planningBlink")
+        removeAction(forKey: "lightbulbSparkSpawner")
+
+        // Remove party celebration animations
+        removeAction(forKey: "blowerCycle")
+        removeAction(forKey: "partyBounce")
+        leftArmNode.removeAction(forKey: "partyArm")
+        rightArmNode.removeAction(forKey: "partyArm")
+
+        // Dismiss any visible Claude UI elements
+        dismissLightbulb()
+        dismissQuestionMark()
+        dismissPartyCelebration()
+
+        // Reset body transform
+        let resetScale = SKAction.scaleY(to: 1.0, duration: 0.1)
+        run(resetScale)
+    }
+
     // MARK: - Planning Animation
 
     /// Start the planning animation (when Claude is in plan mode)
     /// Shows lightbulb with flickering sparks - designing a solution
     func startClaudePlanning() {
         guard !isClaudePlanning, !isDragging else { return }
+
+        // Clean up any other Claude state first (before changing state)
+        cleanupClaudeAnimations()
+
         isClaudePlanning = true
 
         // Pause competing animations
@@ -268,8 +304,12 @@ extension ClawdachiSprite {
 
     /// Start the thinking pose animation (when Claude is processing)
     func startClaudeThinking() {
-        // Don't start regular thinking if already planning
+        // Don't start regular thinking if already planning or thinking
         guard !isClaudeThinking, !isClaudePlanning, !isDragging else { return }
+
+        // Clean up any other Claude state first (before changing state)
+        cleanupClaudeAnimations()
+
         isClaudeThinking = true
 
         // Pause competing animations
@@ -478,6 +518,13 @@ extension ClawdachiSprite {
 
     /// Show the question mark above the sprite's head (waiting for user input)
     func showQuestionMark() {
+        // Clean up any other Claude state first
+        cleanupClaudeAnimations()
+
+        // Pause competing animations
+        pauseIdleAnimations()
+        stopDancing()
+
         // Remove any existing question mark
         childNode(withName: Self.questionMarkName)?.removeFromParent()
 
@@ -533,6 +580,13 @@ extension ClawdachiSprite {
     /// Show the party celebration - hat on head and blower cycling
     /// Persists until dismissed by user click or new CLI activity
     func showPartyCelebration() {
+        // Clean up any other Claude state first
+        cleanupClaudeAnimations()
+
+        // Pause competing animations
+        pauseIdleAnimations()
+        stopDancing()
+
         // Remove any existing celebration
         childNode(withName: Self.partyHatName)?.removeFromParent()
         childNode(withName: Self.partyBlowerName)?.removeFromParent()

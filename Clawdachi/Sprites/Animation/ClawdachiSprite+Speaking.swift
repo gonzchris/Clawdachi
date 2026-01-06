@@ -9,6 +9,31 @@ import SpriteKit
 
 extension ClawdachiSprite {
 
+    // MARK: - Cached Speaking Patterns
+
+    /// Speaking pattern timings (built once, reused)
+    private enum SpeakingPatterns {
+        // Pattern durations: [(isClosed, duration)]
+        static let pattern1: [(Bool, TimeInterval)] = [
+            // -O-O (classic)
+            (true, 0.12), (false, 0.18), (true, 0.12), (false, 0.18)
+        ]
+        static let pattern2: [(Bool, TimeInterval)] = [
+            // -O-O-O (longer)
+            (true, 0.1), (false, 0.15), (true, 0.1), (false, 0.15), (true, 0.1), (false, 0.15)
+        ]
+        static let pattern3: [(Bool, TimeInterval)] = [
+            // -OO-O (quick double)
+            (true, 0.1), (false, 0.12), (true, 0.06), (false, 0.12), (true, 0.15), (false, 0.18)
+        ]
+        static let pattern4: [(Bool, TimeInterval)] = [
+            // -O--O (pause in middle)
+            (true, 0.1), (false, 0.2), (true, 0.25), (false, 0.2)
+        ]
+
+        static let all: [[(Bool, TimeInterval)]] = [pattern1, pattern2, pattern3, pattern4]
+    }
+
     // MARK: - Speaking Animation
 
     /// Start the speaking animation with variety
@@ -22,55 +47,30 @@ extension ClawdachiSprite {
         mouthNode.size = CGSize(width: 3, height: 1)
         mouthNode.alpha = 1.0
 
-        // Create mouth actions
-        let openMouth = SKAction.run { [weak self] in
-            self?.mouthNode.texture = self?.speakingOpenMouthTexture
-            self?.mouthNode.size = CGSize(width: 3, height: 3)
+        // Build actions from selected cached pattern
+        let selectedPattern = SpeakingPatterns.all.randomElement()!
+        var actions: [SKAction] = []
+
+        for (isClosed, waitDuration) in selectedPattern {
+            if isClosed {
+                actions.append(SKAction.run { [weak self] in
+                    self?.mouthNode.texture = self?.speakingClosedMouthTexture
+                    self?.mouthNode.size = CGSize(width: 3, height: 1)
+                })
+            } else {
+                actions.append(SKAction.run { [weak self] in
+                    self?.mouthNode.texture = self?.speakingOpenMouthTexture
+                    self?.mouthNode.size = CGSize(width: 3, height: 3)
+                })
+            }
+            actions.append(SKAction.wait(forDuration: waitDuration))
         }
-        let closedMouth = SKAction.run { [weak self] in
-            self?.mouthNode.texture = self?.speakingClosedMouthTexture
-            self?.mouthNode.size = CGSize(width: 3, height: 1)
-        }
 
-        // Pick a random speaking pattern for variety
-        let patterns: [[SKAction]] = [
-            // Pattern 1: -O-O (classic)
-            [closedMouth, SKAction.wait(forDuration: 0.12),
-             openMouth, SKAction.wait(forDuration: 0.18),
-             closedMouth, SKAction.wait(forDuration: 0.12),
-             openMouth, SKAction.wait(forDuration: 0.18)],
-
-            // Pattern 2: -O-O-O (longer)
-            [closedMouth, SKAction.wait(forDuration: 0.1),
-             openMouth, SKAction.wait(forDuration: 0.15),
-             closedMouth, SKAction.wait(forDuration: 0.1),
-             openMouth, SKAction.wait(forDuration: 0.15),
-             closedMouth, SKAction.wait(forDuration: 0.1),
-             openMouth, SKAction.wait(forDuration: 0.15)],
-
-            // Pattern 3: -OO-O (quick double)
-            [closedMouth, SKAction.wait(forDuration: 0.1),
-             openMouth, SKAction.wait(forDuration: 0.12),
-             closedMouth, SKAction.wait(forDuration: 0.06),
-             openMouth, SKAction.wait(forDuration: 0.12),
-             closedMouth, SKAction.wait(forDuration: 0.15),
-             openMouth, SKAction.wait(forDuration: 0.18)],
-
-            // Pattern 4: -O--O (pause in middle)
-            [closedMouth, SKAction.wait(forDuration: 0.1),
-             openMouth, SKAction.wait(forDuration: 0.2),
-             closedMouth, SKAction.wait(forDuration: 0.25),
-             openMouth, SKAction.wait(forDuration: 0.2)],
-        ]
-
-        let selectedPattern = patterns.randomElement()!
-        let speakPattern = SKAction.sequence(selectedPattern)
-
-        let cleanup = SKAction.run { [weak self] in
+        actions.append(SKAction.run { [weak self] in
             self?.stopSpeaking()
-        }
+        })
 
-        mouthNode.run(SKAction.sequence([speakPattern, cleanup]), withKey: "speaking")
+        mouthNode.run(SKAction.sequence(actions), withKey: "speaking")
     }
 
     /// Stop the speaking animation

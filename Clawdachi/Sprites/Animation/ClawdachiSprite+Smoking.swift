@@ -244,7 +244,8 @@ extension ClawdachiSprite {
     // MARK: - Stop Smoking
 
     func stopSmoking() {
-        guard isSmoking else { return }
+        // Check for cigarette node presence OR state flag (handles state machine transitions)
+        guard isSmoking || cigaretteNode != nil else { return }
 
         // Remove puff-related actions
         removeAction(forKey: "puffCycle")
@@ -277,9 +278,11 @@ extension ClawdachiSprite {
             cig.run(SKAction.sequence([fadeOut, remove]))
         }
 
-        isSmoking = false
-
-        // Schedule next smoking session
-        scheduleNextSmoking()
+        // Only reset state and reschedule if we were actually in smoking state
+        // (not if called during cleanup from another state transition)
+        if currentState == .smoking {
+            isSmoking = false
+            scheduleNextSmoking()
+        }
     }
 }

@@ -46,18 +46,53 @@ class ClawdachiSprite: SKNode {
     var speakingOpenMouthTexture: SKTexture!
     var speakingClosedMouthTexture: SKTexture!
 
-    // MARK: - Animation State (internal for extension access)
+    // MARK: - State Machine
 
-    var isBlinking = false
-    var isWhistling = false
-    var isPerformingAction = false
-    var isLookingAround = false
-    var isDragging = false
-    var isDancing = false
-    var isClaudeThinking = false
-    var isClaudePlanning = false
-    var isSmoking = false
-    var isSpeaking = false
+    /// Centralized state manager for animation states
+    let stateManager = SpriteStateManager()
+
+    /// Current sprite state (convenience accessor)
+    var currentState: SpriteState { stateManager.currentState }
+
+    // MARK: - Animation State (internal for extension access)
+    // Note: These are being migrated to stateManager. Keep for backwards compatibility during transition.
+
+    var isBlinking = false  // Overlay behavior, not part of state machine
+    var isSpeaking = false  // Overlay behavior, not part of state machine
+
+    // State machine-backed computed properties for backwards compatibility
+    var isWhistling: Bool {
+        get { currentState == .whistling }
+        set { if newValue { stateManager.transitionTo(.whistling) } else if currentState == .whistling { stateManager.transitionTo(.idle) } }
+    }
+    var isPerformingAction: Bool {
+        get { currentState == .performingAction }
+        set { if newValue { stateManager.transitionTo(.performingAction) } else if currentState == .performingAction { stateManager.transitionTo(.idle) } }
+    }
+    var isLookingAround: Bool {
+        get { currentState == .lookingAround }
+        set { if newValue { stateManager.transitionTo(.lookingAround) } else if currentState == .lookingAround { stateManager.transitionTo(.idle) } }
+    }
+    var isDragging: Bool {
+        get { currentState == .dragging }
+        set { if newValue { stateManager.transitionTo(.dragging) } else if currentState == .dragging { stateManager.transitionTo(.idle) } }
+    }
+    var isDancing: Bool {
+        get { currentState == .dancing }
+        set { if newValue { stateManager.transitionTo(.dancing) } else if currentState == .dancing { stateManager.transitionTo(.idle) } }
+    }
+    var isClaudeThinking: Bool {
+        get { currentState == .claudeThinking }
+        set { if newValue { stateManager.transitionTo(.claudeThinking) } else if currentState == .claudeThinking { stateManager.transitionTo(.idle) } }
+    }
+    var isClaudePlanning: Bool {
+        get { currentState == .claudePlanning }
+        set { if newValue { stateManager.transitionTo(.claudePlanning) } else if currentState == .claudePlanning { stateManager.transitionTo(.idle) } }
+    }
+    var isSmoking: Bool {
+        get { currentState == .smoking }
+        set { if newValue { stateManager.transitionTo(.smoking) } else if currentState == .smoking { stateManager.transitionTo(.idle) } }
+    }
 
     // Smoking animation node (created/destroyed during animation)
     var cigaretteNode: SKSpriteNode?

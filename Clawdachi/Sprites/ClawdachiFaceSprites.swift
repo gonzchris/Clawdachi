@@ -10,6 +10,65 @@ class ClawdachiFaceSprites {
 
     private typealias P = ClawdachiPalette
 
+    // MARK: - Pixel Pattern Renderer
+
+    /// Renders a pixel pattern to an SKTexture
+    /// - Parameters:
+    ///   - pattern: 2D array where each value maps to a color (0 = transparent)
+    ///   - colorMap: Dictionary mapping pattern values to colors
+    ///   - pixelSize: Size of each pixel in points
+    ///   - filtering: Texture filtering mode (.nearest for crisp, .linear for smooth)
+    /// - Returns: Generated SKTexture
+    static func renderPixelPattern(
+        _ pattern: [[Int]],
+        colorMap: [Int: NSColor],
+        pixelSize: CGFloat,
+        filtering: SKTextureFilteringMode = .nearest
+    ) -> SKTexture {
+        let height = pattern.count
+        let width = pattern.first?.count ?? 0
+        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
+
+        let image = NSImage(size: size, flipped: true) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
+
+            for row in 0..<height {
+                for col in 0..<width {
+                    let value = pattern[row][col]
+                    guard value > 0, let color = colorMap[value] else { continue }
+
+                    color.setFill()
+                    CGRect(
+                        x: CGFloat(col) * pixelSize,
+                        y: CGFloat(row) * pixelSize,
+                        width: pixelSize,
+                        height: pixelSize
+                    ).fill()
+                }
+            }
+
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create pixel pattern image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = filtering
+        return texture
+    }
+
+    // MARK: - Common Colors
+
+    private enum Colors {
+        static let outline = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)  // #222222
+        static let orangeHighlight = NSColor(red: 255/255, green: 200/255, blue: 140/255, alpha: 1.0)
+        static let orangeMain = NSColor(red: 255/255, green: 153/255, blue: 51/255, alpha: 1.0)  // #FF9933
+        static let orangeShadow = NSColor(red: 180/255, green: 80/255, blue: 0/255, alpha: 1.0)
+    }
+
     // MARK: - Eye States
 
     enum EyeState {
@@ -194,18 +253,6 @@ class ClawdachiFaceSprites {
 
     /// Generates a pixel-art heart texture with orange gradient and black outline
     static func generateHeartTexture() -> SKTexture {
-        // 7x7 pixel heart with outline, scaled up for smooth rendering
-        let pixelSize: CGFloat = 4
-        let width = 7
-        let height = 7
-        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
-
-        // Colors
-        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)
-        let highlightColor = NSColor(red: 255/255, green: 200/255, blue: 140/255, alpha: 1.0)
-        let mainColor = NSColor(red: 255/255, green: 153/255, blue: 51/255, alpha: 1.0)
-        let shadowColor = NSColor(red: 180/255, green: 80/255, blue: 0/255, alpha: 1.0)
-
         // Heart pattern (1 = outline, 2 = highlight, 3 = main, 4 = shadow)
         let pattern: [[Int]] = [
             [0, 1, 1, 0, 1, 1, 0],
@@ -217,45 +264,12 @@ class ClawdachiFaceSprites {
             [0, 0, 0, 1, 0, 0, 0],
         ]
 
-        let image = NSImage(size: size, flipped: true) { rect in
-            NSColor.clear.setFill()
-            rect.fill()
-
-            for row in 0..<height {
-                for col in 0..<width {
-                    let value = pattern[row][col]
-                    guard value > 0 else { continue }
-
-                    let color: NSColor
-                    switch value {
-                    case 1: color = outlineColor
-                    case 2: color = highlightColor
-                    case 3: color = mainColor
-                    case 4: color = shadowColor
-                    default: continue
-                    }
-
-                    color.setFill()
-                    let pixelRect = CGRect(
-                        x: CGFloat(col) * pixelSize,
-                        y: CGFloat(row) * pixelSize,
-                        width: pixelSize,
-                        height: pixelSize
-                    )
-                    pixelRect.fill()
-                }
-            }
-
-            return true
-        }
-
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            fatalError("Failed to create heart image")
-        }
-
-        let texture = SKTexture(cgImage: cgImage)
-        texture.filteringMode = .nearest  // Keep crisp pixels
-        return texture
+        return renderPixelPattern(pattern, colorMap: [
+            1: Colors.outline,
+            2: Colors.orangeHighlight,
+            3: Colors.orangeMain,
+            4: Colors.orangeShadow
+        ], pixelSize: 4)
     }
 
     /// Generates a "Z" texture for sleeping animation with orange gradient and black outline

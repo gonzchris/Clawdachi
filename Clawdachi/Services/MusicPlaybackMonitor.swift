@@ -66,10 +66,17 @@ class MusicPlaybackMonitor {
 
     // MARK: - AppleScript Queries
 
-    private func isSpotifyPlaying() -> Bool {
+    /// Supported music applications
+    private enum MusicApp: String, CaseIterable {
+        case spotify = "Spotify"
+        case appleMusic = "Music"
+    }
+
+    /// Check if a specific music app is currently playing
+    private func isAppPlaying(_ app: MusicApp) -> Bool {
         let script = """
-        if application "Spotify" is running then
-            tell application "Spotify"
+        if application "\(app.rawValue)" is running then
+            tell application "\(app.rawValue)"
                 if player state is playing then
                     return "playing"
                 end if
@@ -80,18 +87,14 @@ class MusicPlaybackMonitor {
         return runAppleScript(script) == "playing"
     }
 
+    /// Check if Spotify is playing
+    private func isSpotifyPlaying() -> Bool {
+        isAppPlaying(.spotify)
+    }
+
+    /// Check if Apple Music is playing
     private func isAppleMusicPlaying() -> Bool {
-        let script = """
-        if application "Music" is running then
-            tell application "Music"
-                if player state is playing then
-                    return "playing"
-                end if
-            end tell
-        end if
-        return "stopped"
-        """
-        return runAppleScript(script) == "playing"
+        isAppPlaying(.appleMusic)
     }
 
     private func runAppleScript(_ source: String) -> String? {

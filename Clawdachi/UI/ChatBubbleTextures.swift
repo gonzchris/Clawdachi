@@ -16,6 +16,8 @@ class ChatBubbleTextures {
 
     /// LRU cache for generated bubble images
     private static var imageCache: [String: NSImage] = [:]
+    /// Track insertion order for proper LRU eviction (oldest first)
+    private static var cacheOrder: [String] = []
     private static let maxCacheSize = 12
 
     /// Generate cache key from content size and tail flag
@@ -34,6 +36,11 @@ class ChatBubbleTextures {
         // Check cache first
         let key = cacheKey(contentSize: contentSize, hasTail: hasTail)
         if let cached = imageCache[key] {
+            // Move to end of LRU order (most recently used)
+            if let index = cacheOrder.firstIndex(of: key) {
+                cacheOrder.remove(at: index)
+                cacheOrder.append(key)
+            }
             return cached
         }
 
@@ -121,14 +128,34 @@ class ChatBubbleTextures {
                 )
             }
 
+            // Draw inner shadow (bottom edge for 3D effect)
+            let innerShadowRect = CGRect(
+                x: bodyX + shadowSize + px,
+                y: outlineSize + bodyHeight - px * 3,
+                width: bodyWidth - px * 2,
+                height: px * 3
+            )
+            Self.drawRoundedRect(rect: innerShadowRect, cornerRadius: cornerRadius / 2, color: C.innerShadowColor)
+
+            // Draw inner highlight (top edge for 3D effect)
+            let highlightRect = CGRect(
+                x: bodyX + shadowSize + px,
+                y: outlineSize + px,
+                width: bodyWidth - px * 2,
+                height: px * 2
+            )
+            Self.drawRoundedRect(rect: highlightRect, cornerRadius: cornerRadius / 2, color: C.highlightColor)
+
             return true
         }
 
         // Add to cache (evict oldest if full)
-        if imageCache.count >= maxCacheSize {
-            imageCache.removeValue(forKey: imageCache.keys.first!)
+        if imageCache.count >= maxCacheSize, let oldest = cacheOrder.first {
+            imageCache.removeValue(forKey: oldest)
+            cacheOrder.removeFirst()
         }
         imageCache[key] = image
+        cacheOrder.append(key)
 
         return image
     }

@@ -149,29 +149,20 @@ class ClawdachiScene: SKScene {
 
     private func randomThinkingMessage() -> String {
         let messages = [
-            "hmm, let me think...",
             "on it!",
-            "working on it...",
-            "let's see...",
-            "thinking...",
-            "one sec...",
-            "i got this!",
-            "brb coding..."
+            "one sec!",
+            "i got this!"
         ]
-        return messages.randomElement() ?? "thinking..."
+        return messages.randomElement() ?? "on it!"
     }
 
     private func randomPlanningMessage() -> String {
         let messages = [
-            "planning it out...",
             "got an idea!",
-            "designing...",
             "let me plan this",
-            "strategizing...",
-            "mapping it out!",
-            "blueprinting~"
+            "mapping it out!"
         ]
-        return messages.randomElement() ?? "planning..."
+        return messages.randomElement() ?? "got an idea!"
     }
 
     private func randomWaitingMessage() -> String {
@@ -552,7 +543,7 @@ class ClawdachiScene: SKScene {
             "hi, i'm clawdachi",
             "i love music!",
             "pet me please?",
-            "zzz... sleepy..."
+            "zzz so sleepy"
         ]
 
         for (index, message) in messages.enumerated() {

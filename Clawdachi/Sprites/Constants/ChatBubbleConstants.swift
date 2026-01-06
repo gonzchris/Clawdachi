@@ -51,16 +51,22 @@ enum ChatBubbleConstants {
     /// Black outline
     static let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)
 
-    /// Gray shadow (left/bottom edges)
+    /// Gray shadow (drop shadow)
     static let shadowColor = NSColor(red: 140/255, green: 140/255, blue: 140/255, alpha: 1.0)
+
+    /// Inner highlight color (top edge, subtle 3D effect)
+    static let highlightColor = NSColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 1.0)
+
+    /// Inner shadow color (bottom edge, 3D effect)
+    static let innerShadowColor = NSColor(red: 220/255, green: 220/255, blue: 220/255, alpha: 1.0)
 
     // MARK: - Text
 
     /// Font size for bubble text
-    static let fontSize: CGFloat = 12
+    static let fontSize: CGFloat = 13
 
-    /// Text color
-    static let textColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)
+    /// Text color (pure black for maximum contrast)
+    static let textColor = NSColor.black
 
     /// Line spacing for multi-line text
     static let lineSpacing: CGFloat = 2

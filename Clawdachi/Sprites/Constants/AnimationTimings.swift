@@ -100,11 +100,34 @@ enum AnimationTimings {
     /// Interval between thinking particle spawns
     static let thinkingParticleInterval: TimeInterval = 0.7
 
+    /// Min interval between thinking dot spawns
+    static let thinkingDotMinInterval: TimeInterval = 0.6
+
+    /// Max interval between thinking dot spawns
+    static let thinkingDotMaxInterval: TimeInterval = 1.0
+
     /// Duration of thinking particle float
     static let thinkingParticleFloatDuration: TimeInterval = 1.0
 
+    /// Min interval between thinking blinks
+    static let thinkingBlinkMinInterval: TimeInterval = 4.0
+
+    /// Max interval between thinking blinks
+    static let thinkingBlinkMaxInterval: TimeInterval = 7.0
+
     /// Maximum age of session file before considered stale (seconds)
     static let sessionStalenessThreshold: TimeInterval = 60.0
+
+    // MARK: - Claude Planning Animation
+
+    /// Min interval between planning spark spawns
+    static let planningSparkMinInterval: TimeInterval = 0.15
+
+    /// Max interval between planning spark spawns
+    static let planningSparkMaxInterval: TimeInterval = 0.35
+
+    /// Planning spark lifetime (how long before fading)
+    static let planningSparkLifetime: TimeInterval = 0.25
 
     // MARK: - Smoking Animation
 

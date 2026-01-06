@@ -48,6 +48,44 @@ enum SpritePositions {
 
     /// Sleep Z spawn position
     static let sleepZ = CGPoint(x: 5, y: 5)
+
+    /// Dancing music note spawn Y position
+    static let danceMusicNoteSpawnY: CGFloat = 10
+
+    // MARK: - Claude Integration Elements
+
+    /// Lightbulb position above head (planning mode)
+    static let lightbulb = CGPoint(x: 0, y: 15)
+
+    /// Lightbulb size (20% smaller than original)
+    static let lightbulbSize = CGSize(width: 6.8, height: 9.6)
+
+    /// Question mark position above head (waiting mode)
+    static let questionMark = CGPoint(x: 0, y: 14)
+
+    /// Party hat position above head (celebration mode)
+    static let partyHat = CGPoint(x: 0, y: 12)
+
+    /// Party blower position near mouth
+    static let partyBlower = CGPoint(x: 3, y: -4)
+
+    /// Thinking dot spawn position range
+    static let thinkingDotSpawnX: ClosedRange<CGFloat> = -3...3
+    static let thinkingDotSpawnY: CGFloat = 10
+
+    // MARK: - Whistle/Smoking Positions
+
+    /// Whistle mouth offset from face center
+    static let whistleMouth = CGPoint(x: 5, y: -5)
+
+    /// Cigarette position when held
+    static let cigarette = CGPoint(x: 5, y: 0)
+
+    /// Cigarette tip offset from cigarette position
+    static let cigaretteTipOffset: CGFloat = 2.5
+
+    /// Smoke particle spawn position (relative to cigarette)
+    static let smokeSpawn = CGPoint(x: 2, y: -4)
 }
 
 /// Z-position layer ordering for Clawdachi sprites

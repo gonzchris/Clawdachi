@@ -33,8 +33,8 @@ extension ClawdachiSprite {
     }
 
     func stopDancing() {
-        guard isDancing else { return }
-        isDancing = false
+        // Check state OR presence of dance animation (handles state machine transitions)
+        guard isDancing || bodyNode.action(forKey: "bodySway") != nil else { return }
 
         // Stop dance animations on their respective nodes
         bodyNode.removeAction(forKey: "bodySway")
@@ -55,9 +55,12 @@ extension ClawdachiSprite {
         outerRightLegNode.zRotation = 0
         innerRightLegNode.zRotation = 0
 
-        // Resume idle animations
-        scheduleNextWhistle()
-        scheduleNextLookAround()
+        // Only reset state and reschedule if we were actually in dancing state
+        if currentState == .dancing {
+            isDancing = false
+            scheduleNextWhistle()
+            scheduleNextLookAround()
+        }
     }
 
     // MARK: - Body Sway (side to side lean)

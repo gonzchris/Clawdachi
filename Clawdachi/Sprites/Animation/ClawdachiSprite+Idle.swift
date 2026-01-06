@@ -207,12 +207,14 @@ extension ClawdachiSprite {
         // (prevents restore: true from overwriting thinking eye textures)
         leftEyeNode.removeAction(forKey: "blink")
         rightEyeNode.removeAction(forKey: "blink")
-        isWhistling = false
-        isLookingAround = false
-        // Stop smoking if in progress
-        if isSmoking {
-            stopSmoking()
-        }
+
+        // Stop whistling visuals if active
+        removeAction(forKey: "whistleLift")
+        removeAction(forKey: "whistleCompletion")
+        mouthNode.alpha = 0
+
+        // Always try to stop smoking (stopSmoking checks for cigarette node)
+        stopSmoking()
     }
 
     func resumeIdleAnimations() {

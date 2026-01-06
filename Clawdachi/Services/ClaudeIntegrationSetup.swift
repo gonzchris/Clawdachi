@@ -130,61 +130,19 @@ class ClaudeIntegrationSetup {
         // Get or create hooks dictionary
         var hooks = (settings["hooks"] as? [String: Any]) ?? [:]
 
-        // Our hook configurations
-        let clawdachiHooks: [String: [[String: Any]]] = [
-            "UserPromptSubmit": [
-                [
-                    "matcher": "",
-                    "hooks": [
-                        ["type": "command", "command": "~/.clawdachi/hooks/claude-status.sh thinking"]
-                    ]
-                ]
-            ],
-            "PreToolUse": [
-                [
-                    "matcher": "",
-                    "hooks": [
-                        ["type": "command", "command": "~/.clawdachi/hooks/claude-status.sh tool_start"]
-                    ]
-                ]
-            ],
-            "PostToolUse": [
-                [
-                    "matcher": "",
-                    "hooks": [
-                        ["type": "command", "command": "~/.clawdachi/hooks/claude-status.sh tool_end"]
-                    ]
-                ]
-            ],
-            "Stop": [
-                [
-                    "matcher": "",
-                    "hooks": [
-                        ["type": "command", "command": "~/.clawdachi/hooks/claude-status.sh stop"]
-                    ]
-                ]
-            ],
-            "PermissionRequest": [
-                [
-                    "matcher": "",
-                    "hooks": [
-                        ["type": "command", "command": "~/.clawdachi/hooks/claude-status.sh permission_request"]
-                    ]
-                ]
-            ],
-            "SessionEnd": [
-                [
-                    "matcher": "",
-                    "hooks": [
-                        ["type": "command", "command": "~/.clawdachi/hooks/claude-status.sh session_end"]
-                    ]
-                ]
-            ]
+        // Hook configurations: (Claude hook event, our script argument)
+        let hookConfigs: [(event: String, action: String)] = [
+            ("UserPromptSubmit", "thinking"),
+            ("PreToolUse", "tool_start"),
+            ("PostToolUse", "tool_end"),
+            ("Stop", "stop"),
+            ("PermissionRequest", "permission_request"),
+            ("SessionEnd", "session_end")
         ]
 
-        // For each hook type, check if our hook already exists
-        for (hookType, ourHookConfig) in clawdachiHooks {
-            var existingHooks = (hooks[hookType] as? [[String: Any]]) ?? []
+        // For each hook type, check if our hook already exists and add if needed
+        for config in hookConfigs {
+            var existingHooks = (hooks[config.event] as? [[String: Any]]) ?? []
 
             // Check if we already have a clawdachi hook installed
             let hasClawdachiHook = existingHooks.contains { hookEntry in
@@ -196,15 +154,25 @@ class ClaudeIntegrationSetup {
             }
 
             if !hasClawdachiHook {
-                // Add our hooks
-                existingHooks.append(contentsOf: ourHookConfig)
+                // Add our hook using builder helper
+                existingHooks.append(buildHookEntry(action: config.action))
             }
 
-            hooks[hookType] = existingHooks
+            hooks[config.event] = existingHooks
         }
 
         result["hooks"] = hooks
         return result
+    }
+
+    /// Builds a standard hook entry dictionary for our status script
+    private static func buildHookEntry(action: String) -> [String: Any] {
+        [
+            "matcher": "",
+            "hooks": [
+                ["type": "command", "command": "~/.clawdachi/hooks/claude-status.sh \(action)"]
+            ]
+        ]
     }
 
     // MARK: - Errors

@@ -8,53 +8,31 @@
 import AppKit
 import CoreText
 
-/// Loads and registers custom pixel fonts
+/// Loads and registers custom pixel fonts (thread-safe)
 enum PixelFontLoader {
 
-    /// The name of the pixel font after registration
-    static let pixelFontName = "Silkscreen"
+    /// Serial queue for thread-safe access to font state
+    private static let fontQueue = DispatchQueue(label: "com.clawdachi.fontloader")
 
-    /// Whether the font has been loaded
-    private static var isLoaded = false
+    /// Size-keyed font cache (avoids repeated NSFont creation for multiple sizes)
+    private static var fontCache: [CGFloat: NSFont] = [:]
 
-    /// Cached font instance (avoids repeated NSFont creation)
-    private static var cachedFont: NSFont?
-    private static var cachedFontSize: CGFloat = 0
-
-    /// Load the pixel font from the app bundle
-    static func loadFonts() {
-        guard !isLoaded else { return }
-
-        // Load Silkscreen (clean, thin pixel font)
-        if let fontURL = Bundle.main.url(forResource: "Silkscreen-Regular", withExtension: "ttf") {
-            var error: Unmanaged<CFError>?
-            if CTFontManagerRegisterFontsForURL(fontURL as CFURL, .process, &error) {
-                print("[PixelFontLoader] Successfully loaded Silkscreen font")
-            } else {
-                print("[PixelFontLoader] Failed to load Silkscreen: \(error?.takeRetainedValue().localizedDescription ?? "unknown error")")
-            }
-        } else {
-            print("[PixelFontLoader] Silkscreen not found in bundle")
-        }
-        isLoaded = true
-    }
-
-    /// Get the pixel font at the specified size
+    /// Get the terminal font at the specified size (thread-safe)
     /// - Parameter size: Font size in points
-    /// - Returns: The pixel font, or a fallback monospace font
+    /// - Returns: Clean monospace system font
     static func pixelFont(size: CGFloat) -> NSFont {
-        // Return cached font if size matches
-        if let cached = cachedFont, cachedFontSize == size {
-            return cached
+        fontQueue.sync {
+            // Return cached font if available
+            if let cached = fontCache[size] {
+                return cached
+            }
+
+            // Use system monospace font (SF Mono on macOS)
+            let font = NSFont.monospacedSystemFont(ofSize: size, weight: .semibold)
+
+            // Cache for this size
+            fontCache[size] = font
+            return font
         }
-
-        loadFonts()
-        let font = NSFont(name: pixelFontName, size: size)
-            ?? NSFont.monospacedSystemFont(ofSize: size, weight: .bold)
-
-        // Cache for next call
-        cachedFont = font
-        cachedFontSize = size
-        return font
     }
 }
