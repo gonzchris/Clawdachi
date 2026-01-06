@@ -43,9 +43,9 @@ This skill guides creation of pixel-art visual elements for Clawdachi, ensuring 
 - **Pop-in effects**: Overshoot slightly (1.1x) then settle
 
 ### Animation Patterns
-- **Idle animations**: Run continuously and independently
-- **State animations**: Can interrupt/override idle animations
-- **Particle effects**: Float upward, fade out, use consistent gradient styling
+- **Idle animations**: Run continuously, coordinated via idle cycle (whistle/smoke alternate every 20s)
+- **State animations**: Managed by SpriteStateManager; use state-backed computed properties (e.g., `isDancing`, `isSmoking`)
+- **Particle effects**: Float upward, fade out, use consistent gradient styling, return to pool on complete
 - **UI animations**: Pop-in with overshoot, fade-out on dismiss
 
 ### Standard Timings
@@ -75,13 +75,13 @@ ChatBubbleManager.shared.showMessage("Hello!", relativeTo: spriteWindow)
 ```
 
 ### Performance
-- Cache fonts, images, attributed strings
+- Cache fonts, images, attributed strings (use NSCache for thread safety)
 - Use NSBezierPath instead of pixel loops for shapes
-- Implement LRU caching for generated images
+- Use object pooling for particles (ParticlePool) and windows
 - Batch animations when possible
 
 ### Floating Effects
-Use ParticleSpawner for consistent particle styling:
+Use ParticleSpawner for consistent particle styling (with object pooling):
 - Orange gradient (highlight → main → shadow)
 - Black outline for visibility
 - Float upward with fade-out

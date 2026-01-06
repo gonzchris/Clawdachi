@@ -14,15 +14,16 @@ class ChatBubbleTextures {
 
     // MARK: - Image Cache
 
-    /// LRU cache for generated bubble images
-    private static var imageCache: [String: NSImage] = [:]
-    /// Track insertion order for proper LRU eviction (oldest first)
-    private static var cacheOrder: [String] = []
-    private static let maxCacheSize = 12
+    /// Thread-safe LRU cache using NSCache (automatic memory management)
+    private static let imageCache: NSCache<NSString, NSImage> = {
+        let cache = NSCache<NSString, NSImage>()
+        cache.countLimit = 12
+        return cache
+    }()
 
     /// Generate cache key from content size and tail flag
-    private static func cacheKey(contentSize: CGSize, hasTail: Bool) -> String {
-        "\(Int(contentSize.width))x\(Int(contentSize.height))-\(hasTail)"
+    private static func cacheKey(contentSize: CGSize, hasTail: Bool) -> NSString {
+        "\(Int(contentSize.width))x\(Int(contentSize.height))-\(hasTail)" as NSString
     }
 
     // MARK: - Public API
@@ -33,14 +34,9 @@ class ChatBubbleTextures {
     ///   - hasTail: Whether to include the pointing tail (default true)
     /// - Returns: NSImage of the complete bubble with optional tail and shadow
     static func generateBubble(contentSize: CGSize, hasTail: Bool = true) -> NSImage {
-        // Check cache first
+        // Check cache first (NSCache handles LRU automatically)
         let key = cacheKey(contentSize: contentSize, hasTail: hasTail)
-        if let cached = imageCache[key] {
-            // Move to end of LRU order (most recently used)
-            if let index = cacheOrder.firstIndex(of: key) {
-                cacheOrder.remove(at: index)
-                cacheOrder.append(key)
-            }
+        if let cached = imageCache.object(forKey: key) {
             return cached
         }
 
@@ -149,13 +145,8 @@ class ChatBubbleTextures {
             return true
         }
 
-        // Add to cache (evict oldest if full)
-        if imageCache.count >= maxCacheSize, let oldest = cacheOrder.first {
-            imageCache.removeValue(forKey: oldest)
-            cacheOrder.removeFirst()
-        }
-        imageCache[key] = image
-        cacheOrder.append(key)
+        // Add to cache (NSCache handles eviction automatically)
+        imageCache.setObject(image, forKey: key)
 
         return image
     }

@@ -28,6 +28,12 @@ class ChatBubbleManager {
     /// Active bubble windows (oldest first, newest last)
     private var bubbles: [ChatBubbleWindow] = []
 
+    /// Pool of reusable bubble windows (reduces allocation overhead)
+    private var windowPool: [ChatBubbleWindow] = []
+
+    /// Maximum pool size
+    private let maxPoolSize = 6
+
     /// Reference to sprite window for positioning
     private weak var spriteWindow: NSWindow?
 
@@ -54,13 +60,8 @@ class ChatBubbleManager {
         // Slide existing bubbles up
         slideExistingBubblesUp()
 
-        // Create new bubble at bottom (with tail)
-        let newBubble = ChatBubbleWindow(
-            message: message,
-            spriteWindow: spriteWindow,
-            hasTail: true,
-            manager: self
-        )
+        // Get bubble from pool or create new one
+        let newBubble = acquireBubble(message: message, spriteWindow: spriteWindow, hasTail: true)
 
         bubbles.append(newBubble)
         positionBubble(newBubble, at: 0)
@@ -70,6 +71,32 @@ class ChatBubbleManager {
         if let duration = duration {
             newBubble.scheduleAutoDismiss(after: duration)
         }
+    }
+
+    // MARK: - Window Pool
+
+    /// Acquire a bubble window from the pool or create a new one
+    private func acquireBubble(message: String, spriteWindow: NSWindow, hasTail: Bool) -> ChatBubbleWindow {
+        if let pooledWindow = windowPool.popLast() {
+            // Reconfigure the pooled window
+            pooledWindow.reconfigure(message: message, spriteWindow: spriteWindow, hasTail: hasTail, manager: self)
+            return pooledWindow
+        }
+        // Create new window if pool is empty
+        return ChatBubbleWindow(
+            message: message,
+            spriteWindow: spriteWindow,
+            hasTail: hasTail,
+            manager: self
+        )
+    }
+
+    /// Return a bubble window to the pool for reuse
+    func returnToPool(_ bubble: ChatBubbleWindow) {
+        if windowPool.count < maxPoolSize {
+            windowPool.append(bubble)
+        }
+        // Otherwise, let the window be deallocated
     }
 
     /// Dismiss all bubbles

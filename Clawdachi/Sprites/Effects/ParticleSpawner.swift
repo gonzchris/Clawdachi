@@ -2,10 +2,69 @@
 //  ParticleSpawner.swift
 //  Clawdachi
 //
-//  Reusable particle effect spawning utilities
+//  Reusable particle effect spawning utilities with object pooling
 //
 
 import SpriteKit
+
+// MARK: - Particle Pool
+
+/// Object pool for reusing particle sprite nodes to reduce memory churn
+/// Note: All operations must be called from the main thread (SpriteKit requirement)
+final class ParticlePool {
+
+    /// Shared pool instance
+    static let shared = ParticlePool()
+
+    /// Pool of available (unused) particles
+    private var availableParticles: [SKSpriteNode] = []
+
+    /// Maximum pool size to prevent unbounded growth
+    private let maxPoolSize = 20
+
+    private init() {
+        // Pre-allocate some particles
+        for _ in 0..<10 {
+            availableParticles.append(createParticle())
+        }
+    }
+
+    /// Get a particle from the pool (or create a new one if empty)
+    /// Must be called from main thread
+    func acquire() -> SKSpriteNode {
+        if let particle = availableParticles.popLast() {
+            // Ensure particle is detached before reuse
+            particle.removeFromParent()
+            return particle
+        }
+        return createParticle()
+    }
+
+    /// Return a particle to the pool for reuse
+    /// Must be called from main thread (use DispatchQueue.main.async if needed)
+    func release(_ particle: SKSpriteNode) {
+        // Reset particle state
+        particle.removeAllActions()
+        particle.removeFromParent()
+        particle.texture = nil
+        particle.alpha = 1
+        particle.position = .zero
+        particle.zPosition = 0
+        particle.setScale(1)
+        particle.zRotation = 0
+        particle.size = CGSize(width: 1, height: 1)
+
+        // Only keep up to maxPoolSize particles
+        if availableParticles.count < maxPoolSize {
+            availableParticles.append(particle)
+        }
+        // Otherwise, let the particle be deallocated
+    }
+
+    private func createParticle() -> SKSpriteNode {
+        SKSpriteNode()
+    }
+}
 
 /// Configuration for a particle effect
 struct ParticleConfig {
@@ -84,13 +143,16 @@ struct ParticleConfig {
 enum ParticleSpawner {
 
     /// Spawn a basic particle that pops in, moves, and fades out
+    /// Uses object pooling to reduce memory churn
     /// - Parameters:
     ///   - config: Configuration for the particle
     ///   - parent: The node to add the particle to
     /// - Returns: The created sprite node (for further customization if needed)
     @discardableResult
     static func spawn(config: ParticleConfig, in parent: SKNode) -> SKSpriteNode {
-        let particle = SKSpriteNode(texture: config.texture)
+        // Get particle from pool instead of creating new one
+        let particle = ParticlePool.shared.acquire()
+        particle.texture = config.texture
         particle.size = config.size
         particle.position = config.startPosition
         particle.alpha = 0
@@ -146,8 +208,14 @@ enum ParticleSpawner {
 
         actions.append(SKAction.group(movementActions))
 
-        // Remove from parent
-        actions.append(SKAction.removeFromParent())
+        // Return particle to pool instead of removing
+        // Use async dispatch to ensure action sequence completes before release
+        actions.append(SKAction.run { [weak particle] in
+            guard let particle = particle else { return }
+            DispatchQueue.main.async {
+                ParticlePool.shared.release(particle)
+            }
+        })
 
         particle.run(SKAction.sequence(actions))
 
@@ -155,6 +223,7 @@ enum ParticleSpawner {
     }
 
     /// Spawn a falling particle (like sweat drops)
+    /// Uses object pooling to reduce memory churn
     /// - Parameters:
     ///   - texture: Texture for the particle
     ///   - size: Size of the particle
@@ -175,7 +244,8 @@ enum ParticleSpawner {
         rotation: CGFloat = 0,
         parent: SKNode
     ) -> SKSpriteNode {
-        let particle = SKSpriteNode(texture: texture)
+        let particle = ParticlePool.shared.acquire()
+        particle.texture = texture
         particle.size = size
         particle.position = startPosition
         particle.alpha = 0
@@ -200,7 +270,12 @@ enum ParticleSpawner {
         let sequence = SKAction.sequence([
             fadeIn,
             SKAction.group([fall, fadeOut]),
-            SKAction.removeFromParent()
+            SKAction.run { [weak particle] in
+                guard let particle = particle else { return }
+                DispatchQueue.main.async {
+                    ParticlePool.shared.release(particle)
+                }
+            }
         ])
 
         particle.run(sequence)
@@ -250,6 +325,7 @@ enum ParticleSpawner {
     }
 
     /// Spawn a heart particle (floating up with pulse)
+    /// Uses object pooling to reduce memory churn
     /// - Parameters:
     ///   - texture: Heart texture
     ///   - offsetX: Horizontal offset from center
@@ -266,7 +342,8 @@ enum ParticleSpawner {
         delay: TimeInterval = 0,
         parent: SKNode
     ) -> SKSpriteNode {
-        let heart = SKSpriteNode(texture: texture)
+        let heart = ParticlePool.shared.acquire()
+        heart.texture = texture
         heart.size = CGSize(width: 12 * size, height: 12 * size)
         heart.position = CGPoint(x: offsetX, y: offsetY)
         heart.alpha = 0
@@ -308,13 +385,19 @@ enum ParticleSpawner {
         ])
 
         actions.append(SKAction.group([floatUp, pulse, fadeOut]))
-        actions.append(SKAction.removeFromParent())
+        actions.append(SKAction.run { [weak heart] in
+            guard let heart = heart else { return }
+            DispatchQueue.main.async {
+                ParticlePool.shared.release(heart)
+            }
+        })
 
         heart.run(SKAction.sequence(actions))
         return heart
     }
 
     /// Spawn a sleep Z particle (floating up, growing)
+    /// Uses object pooling to reduce memory churn
     /// - Parameters:
     ///   - texture: Z texture
     ///   - parent: Parent node to add to
@@ -323,7 +406,8 @@ enum ParticleSpawner {
         texture: SKTexture,
         parent: SKNode
     ) -> SKSpriteNode {
-        let z = SKSpriteNode(texture: texture)
+        let z = ParticlePool.shared.acquire()
+        z.texture = texture
         z.size = CGSize(width: 12, height: 12)
         z.position = CGPoint(x: 7, y: 8)
         z.alpha = 0
@@ -346,7 +430,12 @@ enum ParticleSpawner {
         let floatSequence = SKAction.group([floatUp, grow, wobble])
         let fadeOut = SKAction.fadeOut(withDuration: 0.4)
 
-        z.run(SKAction.sequence([fadeIn, floatSequence, fadeOut, SKAction.removeFromParent()]))
+        z.run(SKAction.sequence([fadeIn, floatSequence, fadeOut, SKAction.run { [weak z] in
+            guard let z = z else { return }
+            DispatchQueue.main.async {
+                ParticlePool.shared.release(z)
+            }
+        }]))
 
         return z
     }
@@ -379,6 +468,7 @@ enum ParticleSpawner {
     }
 
     /// Spawn a smoke particle (floating up, expanding)
+    /// Uses object pooling to reduce memory churn
     /// - Parameters:
     ///   - texture: Smoke texture
     ///   - startPosition: Where to spawn (typically near mouth)
@@ -401,7 +491,8 @@ enum ParticleSpawner {
         ]
         let path = paths[variation % paths.count]
 
-        let smoke = SKSpriteNode(texture: texture)
+        let smoke = ParticlePool.shared.acquire()
+        smoke.texture = texture
         smoke.size = CGSize(width: 6, height: 6)
         smoke.position = startPosition
         smoke.alpha = 0
@@ -441,7 +532,12 @@ enum ParticleSpawner {
         ])
 
         actions.append(SKAction.group([floatUp, expand, wobble, fadeOut]))
-        actions.append(SKAction.removeFromParent())
+        actions.append(SKAction.run { [weak smoke] in
+            guard let smoke = smoke else { return }
+            DispatchQueue.main.async {
+                ParticlePool.shared.release(smoke)
+            }
+        })
 
         smoke.run(SKAction.sequence(actions))
 

@@ -141,8 +141,8 @@ extension ClawdachiSprite {
             self?.enableMouseTracking()
             self?.startSwayAnimation()
             self?.scheduleNextBlink()
-            self?.scheduleNextWhistle()
             self?.scheduleNextLookAround()
+            self?.scheduleNextIdleAnimation()  // Restart coordinated whistle/smoke cycle
             completion?()
         }
         run(SKAction.sequence([SKAction.wait(forDuration: 1.0), completionAction]))

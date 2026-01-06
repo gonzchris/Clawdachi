@@ -83,6 +83,26 @@ class ChatBubbleWindow: NSWindow {
         bubbleView.frame = NSRect(origin: .zero, size: bubbleSize)
     }
 
+    // MARK: - Reconfiguration (for window pooling)
+
+    /// Reconfigure a pooled window for reuse with new content
+    func reconfigure(message: String, spriteWindow: NSWindow, hasTail: Bool, manager: ChatBubbleManager) {
+        self.message = message
+        self.spriteWindow = spriteWindow
+        self.hasTail = hasTail
+        self.manager = manager
+
+        // Reset visual state
+        alphaValue = 0
+        bubbleView.layer?.setAffineTransform(.identity)
+
+        // Reconfigure bubble content
+        bubbleView.configure(message: message, hasTail: hasTail)
+        let bubbleSize = bubbleView.frame.size
+        setContentSize(bubbleSize)
+        bubbleView.frame = NSRect(origin: .zero, size: bubbleSize)
+    }
+
     // MARK: - Tail Management
 
     /// Add tail to this bubble (when it becomes the newest)
@@ -178,7 +198,10 @@ class ChatBubbleWindow: NSWindow {
 
         orderOut(nil)
 
-        // Notify manager
-        manager?.bubbleWasDismissed(self)
+        // Notify manager and return to pool for reuse
+        let mgr = manager
+        manager = nil  // Clear reference before notifying
+        mgr?.bubbleWasDismissed(self)
+        mgr?.returnToPool(self)
     }
 }

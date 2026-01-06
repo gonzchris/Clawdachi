@@ -58,11 +58,20 @@ class ClaudeSessionMonitor {
     /// Polling timer
     private var pollTimer: Timer?
 
-    /// Polling interval in seconds
-    private let pollInterval: TimeInterval = 1.0
+    /// Polling interval in seconds (2.0s balances responsiveness with resource usage)
+    private let pollInterval: TimeInterval = 2.0
 
     /// Sessions directory path
     private let sessionsPath: URL
+
+    /// Last known directory modification date (for change detection)
+    private var lastDirectoryModDate: Date?
+
+    /// Cached file modification dates (filename -> modDate)
+    private var fileModDates: [String: Date] = [:]
+
+    /// Cached parsed sessions (filename -> SessionInfo)
+    private var cachedSessions: [String: SessionInfo] = [:]
 
     // MARK: - Initialization
 
@@ -119,28 +128,69 @@ class ClaudeSessionMonitor {
 
         // Ensure directory exists
         guard fileManager.fileExists(atPath: sessionsPath.path) else {
+            clearCache()
             return (false, nil, [])
+        }
+
+        // Check directory modification date to skip unnecessary file reads
+        let dirAttributes = try? fileManager.attributesOfItem(atPath: sessionsPath.path)
+        let dirModDate = dirAttributes?[.modificationDate] as? Date
+
+        // If directory hasn't changed and we have cached data, use cache
+        // (but still need to check timestamps for staleness)
+        let dirChanged = dirModDate != lastDirectoryModDate
+        if dirChanged {
+            lastDirectoryModDate = dirModDate
         }
 
         do {
             let files = try fileManager.contentsOfDirectory(
                 at: sessionsPath,
-                includingPropertiesForKeys: nil,
+                includingPropertiesForKeys: [.contentModificationDateKey],
                 options: .skipsHiddenFiles
             )
 
             let jsonFiles = files.filter { $0.pathExtension == "json" }
 
             if jsonFiles.isEmpty {
+                clearCache()
                 return (false, nil, [])
             }
+
+            // Track which files still exist (for cache cleanup)
+            var currentFiles = Set<String>()
 
             // Collect all non-stale sessions
             var sessions: [SessionInfo] = []
             let now = Date().timeIntervalSince1970
 
             for file in jsonFiles {
+                let filename = file.lastPathComponent
+                currentFiles.insert(filename)
+
+                // Check file modification date
+                let fileAttributes = try? file.resourceValues(forKeys: [.contentModificationDateKey])
+                let fileModDate = fileAttributes?.contentModificationDate
+
+                // Use cached session if file hasn't changed
+                if let cachedModDate = fileModDates[filename],
+                   let currentModDate = fileModDate,
+                   cachedModDate == currentModDate,
+                   let cachedSession = cachedSessions[filename] {
+                    // Check staleness on cached session
+                    let age = now - cachedSession.timestamp
+                    if age <= AnimationTimings.sessionStalenessThreshold {
+                        sessions.append(cachedSession)
+                    }
+                    continue
+                }
+
+                // File is new or modified - parse it
                 if let session = parseSessionFile(at: file) {
+                    // Update cache
+                    cachedSessions[filename] = session
+                    fileModDates[filename] = fileModDate
+
                     // Skip stale sessions (older than threshold)
                     let age = now - session.timestamp
                     if age > AnimationTimings.sessionStalenessThreshold {
@@ -148,6 +198,13 @@ class ClaudeSessionMonitor {
                     }
                     sessions.append(session)
                 }
+            }
+
+            // Clean up cache for deleted files
+            let deletedFiles = Set(cachedSessions.keys).subtracting(currentFiles)
+            for filename in deletedFiles {
+                cachedSessions.removeValue(forKey: filename)
+                fileModDates.removeValue(forKey: filename)
             }
 
             // Sort by timestamp (most recent first)
@@ -185,6 +242,12 @@ class ClaudeSessionMonitor {
         } catch {
             return nil
         }
+    }
+
+    private func clearCache() {
+        lastDirectoryModDate = nil
+        fileModDates.removeAll()
+        cachedSessions.removeAll()
     }
 
     // MARK: - State Update

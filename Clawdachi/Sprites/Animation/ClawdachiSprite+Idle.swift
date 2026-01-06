@@ -15,9 +15,100 @@ extension ClawdachiSprite {
         startBreathingAnimation()
         startSwayAnimation()
         scheduleNextBlink()
-        scheduleNextWhistle()
         scheduleNextLookAround()
-        scheduleNextSmoking()
+        // Start the coordinated whistle/smoke cycle (they alternate, never overlap)
+        startIdleAnimationCycle()
+    }
+
+    // MARK: - Coordinated Whistle/Smoke Cycle
+
+    /// Tracks which idle animation is next in the cycle
+    private static var nextIdleAnimation: IdleAnimationType = .whistle
+
+    private enum IdleAnimationType {
+        case whistle
+        case smoke
+    }
+
+    /// Start the alternating whistle/smoke cycle
+    /// Pattern: 20s → whistle → 20s → smoke → 20s → whistle → ...
+    func startIdleAnimationCycle() {
+        // Reset to whistle first
+        Self.nextIdleAnimation = .whistle
+        scheduleNextIdleAnimation()
+    }
+
+    func scheduleNextIdleAnimation() {
+        // Determine wait time based on which animation is next
+        let waitTime: TimeInterval
+        switch Self.nextIdleAnimation {
+        case .whistle:
+            waitTime = 20.0  // Whistle after 20s of idle
+        case .smoke:
+            waitTime = 20.0  // Smoke 20s after whistle completes
+        }
+
+        let wait = SKAction.wait(forDuration: waitTime)
+        let perform = SKAction.run { [weak self] in
+            self?.performNextIdleAnimation()
+        }
+        run(SKAction.sequence([wait, perform]), withKey: "idleAnimationCycle")
+    }
+
+    private func performNextIdleAnimation() {
+        switch Self.nextIdleAnimation {
+        case .whistle:
+            // Try to perform whistle
+            if canPerformWhistle() {
+                Self.nextIdleAnimation = .smoke  // Next will be smoke
+                performWhistleAnimation()
+            } else {
+                // Can't whistle right now, try again in a few seconds
+                let retry = SKAction.sequence([
+                    SKAction.wait(forDuration: 3.0),
+                    SKAction.run { [weak self] in self?.performNextIdleAnimation() }
+                ])
+                run(retry, withKey: "idleAnimationCycle")
+                return
+            }
+
+        case .smoke:
+            // Try to perform smoke
+            if canPerformSmoking() {
+                Self.nextIdleAnimation = .whistle  // Next will be whistle
+                performSmokingAnimation()
+            } else {
+                // Can't smoke right now, try again in a few seconds
+                let retry = SKAction.sequence([
+                    SKAction.wait(forDuration: 3.0),
+                    SKAction.run { [weak self] in self?.performNextIdleAnimation() }
+                ])
+                run(retry, withKey: "idleAnimationCycle")
+                return
+            }
+        }
+    }
+
+    /// Check if whistling can be performed (without triggering it)
+    private func canPerformWhistle() -> Bool {
+        // Must be in pure idle state (not in any idle substate or Claude state)
+        return currentState == .idle && !isSpeaking
+    }
+
+    /// Check if smoking can be performed (without triggering it)
+    private func canPerformSmoking() -> Bool {
+        // Must be in pure idle state (not in any idle substate or Claude state)
+        return currentState == .idle
+    }
+
+    /// Called when whistle animation completes - schedules next in cycle
+    func onWhistleComplete() {
+        scheduleNextIdleAnimation()
+    }
+
+    /// Called when smoking animation completes - schedules next in cycle
+    func onSmokingComplete() {
+        scheduleNextIdleAnimation()
     }
 
     // MARK: - Breathing
@@ -129,21 +220,8 @@ extension ClawdachiSprite {
 
     // MARK: - Whistling
 
-    func scheduleNextWhistle() {
-        let interval = TimeInterval.random(in: whistleMinInterval...whistleMaxInterval)
-        let wait = SKAction.wait(forDuration: interval)
-        let whistle = SKAction.run { [weak self] in self?.performWhistle() }
-        run(SKAction.sequence([wait, whistle]), withKey: "whistleSchedule")
-    }
-
-    func performWhistle() {
-        // Don't whistle during Claude states, smoking, speaking, or other actions
-        guard !isWhistling && !isPerformingAction && !isDragging && !isSmoking &&
-              !isSpeaking && !isClaudeThinking && !isClaudePlanning && !isQuestionMarkVisible &&
-              !isLightbulbVisible && !isPartyCelebrationVisible else {
-            scheduleNextWhistle()
-            return
-        }
+    /// Perform the whistle animation (called by the coordinated idle cycle)
+    func performWhistleAnimation() {
         isWhistling = true
 
         // Move mouth to side position for whistle
@@ -180,7 +258,7 @@ extension ClawdachiSprite {
             SKAction.run { [weak self] in
                 self?.mouthNode.texture = self?.whistleMouthTexture  // Reset texture
                 self?.isWhistling = false
-                self?.scheduleNextWhistle()
+                self?.onWhistleComplete()  // Schedule next in coordinated cycle
             }
         ])
         run(completion, withKey: "whistleCompletion")
@@ -199,10 +277,9 @@ extension ClawdachiSprite {
 
     func pauseIdleAnimations() {
         removeAction(forKey: "sway")
-        removeAction(forKey: "whistleSchedule")
+        removeAction(forKey: "idleAnimationCycle")  // Stop coordinated whistle/smoke cycle
         removeAction(forKey: "blinkSchedule")
         removeAction(forKey: "lookAroundSchedule")
-        removeAction(forKey: "smokingSchedule")
         // Stop any currently running blink animation on eye nodes
         // (prevents restore: true from overwriting thinking eye textures)
         leftEyeNode.removeAction(forKey: "blink")
@@ -222,8 +299,8 @@ extension ClawdachiSprite {
         setScale(1.0)
         startSwayAnimation()
         scheduleNextBlink()
-        scheduleNextWhistle()
         scheduleNextLookAround()
-        scheduleNextSmoking()
+        // Resume the coordinated whistle/smoke cycle
+        scheduleNextIdleAnimation()
     }
 }

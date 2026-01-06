@@ -151,6 +151,9 @@ class SpriteStateManager {
         // Claude states can transition between each other
         case let (from, to) where from.isClaudeState && to.isClaudeState:
             return true
+        // From Claude states, only allow idle or dragging (already handled above)
+        case let (from, _) where from.isClaudeState:
+            return false
 
         // From sleeping, only dragging or idle (already handled above)
         case (.sleeping, _):

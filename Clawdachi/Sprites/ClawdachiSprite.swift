@@ -54,13 +54,15 @@ class ClawdachiSprite: SKNode {
     /// Current sprite state (convenience accessor)
     var currentState: SpriteState { stateManager.currentState }
 
-    // MARK: - Animation State (internal for extension access)
-    // Note: These are being migrated to stateManager. Keep for backwards compatibility during transition.
+    // MARK: - Animation State
 
-    var isBlinking = false  // Overlay behavior, not part of state machine
-    var isSpeaking = false  // Overlay behavior, not part of state machine
+    // Overlay behaviors (can occur during any primary state, not mutually exclusive)
+    var isBlinking = false
+    var isSpeaking = false
 
-    // State machine-backed computed properties for backwards compatibility
+    // MARK: - State Machine Computed Properties
+    // These provide backwards-compatible boolean access to the centralized state machine
+
     var isWhistling: Bool {
         get { currentState == .whistling }
         set { if newValue { stateManager.transitionTo(.whistling) } else if currentState == .whistling { stateManager.transitionTo(.idle) } }
@@ -81,6 +83,12 @@ class ClawdachiSprite: SKNode {
         get { currentState == .dancing }
         set { if newValue { stateManager.transitionTo(.dancing) } else if currentState == .dancing { stateManager.transitionTo(.idle) } }
     }
+    var isSmoking: Bool {
+        get { currentState == .smoking }
+        set { if newValue { stateManager.transitionTo(.smoking) } else if currentState == .smoking { stateManager.transitionTo(.idle) } }
+    }
+
+    // Claude integration states
     var isClaudeThinking: Bool {
         get { currentState == .claudeThinking }
         set { if newValue { stateManager.transitionTo(.claudeThinking) } else if currentState == .claudeThinking { stateManager.transitionTo(.idle) } }
@@ -89,9 +97,13 @@ class ClawdachiSprite: SKNode {
         get { currentState == .claudePlanning }
         set { if newValue { stateManager.transitionTo(.claudePlanning) } else if currentState == .claudePlanning { stateManager.transitionTo(.idle) } }
     }
-    var isSmoking: Bool {
-        get { currentState == .smoking }
-        set { if newValue { stateManager.transitionTo(.smoking) } else if currentState == .smoking { stateManager.transitionTo(.idle) } }
+    var isClaudeWaiting: Bool {
+        get { currentState == .claudeWaiting }
+        set { if newValue { stateManager.transitionTo(.claudeWaiting) } else if currentState == .claudeWaiting { stateManager.transitionTo(.idle) } }
+    }
+    var isClaudeCelebrating: Bool {
+        get { currentState == .claudeCelebrating }
+        set { if newValue { stateManager.transitionTo(.claudeCelebrating) } else if currentState == .claudeCelebrating { stateManager.transitionTo(.idle) } }
     }
 
     // Smoking animation node (created/destroyed during animation)

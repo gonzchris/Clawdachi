@@ -309,24 +309,30 @@ class ClawdachiScene: SKScene {
                     }
                 }
             } else if hadLightbulb {
-                // Click was to dismiss lightbulb - resume dancing after fade completes
+                // Click was to dismiss lightbulb - resume idle/dancing after fade completes
                 clawdachi.dismissLightbulb { [weak self] in
-                    if self?.musicMonitor.isPlaying == true {
-                        self?.clawdachi.startDancing()
+                    guard let self = self else { return }
+                    self.clawdachi.resumeIdleAnimations()
+                    if self.musicMonitor.isPlaying {
+                        self.clawdachi.startDancing()
                     }
                 }
             } else if hadQuestionMark {
-                // Click was to dismiss question mark - resume dancing after fade completes
+                // Click was to dismiss question mark - resume idle/dancing after fade completes
                 clawdachi.dismissQuestionMark { [weak self] in
-                    if self?.musicMonitor.isPlaying == true {
-                        self?.clawdachi.startDancing()
+                    guard let self = self else { return }
+                    self.clawdachi.resumeIdleAnimations()
+                    if self.musicMonitor.isPlaying {
+                        self.clawdachi.startDancing()
                     }
                 }
             } else if hadPartyCelebration {
-                // Click was to dismiss party celebration - resume dancing after fade completes
+                // Click was to dismiss party celebration - resume idle/dancing after fade completes
                 clawdachi.dismissPartyCelebration { [weak self] in
-                    if self?.musicMonitor.isPlaying == true {
-                        self?.clawdachi.startDancing()
+                    guard let self = self else { return }
+                    self.clawdachi.resumeIdleAnimations()
+                    if self.musicMonitor.isPlaying {
+                        self.clawdachi.startDancing()
                     }
                 }
             } else {
@@ -347,9 +353,14 @@ class ClawdachiScene: SKScene {
         let locationInScene = event.location(in: self)
         guard isPointOnSprite(locationInScene) else { return }
 
+        // Dismiss any Claude overlays and resume idle animations
+        let hadOverlay = clawdachi.isLightbulbVisible || clawdachi.isQuestionMarkVisible || clawdachi.isPartyCelebrationVisible
         clawdachi.dismissLightbulb()
         clawdachi.dismissQuestionMark()
         clawdachi.dismissPartyCelebration()
+        if hadOverlay {
+            clawdachi.resumeIdleAnimations()
+        }
         showContextMenu(with: event)
     }
 

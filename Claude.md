@@ -194,8 +194,7 @@ All idle animations run continuously and independently:
 ### Animation Timings (see AnimationTimings.swift, ChatBubbleConstants.swift)
 - Breathing cycle: 3.0s
 - Blink interval: 2.5-6.0s
-- Whistle interval: 18-35s
-- Smoking interval: 20-40s
+- Whistle/Smoke cycle: Alternating every 20s (whistle at 20s, smoke at 40s, repeat)
 - Smoking duration: 18s
 - Smoking puff interval: 3.0s
 - Look around interval: 5-12s
@@ -213,7 +212,7 @@ All idle animations run continuously and independently:
 - Speaking mouth pattern: ~0.6-0.8s (varies by pattern)
 
 ### Particle Effects
-Reusable spawner for floating effects:
+Reusable spawner for floating effects with object pooling:
 - Music notes (whistling, dancing)
 - Hearts (click reaction)
 - Sleep Z's (sleep mode)
@@ -222,13 +221,20 @@ Reusable spawner for floating effects:
 - Lightbulb sparks (Claude planning) - yellow/white
 - Smoke particles (smoking animation)
 
+### State Machine
+Centralized `SpriteStateManager` handles all animation states:
+- Mutually exclusive primary states (idle, dancing, smoking, Claude states, etc.)
+- Overlay behaviors (blinking, speaking) can occur during any state
+- State-backed computed properties provide backwards-compatible boolean access
+- Automatic transition validation prevents invalid state combinations
+
 ### Chat Bubble System
 Separate floating NSWindow system (not SpriteKit) for text rendering:
 - **Architecture:** ChatBubbleManager (singleton) → ChatBubbleWindow[] → ChatBubbleView
 - **Rendering:** NSBezierPath for rounded rect body + triangular left-pointing tail
 - **Tail position:** Points LEFT from left edge of bubble toward sprite
 - **Z-order:** Window level above sprite's floating level
-- **Caching:** LRU image cache (12 entries), font caching, attributed string caching
+- **Caching:** NSCache for bubble images (12 entries), font caching, window pooling
 - **Positioning:** At mouth level, right of sprite center (horizontal offset 42px)
 
 API:

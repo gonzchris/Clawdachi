@@ -9,26 +9,10 @@ import SpriteKit
 
 extension ClawdachiSprite {
 
-    // MARK: - Smoking Animation Scheduling
-
-    func scheduleNextSmoking() {
-        let interval = TimeInterval.random(in: smokingMinInterval...smokingMaxInterval)
-        let wait = SKAction.wait(forDuration: interval)
-        let smoke = SKAction.run { [weak self] in self?.performSmoking() }
-        run(SKAction.sequence([wait, smoke]), withKey: "smokingSchedule")
-    }
-
     // MARK: - Main Smoking Animation
 
-    func performSmoking() {
-        // Don't smoke during other activities
-        guard !isSmoking && !isWhistling && !isPerformingAction && !isDragging &&
-              !isClaudeThinking && !isQuestionMarkVisible && !isLightbulbVisible &&
-              !isPartyCelebrationVisible && !isDancing else {
-            scheduleNextSmoking()
-            return
-        }
-
+    /// Perform the smoking animation (called by the coordinated idle cycle)
+    func performSmokingAnimation() {
         isSmoking = true
 
         // Mouth starts hidden, will show during puff cycles
@@ -282,7 +266,7 @@ extension ClawdachiSprite {
         // (not if called during cleanup from another state transition)
         if currentState == .smoking {
             isSmoking = false
-            scheduleNextSmoking()
+            onSmokingComplete()  // Schedule next in coordinated cycle
         }
     }
 }

@@ -521,6 +521,9 @@ extension ClawdachiSprite {
         // Clean up any other Claude state first
         cleanupClaudeAnimations()
 
+        // Set state before pausing animations
+        isClaudeWaiting = true
+
         // Pause competing animations
         pauseIdleAnimations()
         stopDancing()
@@ -559,6 +562,8 @@ extension ClawdachiSprite {
     /// - Parameter completion: Called after question mark is fully removed
     func dismissQuestionMark(completion: (() -> Void)? = nil) {
         guard let mark = childNode(withName: Self.questionMarkName) else {
+            // Still reset state even if node not found
+            if isClaudeWaiting { isClaudeWaiting = false }
             completion?()
             return
         }
@@ -566,8 +571,11 @@ extension ClawdachiSprite {
         mark.removeAllActions()
         let fadeOut = SKAction.fadeOut(withDuration: 0.2)
         let remove = SKAction.removeFromParent()
+        let resetState = SKAction.run { [weak self] in
+            self?.isClaudeWaiting = false
+        }
         let callCompletion = SKAction.run { completion?() }
-        mark.run(SKAction.sequence([fadeOut, remove, callCompletion]))
+        mark.run(SKAction.sequence([fadeOut, remove, resetState, callCompletion]))
     }
 
     /// Check if question mark is currently visible
@@ -582,6 +590,9 @@ extension ClawdachiSprite {
     func showPartyCelebration() {
         // Clean up any other Claude state first
         cleanupClaudeAnimations()
+
+        // Set state before pausing animations
+        isClaudeCelebrating = true
 
         // Pause competing animations
         pauseIdleAnimations()
@@ -760,6 +771,8 @@ extension ClawdachiSprite {
         let blower = childNode(withName: Self.partyBlowerName)
 
         guard hat != nil || blower != nil else {
+            // Still reset state even if nodes not found
+            if isClaudeCelebrating { isClaudeCelebrating = false }
             completion?()
             return
         }
@@ -776,12 +789,18 @@ extension ClawdachiSprite {
         leftArmNode.zRotation = 0
         rightArmNode.zRotation = 0
 
+        // Reset state and call completion after animation
+        let resetAndComplete = SKAction.run { [weak self] in
+            self?.isClaudeCelebrating = false
+            completion?()
+        }
+
         // Determine which node should call completion (prefer blower, fallback to hat)
         if let blower = blower {
             hat?.run(fadeAndRemove)
-            blower.run(SKAction.sequence([fadeAndRemove, SKAction.run { completion?() }]))
+            blower.run(SKAction.sequence([fadeAndRemove, resetAndComplete]))
         } else if let hat = hat {
-            hat.run(SKAction.sequence([fadeAndRemove, SKAction.run { completion?() }]))
+            hat.run(SKAction.sequence([fadeAndRemove, resetAndComplete]))
         }
     }
 

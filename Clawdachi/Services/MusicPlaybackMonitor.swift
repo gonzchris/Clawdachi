@@ -21,8 +21,8 @@ class MusicPlaybackMonitor {
     /// Polling timer
     private var pollTimer: Timer?
 
-    /// Polling interval in seconds
-    private let pollInterval: TimeInterval = 2.0
+    /// Polling interval in seconds (3.5s balances responsiveness with resource usage)
+    private let pollInterval: TimeInterval = 3.5
 
     // MARK: - Initialization
 
@@ -52,15 +52,27 @@ class MusicPlaybackMonitor {
     }
 
     private func checkPlaybackState() {
-        // Check on background thread to avoid blocking main thread
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            let spotifyPlaying = self?.isSpotifyPlaying() ?? false
-            let appleMusicPlaying = self?.isAppleMusicPlaying() ?? false
-            let playing = spotifyPlaying || appleMusicPlaying
+        // Run both AppleScript checks in parallel for faster response
+        let group = DispatchGroup()
+        var spotifyPlaying = false
+        var appleMusicPlaying = false
 
-            DispatchQueue.main.async {
-                self?.updatePlaybackState(playing)
-            }
+        group.enter()
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            spotifyPlaying = self?.isSpotifyPlaying() ?? false
+            group.leave()
+        }
+
+        group.enter()
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            appleMusicPlaying = self?.isAppleMusicPlaying() ?? false
+            group.leave()
+        }
+
+        // Wait for both checks to complete, then update on main thread
+        group.notify(queue: .main) { [weak self] in
+            let playing = spotifyPlaying || appleMusicPlaying
+            self?.updatePlaybackState(playing)
         }
     }
 

@@ -12,18 +12,13 @@ extension ClawdachiSprite {
     // MARK: - Dance Animation
 
     func startDancing() {
-        // Don't dance during Claude Code activity
-        guard !isDancing, !isPerformingAction,
-              !isClaudeThinking, !isQuestionMarkVisible, !isLightbulbVisible,
-              !isPartyCelebrationVisible else { return }
+        // Only start dancing from idle state (state machine blocks Claude states, etc.)
+        guard currentState == .idle else { return }
         isDancing = true
 
-        // Pause competing idle animations (whistle, look-around)
-        removeAction(forKey: "whistleSchedule")
-        removeAction(forKey: "whistleCompletion")
+        // Stop any pending idle animation schedules
+        removeAction(forKey: "idleAnimationCycle")
         removeAction(forKey: "lookAroundSchedule")
-        isWhistling = false
-        isLookingAround = false
 
         // Start dance animations
         startBodySway()
@@ -58,7 +53,7 @@ extension ClawdachiSprite {
         // Only reset state and reschedule if we were actually in dancing state
         if currentState == .dancing {
             isDancing = false
-            scheduleNextWhistle()
+            scheduleNextIdleAnimation()  // Resume coordinated whistle/smoke cycle
             scheduleNextLookAround()
         }
     }
