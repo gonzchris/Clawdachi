@@ -23,7 +23,7 @@ class ChatBubbleManager {
     private let maxBubbles = 4
 
     /// Spacing between stacked bubbles
-    private let bubbleSpacing: CGFloat = 12
+    private let bubbleSpacing: CGFloat = 2
 
     /// Active bubble windows (oldest first, newest last)
     private var bubbles: [ChatBubbleWindow] = []
@@ -100,12 +100,15 @@ class ChatBubbleManager {
     /// Standard height for stacking calculations (bubble without tail)
     private let standardBubbleHeight: CGFloat = 46
 
-    /// Calculate X position for bubbles
-    private func calculateBubbleX() -> CGFloat {
+    /// Calculate X position for bubbles (tail points left toward sprite)
+    /// - Parameter hasTail: Whether the bubble has a tail (affects alignment)
+    private func calculateBubbleX(hasTail: Bool) -> CGFloat {
         guard let parent = spriteWindow else { return 0 }
         let spriteWindowCenter = parent.frame.origin.x + parent.frame.width / 2
-        let tailOffsetFromLeft = CGFloat(C.cornerPixels) * C.pixelSize + C.tailWidth
-        return spriteWindowCenter - tailOffsetFromLeft
+        // Position so tail tip is near sprite, bubble body extends to the right
+        // Bubbles without tail need extra offset to align body left edge
+        let tailOffset = hasTail ? 0 : C.tailWidth
+        return spriteWindowCenter + C.horizontalOffset + tailOffset
     }
 
     /// Calculate Y position for a given stack index
@@ -114,14 +117,11 @@ class ChatBubbleManager {
         let baseY = parent.frame.origin.y + 144 + C.verticalOffsetFromSpriteCenter
 
         if stackIndex == 0 {
-            // Bottom bubble (with tail) sits at base
+            // Bottom bubble sits at base
             return baseY
         } else {
-            // Bubbles above need to account for:
-            // - The tail height on the bottom bubble
-            // - Standard bubble height for each level above
-            let tailHeight = C.tailHeight
-            let firstOffset = standardBubbleHeight + tailHeight + bubbleSpacing
+            // Bubbles above stack with spacing (tail is on side, not bottom)
+            let firstOffset = standardBubbleHeight + bubbleSpacing
             let additionalOffset = CGFloat(stackIndex - 1) * (standardBubbleHeight + bubbleSpacing)
             return baseY + firstOffset + additionalOffset
         }
@@ -129,7 +129,7 @@ class ChatBubbleManager {
 
     /// Position a bubble at the given stack index (0 = bottom/newest)
     private func positionBubble(_ bubble: ChatBubbleWindow, at stackIndex: Int) {
-        let bubbleX = calculateBubbleX()
+        let bubbleX = calculateBubbleX(hasTail: bubble.hasTail)
         let bubbleY = calculateBubbleY(stackIndex: stackIndex)
         bubble.setFrameOrigin(CGPoint(x: bubbleX, y: bubbleY))
     }
@@ -164,7 +164,7 @@ class ChatBubbleManager {
 
     /// Animate a bubble to a new stack position
     private func animateBubbleToPosition(_ bubble: ChatBubbleWindow, stackIndex: Int) {
-        let bubbleX = calculateBubbleX()
+        let bubbleX = calculateBubbleX(hasTail: bubble.hasTail)
         let targetY = calculateBubbleY(stackIndex: stackIndex)
         let targetOrigin = CGPoint(x: bubbleX, y: targetY)
 

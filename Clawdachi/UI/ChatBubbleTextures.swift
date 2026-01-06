@@ -46,14 +46,14 @@ class ChatBubbleTextures {
         let bodyWidth = ceil(contentSize.width) + C.paddingHorizontal * 2
         let bodyHeight = ceil(contentSize.height) + C.paddingVertical * 2
 
-        // Calculate tail dimensions
-        let tailHeight = hasTail ? C.tailHeight : 0
+        // Tail extends to the LEFT of the bubble
+        let tailWidth = hasTail ? C.tailWidth : 0
 
-        // Total image dimensions including outline and shadow
+        // Total image dimensions including outline, shadow, and left tail
         let outlineSize = CGFloat(outline) * px
         let shadowSize = CGFloat(shadow) * px
-        let totalWidth = bodyWidth + outlineSize * 2 + shadowSize
-        let totalHeight = bodyHeight + tailHeight + outlineSize * 2 + shadowSize
+        let totalWidth = tailWidth + bodyWidth + outlineSize * 2 + shadowSize
+        let totalHeight = bodyHeight + outlineSize * 2 + shadowSize
 
         let imageSize = CGSize(width: totalWidth, height: totalHeight)
 
@@ -61,53 +61,65 @@ class ChatBubbleTextures {
             NSColor.clear.setFill()
             rect.fill()
 
-            // Draw shadow layer (offset left and down)
+            // Body starts after the tail area
+            let bodyX = tailWidth
+
+            // Draw shadow layer (offset right and down)
             let shadowRect = CGRect(
-                x: 0,
+                x: bodyX,
                 y: shadowSize,
                 width: bodyWidth,
                 height: bodyHeight
             )
-            Self.drawBubbleWithPath(
-                rect: shadowRect,
-                cornerRadius: cornerRadius,
-                tailWidth: C.tailWidth,
-                tailHeight: tailHeight,
-                color: C.shadowColor,
-                includeTail: hasTail
-            )
+            Self.drawRoundedRect(rect: shadowRect, cornerRadius: cornerRadius, color: C.shadowColor)
+            if hasTail {
+                Self.drawLeftTail(
+                    bodyX: bodyX,
+                    bodyY: shadowSize,
+                    bodyHeight: bodyHeight,
+                    tailWidth: tailWidth,
+                    tailHeight: C.tailHeight,
+                    color: C.shadowColor
+                )
+            }
 
             // Draw outline (slightly larger)
             let outlineRect = CGRect(
-                x: shadowSize,
+                x: bodyX + shadowSize - outlineSize,
                 y: 0,
                 width: bodyWidth + outlineSize * 2,
                 height: bodyHeight + outlineSize * 2
             )
-            Self.drawBubbleWithPath(
-                rect: outlineRect,
-                cornerRadius: cornerRadius + outlineSize,
-                tailWidth: C.tailWidth + outlineSize * 2,
-                tailHeight: hasTail ? tailHeight + outlineSize : 0,
-                color: C.outlineColor,
-                includeTail: hasTail
-            )
+            Self.drawRoundedRect(rect: outlineRect, cornerRadius: cornerRadius + outlineSize, color: C.outlineColor)
+            if hasTail {
+                Self.drawLeftTail(
+                    bodyX: bodyX + shadowSize - outlineSize,
+                    bodyY: 0,
+                    bodyHeight: bodyHeight + outlineSize * 2,
+                    tailWidth: tailWidth + outlineSize,
+                    tailHeight: C.tailHeight + outlineSize * 2,
+                    color: C.outlineColor
+                )
+            }
 
             // Draw white fill
             let fillRect = CGRect(
-                x: shadowSize + outlineSize,
+                x: bodyX + shadowSize,
                 y: outlineSize,
                 width: bodyWidth,
                 height: bodyHeight
             )
-            Self.drawBubbleWithPath(
-                rect: fillRect,
-                cornerRadius: cornerRadius,
-                tailWidth: C.tailWidth,
-                tailHeight: tailHeight,
-                color: C.fillColor,
-                includeTail: hasTail
-            )
+            Self.drawRoundedRect(rect: fillRect, cornerRadius: cornerRadius, color: C.fillColor)
+            if hasTail {
+                Self.drawLeftTail(
+                    bodyX: bodyX + shadowSize,
+                    bodyY: outlineSize,
+                    bodyHeight: bodyHeight,
+                    tailWidth: tailWidth,
+                    tailHeight: C.tailHeight,
+                    color: C.fillColor
+                )
+            }
 
             return true
         }
@@ -121,86 +133,34 @@ class ChatBubbleTextures {
         return image
     }
 
-    // MARK: - Optimized Path Drawing
+    // MARK: - Drawing Helpers
 
-    /// Draw bubble using NSBezierPath (much faster than pixel-by-pixel)
-    private static func drawBubbleWithPath(
-        rect: CGRect,
-        cornerRadius: CGFloat,
+    /// Draw a simple rounded rectangle
+    private static func drawRoundedRect(rect: CGRect, cornerRadius: CGFloat, color: NSColor) {
+        let path = NSBezierPath(roundedRect: rect, xRadius: cornerRadius, yRadius: cornerRadius)
+        color.setFill()
+        path.fill()
+    }
+
+    /// Draw a triangular tail pointing LEFT from the left edge of the bubble body
+    private static func drawLeftTail(
+        bodyX: CGFloat,
+        bodyY: CGFloat,
+        bodyHeight: CGFloat,
         tailWidth: CGFloat,
         tailHeight: CGFloat,
-        color: NSColor,
-        includeTail: Bool
+        color: NSColor
     ) {
+        // Position tail vertically centered on the left edge, slightly toward bottom
+        let tailY = bodyY + bodyHeight - tailHeight - 8
+
         let path = NSBezierPath()
-
-        // Start at top-left after corner
-        path.move(to: CGPoint(x: rect.minX + cornerRadius, y: rect.minY))
-
-        // Top edge
-        path.line(to: CGPoint(x: rect.maxX - cornerRadius, y: rect.minY))
-
-        // Top-right corner
-        path.appendArc(
-            withCenter: CGPoint(x: rect.maxX - cornerRadius, y: rect.minY + cornerRadius),
-            radius: cornerRadius,
-            startAngle: 270,
-            endAngle: 0,
-            clockwise: false
-        )
-
-        // Right edge
-        path.line(to: CGPoint(x: rect.maxX, y: rect.maxY - cornerRadius))
-
-        // Bottom-right corner
-        path.appendArc(
-            withCenter: CGPoint(x: rect.maxX - cornerRadius, y: rect.maxY - cornerRadius),
-            radius: cornerRadius,
-            startAngle: 0,
-            endAngle: 90,
-            clockwise: false
-        )
-
-        // Bottom edge (with tail if included)
-        if includeTail && tailHeight > 0 {
-            // Bottom edge to tail start
-            let tailStartX = rect.minX + cornerRadius + tailWidth
-            path.line(to: CGPoint(x: tailStartX + tailWidth / 2, y: rect.maxY))
-
-            // Tail point
-            path.line(to: CGPoint(x: tailStartX, y: rect.maxY + tailHeight))
-
-            // Tail back up
-            path.line(to: CGPoint(x: tailStartX - tailWidth / 2, y: rect.maxY))
-
-            // Continue to bottom-left corner
-            path.line(to: CGPoint(x: rect.minX + cornerRadius, y: rect.maxY))
-        } else {
-            // Just bottom edge
-            path.line(to: CGPoint(x: rect.minX + cornerRadius, y: rect.maxY))
-        }
-
-        // Bottom-left corner
-        path.appendArc(
-            withCenter: CGPoint(x: rect.minX + cornerRadius, y: rect.maxY - cornerRadius),
-            radius: cornerRadius,
-            startAngle: 90,
-            endAngle: 180,
-            clockwise: false
-        )
-
-        // Left edge
-        path.line(to: CGPoint(x: rect.minX, y: rect.minY + cornerRadius))
-
-        // Top-left corner
-        path.appendArc(
-            withCenter: CGPoint(x: rect.minX + cornerRadius, y: rect.minY + cornerRadius),
-            radius: cornerRadius,
-            startAngle: 180,
-            endAngle: 270,
-            clockwise: false
-        )
-
+        // Start at body edge (top of tail attachment)
+        path.move(to: CGPoint(x: bodyX, y: tailY))
+        // Point to the left
+        path.line(to: CGPoint(x: bodyX - tailWidth, y: tailY + tailHeight / 2))
+        // Back to body edge (bottom of tail attachment)
+        path.line(to: CGPoint(x: bodyX, y: tailY + tailHeight))
         path.close()
 
         color.setFill()

@@ -80,13 +80,18 @@ class ChatBubbleView: NSView {
         bubbleImage = ChatBubbleTextures.generateBubble(contentSize: contentSize, hasTail: hasTail)
 
         // Calculate text rect for drawing
-        // Text is drawn inside the bubble, accounting for shadow offset and padding
+        // Text is drawn inside the bubble body, accounting for tail, shadow, and padding
         let shadowOffset = CGFloat(C.shadowPixels) * C.pixelSize
         let outlineOffset = CGFloat(C.outlinePixels) * C.pixelSize
+        let tailOffset = hasTail ? C.tailWidth : 0  // Tail is on the left
+
+        // Calculate vertical position to center text in bubble
+        let bubbleBodyHeight = ceil(textHeight) + C.paddingVertical * 2
+        let textYOffset = (bubbleBodyHeight - ceil(textHeight)) / 2
 
         calculatedTextRect = CGRect(
-            x: shadowOffset + outlineOffset + C.paddingHorizontal,
-            y: outlineOffset + C.paddingVertical - 1,  // Raised 1px
+            x: tailOffset + shadowOffset + outlineOffset + C.paddingHorizontal,
+            y: outlineOffset + textYOffset,
             width: ceil(textWidth),
             height: ceil(textHeight)
         )
