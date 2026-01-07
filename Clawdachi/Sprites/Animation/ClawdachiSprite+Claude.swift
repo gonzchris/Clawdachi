@@ -584,13 +584,16 @@ extension ClawdachiSprite {
 
     /// Add three animated thinking dots inside the cloud
     private func addThinkingDots(to cloud: SKSpriteNode) {
-        let dotSize: CGFloat = 1.5
-        let spacing: CGFloat = 3.0
+        let dotSize: CGFloat = 1.2
+        let spacing: CGFloat = 2.5
         let dotY: CGFloat = 0  // Center of cloud
+
+        // Match cloud outline color (dark blue-gray)
+        let dotColor = NSColor(red: 50/255, green: 55/255, blue: 70/255, alpha: 1.0)
 
         for i in 0..<3 {
             let dot = SKShapeNode(rectOf: CGSize(width: dotSize, height: dotSize))
-            dot.fillColor = .black
+            dot.fillColor = dotColor
             dot.strokeColor = .clear
             dot.position = CGPoint(x: CGFloat(i - 1) * spacing, y: dotY)
             dot.zPosition = 1

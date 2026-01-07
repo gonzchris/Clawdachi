@@ -53,17 +53,30 @@ class ClaudeSessionMonitor {
     /// Whether to auto-select session based on focused terminal TTY
     var autoSelectByTTY: Bool = true
 
+    /// The TTY of the currently focused terminal (nil if not a terminal or unknown)
+    private(set) var focusedTTY: String?
+
     /// Update selected session based on focused terminal TTY
     /// - Parameter tty: The TTY device of the focused terminal (e.g., "/dev/ttys003")
     func selectSessionByTTY(_ tty: String?) {
-        guard autoSelectByTTY, let tty = tty else { return }
+        guard autoSelectByTTY else { return }
+
+        focusedTTY = tty
 
         // Find session with matching TTY
-        if let matchingSession = activeSessions.first(where: { $0.tty == tty }) {
+        if let tty = tty, let matchingSession = activeSessions.first(where: { $0.tty == tty }) {
             // Only update if different from current selection
             if selectedSessionId != matchingSession.id {
                 selectedSessionId = matchingSession.id
             }
+        } else {
+            // No matching session for this TTY - clear selection so we show idle
+            // (rather than defaulting to another terminal's session)
+            if selectedSessionId != nil {
+                selectedSessionId = nil
+            }
+            // Re-check status to update UI immediately
+            checkSessionStatus()
         }
     }
 
@@ -273,8 +286,11 @@ class ClaudeSessionMonitor {
                 // User selected a specific session
                 monitoredSession = sessions.first { $0.id == selectedId }
                 // If selected session is gone, fall back to nil (will trigger callback)
+            } else if let tty = focusedTTY {
+                // TTY-based selection: only show session for focused terminal
+                monitoredSession = sessions.first { $0.tty == tty }
             } else {
-                // Auto mode: use most recent session
+                // No TTY info (terminal not focused) - use most recent session
                 monitoredSession = sessions.first
             }
 

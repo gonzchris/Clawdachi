@@ -169,10 +169,15 @@ class ClawdachiScene: SKScene {
             clawdachi.dismissLightbulb()
             clawdachi.dismissQuestionMark()
             clawdachi.dismissPartyCelebration()
+            let wasThinking = clawdachi.isClaudeThinking
             if clawdachi.isClaudePlanning {
                 clawdachi.stopClaudePlanning()
             }
             clawdachi.startClaudeThinking()
+            // Show message only when first entering thinking mode
+            if !wasThinking {
+                showChatBubble("*thinking*", duration: 3.0)
+            }
         case "waiting":
             clawdachi.stopClaudeThinking()
             clawdachi.stopClaudePlanning()
@@ -498,30 +503,14 @@ class ClawdachiScene: SKScene {
 
         let menu = NSMenu(title: "Clawdachi")
 
-        // Header
-        let headerItem = NSMenuItem(title: "Clawdachi", action: nil, keyEquivalent: "")
-        headerItem.isEnabled = false
-        menu.addItem(headerItem)
-
-        menu.addItem(NSMenuItem.separator())
-
-        // Sleep mode toggle
-        let sleepItem = NSMenuItem(
-            title: isSleeping ? "Wake Up" : "Sleep Mode",
-            action: #selector(toggleSleep),
-            keyEquivalent: ""
-        )
-        sleepItem.target = self
-        menu.addItem(sleepItem)
-
-        menu.addItem(NSMenuItem.separator())
-
-        // Launch Claude submenu
-        let launchItem = NSMenuItem(title: "Launch Claude", action: nil, keyEquivalent: "")
-        let launchSubmenu = NSMenu(title: "Launch Claude")
+        // Launch Claude Code submenu (top of menu)
+        let launchItem = NSMenuItem(title: "Launch Claude Code", action: nil, keyEquivalent: "")
+        let launchSubmenu = NSMenu(title: "Launch Claude Code")
         buildLaunchClaudeSubmenu(launchSubmenu)
         launchItem.submenu = launchSubmenu
         menu.addItem(launchItem)
+
+        menu.addItem(NSMenuItem.separator())
 
         // Monitor Instance submenu
         let instanceItem = NSMenuItem(title: "Monitor Instance", action: nil, keyEquivalent: "")
@@ -538,6 +527,15 @@ class ClawdachiScene: SKScene {
         menu.addItem(voiceItem)
 
         menu.addItem(NSMenuItem.separator())
+
+        // Sleep mode toggle
+        let sleepItem = NSMenuItem(
+            title: isSleeping ? "Wake Up" : "Sleep Mode",
+            action: #selector(toggleSleep),
+            keyEquivalent: ""
+        )
+        sleepItem.target = self
+        menu.addItem(sleepItem)
 
         // Quit
         let quitItem = NSMenuItem(
