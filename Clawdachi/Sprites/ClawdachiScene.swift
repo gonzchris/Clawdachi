@@ -15,7 +15,10 @@ class ClawdachiScene: SKScene {
     private var musicMonitor: MusicPlaybackMonitor!
     private var claudeMonitor: ClaudeSessionMonitor!
     private var terminalFocusMonitor: TerminalFocusMonitor!
-    private var wasClaudeActive = false
+
+    // Track which sessions are/were actively working (thinking/tools/planning)
+    // Used to detect completion transitions per-session
+    private var activeWorkingSessions: Set<String> = []
 
     // Track which sessions have already played sounds (to avoid replay on tab switch)
     private var sessionsPlayedQuestionSound: Set<String> = []
@@ -99,130 +102,110 @@ class ClawdachiScene: SKScene {
         // Don't interrupt sleep
         guard !isSleeping else { return }
 
+        // Check if THIS session was previously working (for completion detection)
+        let thisSessionWasWorking = sessionId.map { activeWorkingSessions.contains($0) } ?? false
+
         if isActive && status == "planning" {
             // Claude is in plan mode - show planning pose (thinking + lightbulb)
             clawdachi.dismissQuestionMark()
             clawdachi.dismissPartyCelebration()
 
-            // Session is active - clear sound tracking so sounds can play for new events
+            // Mark this session as actively working
             if let id = sessionId {
+                let isNewWork = !activeWorkingSessions.contains(id)
+                activeWorkingSessions.insert(id)
                 sessionsPlayedQuestionSound.remove(id)
                 sessionsPlayedCompleteSound.remove(id)
-            }
 
-            // Only start if not already planning
-            if !clawdachi.isClaudePlanning {
-                clawdachi.stopClaudeThinking()  // Stop regular thinking if active
-                clawdachi.startClaudePlanning()
+                // Only start animation if not already planning
+                if !clawdachi.isClaudePlanning {
+                    clawdachi.stopClaudeThinking()
+                    clawdachi.startClaudePlanning()
 
-                // Show planning message only when first starting
-                if !wasClaudeActive {
-                    showChatBubble(randomPlanningMessage(), duration: 3.0)
+                    // Show message only when first starting this session's work
+                    if isNewWork {
+                        showChatBubble(randomPlanningMessage(), duration: 3.0)
+                    }
                 }
             }
-            wasClaudeActive = true
         } else if isActive && (status == "thinking" || status == "tools") {
             // Claude is working - show thinking pose
             clawdachi.dismissLightbulb()
             clawdachi.dismissQuestionMark()
             clawdachi.dismissPartyCelebration()
 
-            // Session is active - clear sound tracking so sounds can play for new events
+            // Mark this session as actively working
             if let id = sessionId {
+                let isNewWork = !activeWorkingSessions.contains(id)
+                activeWorkingSessions.insert(id)
                 sessionsPlayedQuestionSound.remove(id)
                 sessionsPlayedCompleteSound.remove(id)
-            }
 
-            // Stop planning if was planning, then start thinking
-            if clawdachi.isClaudePlanning {
-                clawdachi.stopClaudePlanning()
-            }
-            clawdachi.startClaudeThinking()
+                // Stop planning if was planning, then start thinking
+                if clawdachi.isClaudePlanning {
+                    clawdachi.stopClaudePlanning()
+                }
+                clawdachi.startClaudeThinking()
 
-            // Show thinking message only when first starting
-            if !wasClaudeActive {
-                showChatBubble(randomThinkingMessage(), duration: 3.0)
+                // Show message only when first starting this session's work
+                if isNewWork {
+                    showChatBubble(randomThinkingMessage(), duration: 3.0)
+                }
             }
-            wasClaudeActive = true
         } else if isActive && status == "waiting" {
             // Claude stopped responding - waiting for user input
             clawdachi.stopClaudeThinking()
             clawdachi.stopClaudePlanning()
-            clawdachi.stopDancing()  // Stop dancing while waiting
+            clawdachi.stopDancing()
             clawdachi.dismissPartyCelebration()
             clawdachi.showQuestionMark()
 
-            // Only play sound if this session hasn't played it yet
-            let shouldPlayQuestion: Bool
-            if let id = sessionId {
-                shouldPlayQuestion = !sessionsPlayedQuestionSound.contains(id)
-                print("Clawdachi: Question sound decision for \(id): shouldPlay=\(shouldPlayQuestion), alreadyPlayed=\(sessionsPlayedQuestionSound.contains(id))")
-                if shouldPlayQuestion {
+            // Only play sound if this specific session was working and hasn't played yet
+            if let id = sessionId, thisSessionWasWorking {
+                activeWorkingSessions.remove(id)  // No longer actively working
+
+                if !sessionsPlayedQuestionSound.contains(id) {
                     sessionsPlayedQuestionSound.insert(id)
+                    print("Clawdachi: Playing question sound for \(id)")
+                    SoundManager.shared.playQuestionSound()
+                    showChatBubble(randomWaitingMessage(), duration: 4.0)
                 }
-            } else {
-                // No sessionId - fall back to playing (rare edge case)
-                print("Clawdachi: Question sound - no sessionId, playing anyway")
-                shouldPlayQuestion = true
             }
-            if shouldPlayQuestion {
-                SoundManager.shared.playQuestionSound()
-                showChatBubble(randomWaitingMessage(), duration: 4.0)
-            }
-            // Keep wasClaudeActive true - still in session
-            // Don't resume dancing - question mark means user interaction needed
         } else if isActive && status == "idle" {
             // Session is idle (Claude finished responding, waiting for next user prompt)
             clawdachi.stopClaudeThinking()
             clawdachi.stopClaudePlanning()
             clawdachi.dismissQuestionMark()
 
-            // Play completion sound/celebration when transitioning from working → idle
-            if wasClaudeActive {
-                clawdachi.showPartyCelebration()
+            // Only play completion if THIS session was working before
+            if let id = sessionId, thisSessionWasWorking {
+                activeWorkingSessions.remove(id)  // No longer actively working
 
-                let shouldPlayComplete: Bool
-                if let id = sessionId {
-                    shouldPlayComplete = !sessionsPlayedCompleteSound.contains(id)
-                    print("Clawdachi: Complete sound decision for \(id): shouldPlay=\(shouldPlayComplete)")
-                    if shouldPlayComplete {
-                        sessionsPlayedCompleteSound.insert(id)
-                    }
-                } else {
-                    shouldPlayComplete = true
-                }
-                if shouldPlayComplete {
+                if !sessionsPlayedCompleteSound.contains(id) {
+                    sessionsPlayedCompleteSound.insert(id)
+                    print("Clawdachi: Playing complete sound for \(id)")
+                    clawdachi.showPartyCelebration()
                     SoundManager.shared.playCompleteSound()
                     showChatBubble(randomCompletionMessage(), duration: 4.0)
                 }
-                wasClaudeActive = false
             }
         } else {
-            // Claude session truly ended - show completion celebration
+            // Claude session truly ended (no active session)
             clawdachi.stopClaudeThinking()
             clawdachi.stopClaudePlanning()
             clawdachi.dismissQuestionMark()
 
-            // Show party celebration when transitioning from active → complete
-            // Only play sound if this session hasn't played it yet
-            if wasClaudeActive {
-                clawdachi.showPartyCelebration()
+            // Only play completion if THIS session was working before
+            if let id = sessionId, thisSessionWasWorking {
+                activeWorkingSessions.remove(id)
 
-                let shouldPlayComplete: Bool
-                if let id = sessionId {
-                    shouldPlayComplete = !sessionsPlayedCompleteSound.contains(id)
-                    if shouldPlayComplete {
-                        sessionsPlayedCompleteSound.insert(id)
-                    }
-                } else {
-                    // No sessionId (session ended) - play sound since wasClaudeActive gate handles replay
-                    shouldPlayComplete = true
-                }
-                if shouldPlayComplete {
+                if !sessionsPlayedCompleteSound.contains(id) {
+                    sessionsPlayedCompleteSound.insert(id)
+                    print("Clawdachi: Playing complete sound for ended session \(id)")
+                    clawdachi.showPartyCelebration()
                     SoundManager.shared.playCompleteSound()
                     showChatBubble(randomCompletionMessage(), duration: 4.0)
                 }
-                wasClaudeActive = false
             }
         }
     }
@@ -918,7 +901,7 @@ class ClawdachiScene: SKScene {
             // Stop dancing and thinking before sleeping
             clawdachi.stopDancing()
             clawdachi.stopClaudeThinking()
-            wasClaudeActive = false  // Clear so we don't bounce on wake
+            activeWorkingSessions.removeAll()  // Clear so we don't bounce on wake
             isSleeping = true
             clawdachi.startSleeping()
         }
@@ -1055,7 +1038,7 @@ class ClawdachiScene: SKScene {
         clawdachi.stopClaudePlanning()
         clawdachi.dismissQuestionMark()
         clawdachi.dismissPartyCelebration()
-        wasClaudeActive = false
+        activeWorkingSessions.removeAll()
         isSleeping = true
         clawdachi.startSleeping()
     }
