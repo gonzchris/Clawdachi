@@ -22,6 +22,24 @@ SESSION_ID=$(echo "$INPUT" | python3 -c "import sys, json; d=json.load(sys.stdin
 TOOL_NAME=$(echo "$INPUT" | python3 -c "import sys, json; d=json.load(sys.stdin); print(d.get('tool_name', ''))" 2>/dev/null || echo "")
 CWD=$(echo "$INPUT" | python3 -c "import sys, json; d=json.load(sys.stdin); print(d.get('cwd', ''))" 2>/dev/null || echo "")
 
+# Capture TTY for terminal tab correlation
+# Hooks run in subprocesses, so we need to find the controlling terminal
+# from the parent process tree (Claude Code → shell → hook)
+TTY=""
+if [ -n "$PPID" ]; then
+    # Try to get TTY from parent's parent (the shell running Claude)
+    GRANDPARENT_PID=$(ps -o ppid= -p "$PPID" 2>/dev/null | tr -d ' ')
+    if [ -n "$GRANDPARENT_PID" ]; then
+        TTY=$(ps -o tty= -p "$GRANDPARENT_PID" 2>/dev/null | tr -d ' ')
+        # Prefix with /dev/ if we got a tty name
+        if [ -n "$TTY" ] && [ "$TTY" != "??" ] && [ "$TTY" != "-" ]; then
+            TTY="/dev/$TTY"
+        else
+            TTY=""
+        fi
+    fi
+fi
+
 # If no session_id, generate a fallback based on PID
 if [ -z "$SESSION_ID" ]; then
     SESSION_ID="unknown_$$"
@@ -121,7 +139,8 @@ data = {
     'timestamp': $TIMESTAMP,
     'session_id': '$SESSION_ID',
     'tool_name': '$TOOL_NAME' if '$TOOL_NAME' and '$STATUS' in ('tools', 'waiting') else None,
-    'cwd': '$CWD' if '$CWD' else None
+    'cwd': '$CWD' if '$CWD' else None,
+    'tty': '$TTY' if '$TTY' else None
 }
 # Remove None values
 data = {k: v for k, v in data.items() if v is not None}

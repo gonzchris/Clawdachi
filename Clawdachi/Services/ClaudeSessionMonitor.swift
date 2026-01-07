@@ -13,6 +13,7 @@ struct SessionInfo: Equatable {
     let status: String
     let timestamp: Double
     let cwd: String?
+    let tty: String?  // Terminal TTY device (e.g., /dev/ttys003)
 
     /// Display name for the session (project folder name or truncated ID)
     var displayName: String {
@@ -46,6 +47,23 @@ class ClaudeSessionMonitor {
         didSet {
             // Re-check status immediately when selection changes
             checkSessionStatus()
+        }
+    }
+
+    /// Whether to auto-select session based on focused terminal TTY
+    var autoSelectByTTY: Bool = true
+
+    /// Update selected session based on focused terminal TTY
+    /// - Parameter tty: The TTY device of the focused terminal (e.g., "/dev/ttys003")
+    func selectSessionByTTY(_ tty: String?) {
+        guard autoSelectByTTY, let tty = tty else { return }
+
+        // Find session with matching TTY
+        if let matchingSession = activeSessions.first(where: { $0.tty == tty }) {
+            // Only update if different from current selection
+            if selectedSessionId != matchingSession.id {
+                selectedSessionId = matchingSession.id
+            }
         }
     }
 
@@ -240,7 +258,8 @@ class ClaudeSessionMonitor {
                 id: session.session_id ?? url.deletingPathExtension().lastPathComponent,
                 status: session.status,
                 timestamp: session.timestamp,
-                cwd: session.cwd
+                cwd: session.cwd,
+                tty: session.tty
             )
         } catch {
             return nil
@@ -286,4 +305,5 @@ private struct SessionData: Codable {
     let session_id: String?
     let tool_name: String?
     let cwd: String?
+    let tty: String?
 }

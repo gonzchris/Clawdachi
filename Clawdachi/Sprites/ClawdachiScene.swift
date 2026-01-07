@@ -14,6 +14,7 @@ class ClawdachiScene: SKScene {
     private var isSleeping = false
     private var musicMonitor: MusicPlaybackMonitor!
     private var claudeMonitor: ClaudeSessionMonitor!
+    private var terminalFocusMonitor: TerminalFocusMonitor!
     private var wasClaudeActive = false
 
     // MARK: - Initialization
@@ -73,10 +74,17 @@ class ClawdachiScene: SKScene {
         // Load saved preference
         if let savedId = UserDefaults.standard.string(forKey: "clawdachi.monitoring.instanceId") {
             claudeMonitor.selectedSessionId = savedId
+            claudeMonitor.autoSelectByTTY = false  // Manual selection overrides TTY
         }
 
         claudeMonitor.onStatusChanged = { [weak self] isActive, status in
             self?.handleClaudeStatusChanged(isActive: isActive, status: status)
+        }
+
+        // Set up terminal focus monitor to auto-select session by focused tab
+        terminalFocusMonitor = TerminalFocusMonitor()
+        terminalFocusMonitor.onFocusedTTYChanged = { [weak self] tty in
+            self?.claudeMonitor.selectSessionByTTY(tty)
         }
     }
 
@@ -438,15 +446,17 @@ class ClawdachiScene: SKScene {
     private func buildInstanceSubmenu(_ menu: NSMenu) {
         let sessions = claudeMonitor.activeSessions
         let selectedId = claudeMonitor.selectedSessionId
+        let isAutoMode = selectedId == nil
 
-        // Auto option (always present)
+        // Auto option (always present) - now uses focused terminal tab
+        let autoTitle = "Auto (Focused Tab)"
         let autoItem = NSMenuItem(
-            title: "Auto (Most Recent)",
+            title: autoTitle,
             action: #selector(selectAutoInstance),
             keyEquivalent: ""
         )
         autoItem.target = self
-        autoItem.state = (selectedId == nil) ? .on : .off
+        autoItem.state = isAutoMode ? .on : .off
         menu.addItem(autoItem)
 
         // Separator if there are sessions
@@ -504,12 +514,14 @@ class ClawdachiScene: SKScene {
 
     @objc private func selectAutoInstance() {
         claudeMonitor.selectedSessionId = nil
+        claudeMonitor.autoSelectByTTY = true  // Re-enable TTY-based selection
         saveMonitorPreference(nil)
     }
 
     @objc private func selectInstance(_ sender: NSMenuItem) {
         guard let sessionId = sender.representedObject as? String else { return }
         claudeMonitor.selectedSessionId = sessionId
+        claudeMonitor.autoSelectByTTY = false  // Disable TTY auto-selection when manually selecting
         saveMonitorPreference(sessionId)
     }
 
