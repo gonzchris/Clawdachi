@@ -161,12 +161,6 @@ class ClawdachiSprite: SKNode {
         set { if newValue { stateManager.transitionTo(.claudeCelebrating) } else if currentState == .claudeCelebrating { stateManager.transitionTo(.idle) } }
     }
 
-    // Voice input listening state
-    var isListening: Bool {
-        get { currentState == .listening }
-        set { if newValue { stateManager.transitionTo(.listening) } else if currentState == .listening { stateManager.transitionTo(.idle) } }
-    }
-
     // Smoking animation node (created/destroyed during animation)
     var cigaretteNode: SKSpriteNode?
     // Controls tip smoke to prevent particle overload during puffs

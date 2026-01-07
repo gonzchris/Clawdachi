@@ -191,15 +191,4 @@ enum AnimationKey: String {
 
     /// Arm celebration animation
     case partyArm
-
-    // MARK: - Voice Input Listening
-
-    /// Body pulse during listening
-    case listeningPulse
-
-    /// Sound wave animation above head
-    case listeningSoundWaves
-
-    /// Sound wave particle spawner
-    case listeningParticleSpawner
 }

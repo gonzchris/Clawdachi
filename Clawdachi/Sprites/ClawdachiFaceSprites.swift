@@ -1282,50 +1282,6 @@ class ClawdachiFaceSprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 5, height: 6)
     }
 
-    // MARK: - Sound Wave Textures (Voice Input)
-
-    /// Blue/cyan color palette for sound wave arcs
-    private static let waveBlue = PixelColor(r: 100, g: 180, b: 255)
-    private static let waveCyan = PixelColor(r: 150, g: 220, b: 255)
-    private static let waveWhite = PixelColor(r: 255, g: 255, b: 255)
-
-    /// Generates a sound wave arc texture for voice input listening
-    /// - Parameter intensity: 0 = small, 1 = medium, 2 = large arc
-    static func generateSoundWaveTexture(intensity: Int) -> SKTexture {
-        // Different arc sizes based on intensity
-        switch intensity {
-        case 0:
-            // Small arc - 6x3 pixels
-            let pixels: [[PixelColor]] = [
-                [P.clear, waveBlue, waveCyan, waveCyan, waveBlue, P.clear],
-                [waveBlue, P.clear, P.clear, P.clear, P.clear, waveBlue],
-                [P.clear, P.clear, P.clear, P.clear, P.clear, P.clear],
-            ]
-            return PixelArtGenerator.textureFromPixels(pixels, width: 6, height: 3)
-
-        case 1:
-            // Medium arc - 8x4 pixels
-            let pixels: [[PixelColor]] = [
-                [P.clear, P.clear, waveCyan, waveWhite, waveWhite, waveCyan, P.clear, P.clear],
-                [P.clear, waveCyan, P.clear, P.clear, P.clear, P.clear, waveCyan, P.clear],
-                [waveBlue, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, waveBlue],
-                [P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear],
-            ]
-            return PixelArtGenerator.textureFromPixels(pixels, width: 8, height: 4)
-
-        default:
-            // Large arc - 10x5 pixels
-            let pixels: [[PixelColor]] = [
-                [P.clear, P.clear, P.clear, waveWhite, waveWhite, waveWhite, waveWhite, P.clear, P.clear, P.clear],
-                [P.clear, P.clear, waveCyan, P.clear, P.clear, P.clear, P.clear, waveCyan, P.clear, P.clear],
-                [P.clear, waveCyan, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, waveCyan, P.clear],
-                [waveBlue, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, waveBlue],
-                [P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear],
-            ]
-            return PixelArtGenerator.textureFromPixels(pixels, width: 10, height: 5)
-        }
-    }
-
     // MARK: - Gear Texture (Thinking indicator)
 
     /// Generates a pixel-art gear/cog for thinking animation

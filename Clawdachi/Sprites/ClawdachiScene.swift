@@ -44,7 +44,6 @@ class ClawdachiScene: SKScene {
         setupCharacter()
         setupMusicMonitor()
         setupClaudeMonitor()
-        setupVoiceInput()
 
         // Watch for app losing focus to cancel drag
         NotificationCenter.default.addObserver(
@@ -243,47 +242,6 @@ class ClawdachiScene: SKScene {
         addChild(clawdachi)
     }
 
-    // MARK: - Voice Input Setup
-
-    private func setupVoiceInput() {
-        let voiceService = VoiceInputService.shared
-
-        // Wire up recording state to sprite animation
-        voiceService.onRecordingStateChanged = { [weak self] isRecording in
-            guard let self = self else { return }
-            if isRecording {
-                self.clawdachi.startListening()
-                self.showChatBubble(self.randomListeningMessage(), duration: nil)
-            } else {
-                self.clawdachi.stopListening()
-                ChatBubbleWindow.dismiss(animated: true)
-            }
-        }
-
-        // Wire up transcription completion
-        voiceService.onTranscriptionComplete = { [weak self] text in
-            guard let self = self, let text = text else { return }
-            // Show brief confirmation
-            let truncated = text.count > 30 ? String(text.prefix(27)) + "..." : text
-            self.showChatBubble("sent: \(truncated)", duration: 2.0)
-        }
-
-        // Wire up errors
-        voiceService.onError = { [weak self] message in
-            self?.showChatBubble(message, duration: 3.0)
-        }
-    }
-
-    private func randomListeningMessage() -> String {
-        let messages = [
-            "listening...",
-            "go ahead!",
-            "speak up!",
-            "i'm all ears!"
-        ]
-        return messages.randomElement() ?? "listening..."
-    }
-
     // MARK: - Update Loop
 
     override func update(_ currentTime: TimeInterval) {
@@ -471,24 +429,6 @@ class ClawdachiScene: SKScene {
 
     @objc private func appDidResignActive() {
         endDragIfNeeded()
-
-        // Cancel voice recording if app loses focus
-        if VoiceInputService.shared.isRecording {
-            VoiceInputService.shared.cancelRecording()
-        }
-    }
-
-    // MARK: - Keyboard Handling (Voice Input)
-
-    override func keyDown(with event: NSEvent) {
-        // Spacebar (keyCode 49) toggles voice input when window is focused
-        if event.keyCode == 49 && !event.isARepeat {
-            if VoiceInputService.shared.isRecording {
-                VoiceInputService.shared.stopRecording()
-            } else {
-                VoiceInputService.shared.startRecording()
-            }
-        }
     }
 
     // MARK: - Context Menu
@@ -513,13 +453,6 @@ class ClawdachiScene: SKScene {
         buildInstanceSubmenu(instanceSubmenu)
         instanceItem.submenu = instanceSubmenu
         menu.addItem(instanceItem)
-
-        // Voice Input submenu
-        let voiceItem = NSMenuItem(title: "Voice Input", action: nil, keyEquivalent: "")
-        let voiceSubmenu = NSMenu(title: "Voice Input")
-        buildVoiceInputSubmenu(voiceSubmenu)
-        voiceItem.submenu = voiceSubmenu
-        menu.addItem(voiceItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -635,104 +568,6 @@ class ClawdachiScene: SKScene {
         } else {
             defaults.removeObject(forKey: "clawdachi.monitoring.instanceId")
         }
-    }
-
-    // MARK: - Voice Input Menu
-
-    private func buildVoiceInputSubmenu(_ menu: NSMenu) {
-        let useWhisper = VoiceInputService.useWhisper
-        let whisperDownloaded = WhisperModelManager.shared.isModelDownloaded
-
-        // Native option
-        let nativeItem = NSMenuItem(
-            title: "macOS Native",
-            action: #selector(selectNativeRecognition),
-            keyEquivalent: ""
-        )
-        nativeItem.target = self
-        nativeItem.state = useWhisper ? .off : .on
-        menu.addItem(nativeItem)
-
-        // Whisper option (or download option)
-        if whisperDownloaded {
-            let whisperItem = NSMenuItem(
-                title: "Whisper (Better Accuracy)",
-                action: #selector(selectWhisperRecognition),
-                keyEquivalent: ""
-            )
-            whisperItem.target = self
-            whisperItem.state = useWhisper ? .on : .off
-            menu.addItem(whisperItem)
-        } else if WhisperModelManager.shared.isDownloading {
-            let downloadingItem = NSMenuItem(
-                title: "Downloading... \(Int(WhisperModelManager.shared.downloadProgress * 100))%",
-                action: nil,
-                keyEquivalent: ""
-            )
-            downloadingItem.isEnabled = false
-            menu.addItem(downloadingItem)
-        } else {
-            let downloadItem = NSMenuItem(
-                title: "Download Whisper (~\(WhisperModelManager.shared.modelSizeDescription))",
-                action: #selector(downloadWhisperModel),
-                keyEquivalent: ""
-            )
-            downloadItem.target = self
-            menu.addItem(downloadItem)
-        }
-
-        menu.addItem(NSMenuItem.separator())
-
-        // Hotkey hint
-        let hotkeyItem = NSMenuItem(
-            title: "Hotkey: Ctrl+Opt+Cmd (hold)",
-            action: nil,
-            keyEquivalent: ""
-        )
-        hotkeyItem.isEnabled = false
-        menu.addItem(hotkeyItem)
-
-        let spacebarItem = NSMenuItem(
-            title: "Or: Click sprite + hold Space",
-            action: nil,
-            keyEquivalent: ""
-        )
-        spacebarItem.isEnabled = false
-        menu.addItem(spacebarItem)
-    }
-
-    @objc private func selectNativeRecognition() {
-        VoiceInputService.useWhisper = false
-    }
-
-    @objc private func selectWhisperRecognition() {
-        VoiceInputService.useWhisper = true
-    }
-
-    @objc private func downloadWhisperModel() {
-        showChatBubble("downloading whisper...", duration: nil)
-
-        WhisperModelManager.shared.onDownloadProgress = { [weak self] progress in
-            let percent = Int(progress * 100)
-            // Update bubble periodically
-            if percent % 10 == 0 || percent == 100 {
-                ChatBubbleWindow.dismiss(animated: false)
-                self?.showChatBubble("downloading: \(percent)%", duration: nil)
-            }
-        }
-
-        WhisperModelManager.shared.onDownloadComplete = { [weak self] result in
-            ChatBubbleWindow.dismiss(animated: true)
-            switch result {
-            case .success:
-                self?.showChatBubble("whisper ready!", duration: 3.0)
-                VoiceInputService.shared.reloadWhisperRecognizer()
-            case .failure:
-                self?.showChatBubble("download failed", duration: 3.0)
-            }
-        }
-
-        WhisperModelManager.shared.downloadModel()
     }
 
     // MARK: - Launch Claude Menu
