@@ -58,7 +58,8 @@ case "$EVENT_TYPE" in
   "session_start")
     # Clear any stale plan mode state on new session
     rm -f "$PLAN_MODE_FILE"
-    STATUS="thinking"
+    # Session starts idle - waiting for user's first prompt
+    STATUS="idle"
     ;;
   "thinking"|"prompt_submit")
     # Check if still in plan mode
