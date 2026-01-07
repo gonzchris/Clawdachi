@@ -169,15 +169,10 @@ class ClawdachiScene: SKScene {
             clawdachi.dismissLightbulb()
             clawdachi.dismissQuestionMark()
             clawdachi.dismissPartyCelebration()
-            let wasThinking = clawdachi.isClaudeThinking
             if clawdachi.isClaudePlanning {
                 clawdachi.stopClaudePlanning()
             }
             clawdachi.startClaudeThinking()
-            // Show message only when first entering thinking mode
-            if !wasThinking {
-                showChatBubble("*thinking*", duration: 3.0)
-            }
         case "waiting":
             clawdachi.stopClaudeThinking()
             clawdachi.stopClaudePlanning()
