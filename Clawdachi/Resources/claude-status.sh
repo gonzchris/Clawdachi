@@ -113,14 +113,13 @@ case "$EVENT_TYPE" in
     STATUS="error"
     ;;
   "stop")
-    # Claude stopped responding - delete session file to signal completion
-    # Question mark is only shown via AskUserQuestion tool detection
-    rm -f "$SESSION_FILE"
+    # Claude stopped responding - session is now idle (waiting for user input)
+    # Keep session file so sprite knows terminal is still open
     rm -f "$PLAN_MODE_FILE"
-    exit 0
+    STATUS="idle"
     ;;
-  "session_end"|"idle")
-    # Session truly ended - delete session and plan mode files
+  "session_end")
+    # Session truly ended (terminal closed) - delete session and plan mode files
     rm -f "$SESSION_FILE"
     rm -f "$PLAN_MODE_FILE"
     exit 0

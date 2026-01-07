@@ -16,6 +16,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var globalEventMonitor: Any?
     private var localEventMonitor: Any?
 
+    // Voice input hotkey monitors
+    private var globalFlagsMonitor: Any?
+    private var localFlagsMonitor: Any?
+    private var isVoiceHotkeyPressed = false
+
     private enum Keys {
         static let windowX = "clawdachi.window.x"
         static let windowY = "clawdachi.window.y"
@@ -74,6 +79,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Set up keyboard shortcut for recording (Cmd+Shift+R)
         setupRecordingShortcut()
 
+        // Set up voice input hotkey (Ctrl+Option+Cmd)
+        setupVoiceInputHotkey()
+
         // Request notification permissions for recording feedback
         requestNotificationPermissions()
     }
@@ -105,6 +113,43 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return true
         }
         return false
+    }
+
+    // MARK: - Voice Input Hotkey
+
+    private func setupVoiceInputHotkey() {
+        // Monitor modifier key changes for Ctrl+Option+Cmd hold/release
+        let voiceModifiers: NSEvent.ModifierFlags = [.control, .option, .command]
+
+        globalFlagsMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+            self?.handleVoiceFlagsChanged(event, requiredModifiers: voiceModifiers)
+        }
+
+        localFlagsMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+            self?.handleVoiceFlagsChanged(event, requiredModifiers: voiceModifiers)
+            return event
+        }
+    }
+
+    private func handleVoiceFlagsChanged(_ event: NSEvent, requiredModifiers: NSEvent.ModifierFlags) {
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+
+        // Toggle recording when all three modifiers are pressed
+        if flags.contains(requiredModifiers) && !isVoiceHotkeyPressed {
+            isVoiceHotkeyPressed = true
+            // Audio operations must happen on main thread
+            DispatchQueue.main.async {
+                if VoiceInputService.shared.isRecording {
+                    VoiceInputService.shared.stopRecording()
+                } else {
+                    VoiceInputService.shared.startRecording()
+                }
+            }
+        }
+        // Reset flag when modifiers released (allows next toggle)
+        else if isVoiceHotkeyPressed && !flags.contains(requiredModifiers) {
+            isVoiceHotkeyPressed = false
+        }
     }
 
     private func requestNotificationPermissions() {
@@ -172,6 +217,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let monitor = localEventMonitor {
             NSEvent.removeMonitor(monitor)
             localEventMonitor = nil
+        }
+        if let monitor = globalFlagsMonitor {
+            NSEvent.removeMonitor(monitor)
+            globalFlagsMonitor = nil
+        }
+        if let monitor = localFlagsMonitor {
+            NSEvent.removeMonitor(monitor)
+            localFlagsMonitor = nil
+        }
+
+        // Cancel any in-progress voice recording
+        if VoiceInputService.shared.isRecording {
+            VoiceInputService.shared.cancelRecording()
         }
     }
 }

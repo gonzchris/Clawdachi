@@ -33,6 +33,9 @@ enum SpriteState: Equatable, CustomStringConvertible {
     /// Claude session ended (party celebration)
     case claudeCelebrating
 
+    /// Voice input listening mode
+    case listening
+
     // MARK: - Idle Substates
 
     /// Idle substate: whistling animation in progress
@@ -59,6 +62,7 @@ enum SpriteState: Equatable, CustomStringConvertible {
         case .claudePlanning: return "claudePlanning"
         case .claudeWaiting: return "claudeWaiting"
         case .claudeCelebrating: return "claudeCelebrating"
+        case .listening: return "listening"
         case .whistling: return "whistling"
         case .lookingAround: return "lookingAround"
         case .smoking: return "smoking"
@@ -86,6 +90,11 @@ enum SpriteState: Equatable, CustomStringConvertible {
         default:
             return false
         }
+    }
+
+    /// Whether this is the voice input listening state
+    var isListeningState: Bool {
+        self == .listening
     }
 
     /// Whether idle animations should be paused in this state
@@ -160,10 +169,20 @@ class SpriteStateManager {
         case (.sleeping, _):
             return false
 
-        // From dancing, Claude states can interrupt (dragging/idle already handled above)
-        case (.dancing, let to) where to.isClaudeState:
+        // From dancing, Claude states or listening can interrupt (dragging/idle already handled above)
+        case (.dancing, let to) where to.isClaudeState || to.isListeningState:
             return true
         case (.dancing, _):
+            return false
+
+        // Listening can be entered from most states
+        case (_, .listening):
+            return true
+
+        // From listening, can return to idle (handled above) or claude states
+        case (.listening, let to) where to.isClaudeState:
+            return true
+        case (.listening, _):
             return false
 
         // Default: allow transition

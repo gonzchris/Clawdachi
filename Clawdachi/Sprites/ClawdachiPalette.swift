@@ -31,6 +31,12 @@ struct ClawdachiPalette {
     // Ground shadow (semi-transparent)
     static let groundShadow = PixelColor(r: 0, g: 0, b: 0, a: 51)   // 20% opacity black
 
+    // Brain colors (for thinking animation)
+    static let brainPink = PixelColor(r: 255, g: 153, b: 179)       // #FF99B3 - main
+    static let brainPinkLight = PixelColor(r: 255, g: 191, b: 209)  // #FFBFD1 - highlight
+    static let brainPinkDark = PixelColor(r: 217, g: 115, b: 140)   // #D9738C - shadow
+    static let brainPinkDeep = PixelColor(r: 179, g: 89, b: 115)    // #B35973 - deep folds
+
     // Transparent
     static let clear = PixelColor.clear
 }

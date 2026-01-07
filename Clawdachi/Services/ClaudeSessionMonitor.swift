@@ -67,8 +67,8 @@ class ClaudeSessionMonitor {
         }
     }
 
-    /// Callback when session status changes
-    var onStatusChanged: ((Bool, String?) -> Void)?
+    /// Callback when session status changes (isActive, status, sessionId)
+    var onStatusChanged: ((Bool, String?, String?) -> Void)?
 
     /// Callback when the list of active sessions changes
     var onSessionListChanged: (([SessionInfo]) -> Void)?
@@ -131,11 +131,13 @@ class ClaudeSessionMonitor {
             guard let self = self else { return }
 
             let result = self.readSessionFiles()
+            print("Clawdachi: Poll result - isActive: \(result.isActive), status: \(result.status ?? "nil"), sessionId: \(result.sessionId ?? "nil")")
 
             DispatchQueue.main.async {
                 self.updateStatus(
                     isActive: result.isActive,
                     status: result.status,
+                    sessionId: result.sessionId,
                     allSessions: result.allSessions
                 )
             }
@@ -144,13 +146,13 @@ class ClaudeSessionMonitor {
 
     // MARK: - Session File Reading
 
-    private func readSessionFiles() -> (isActive: Bool, status: String?, allSessions: [SessionInfo]) {
+    private func readSessionFiles() -> (isActive: Bool, status: String?, sessionId: String?, allSessions: [SessionInfo]) {
         let fileManager = FileManager.default
 
         // Ensure directory exists
         guard fileManager.fileExists(atPath: sessionsPath.path) else {
             clearCache()
-            return (false, nil, [])
+            return (false, nil, nil, [])
         }
 
         // Check directory modification date to skip unnecessary file reads
@@ -175,14 +177,15 @@ class ClaudeSessionMonitor {
 
             if jsonFiles.isEmpty {
                 clearCache()
-                return (false, nil, [])
+                return (false, nil, nil, [])
             }
 
             // Track which files still exist (for cache cleanup)
             var currentFiles = Set<String>()
 
-            // Collect all non-stale sessions
+            // Collect all valid sessions
             var sessions: [SessionInfo] = []
+            var sessionsToDelete: [URL] = []
             let now = Date().timeIntervalSince1970
 
             for file in jsonFiles {
@@ -198,10 +201,20 @@ class ClaudeSessionMonitor {
                    let currentModDate = fileModDate,
                    cachedModDate == currentModDate,
                    let cachedSession = cachedSessions[filename] {
-                    // Check staleness on cached session
-                    let age = now - cachedSession.timestamp
-                    if age <= AnimationTimings.sessionStalenessThreshold {
-                        sessions.append(cachedSession)
+                    // For idle sessions, check if terminal is still open
+                    if cachedSession.status == "idle" {
+                        if isTerminalOpen(tty: cachedSession.tty) {
+                            sessions.append(cachedSession)
+                        } else {
+                            // Terminal closed - mark for cleanup
+                            sessionsToDelete.append(file)
+                        }
+                    } else {
+                        // For active sessions, apply staleness threshold
+                        let age = now - cachedSession.timestamp
+                        if age <= AnimationTimings.sessionStalenessThreshold {
+                            sessions.append(cachedSession)
+                        }
                     }
                     continue
                 }
@@ -212,13 +225,31 @@ class ClaudeSessionMonitor {
                     cachedSessions[filename] = session
                     fileModDates[filename] = fileModDate
 
-                    // Skip stale sessions (older than threshold)
-                    let age = now - session.timestamp
-                    if age > AnimationTimings.sessionStalenessThreshold {
-                        continue
+                    // For idle sessions, check if terminal is still open
+                    if session.status == "idle" {
+                        if isTerminalOpen(tty: session.tty) {
+                            sessions.append(session)
+                        } else {
+                            // Terminal closed - mark for cleanup
+                            sessionsToDelete.append(file)
+                        }
+                    } else {
+                        // For active sessions, apply staleness threshold
+                        let age = now - session.timestamp
+                        if age <= AnimationTimings.sessionStalenessThreshold {
+                            sessions.append(session)
+                        }
                     }
-                    sessions.append(session)
                 }
+            }
+
+            // Clean up session files for closed terminals
+            for file in sessionsToDelete {
+                try? fileManager.removeItem(at: file)
+                let filename = file.lastPathComponent
+                cachedSessions.removeValue(forKey: filename)
+                fileModDates.removeValue(forKey: filename)
+                currentFiles.remove(filename)
             }
 
             // Clean up cache for deleted files
@@ -243,11 +274,20 @@ class ClaudeSessionMonitor {
             }
 
             let hasActiveSession = monitoredSession != nil
-            return (hasActiveSession, monitoredSession?.status, sessions)
+            return (hasActiveSession, monitoredSession?.status, monitoredSession?.id, sessions)
 
         } catch {
-            return (false, nil, [])
+            return (false, nil, nil, [])
         }
+    }
+
+    /// Check if a terminal is still open by verifying the TTY device exists
+    private func isTerminalOpen(tty: String?) -> Bool {
+        guard let tty = tty, !tty.isEmpty else {
+            // No TTY info - assume still open (will be cleaned up by staleness)
+            return true
+        }
+        return FileManager.default.fileExists(atPath: tty)
     }
 
     private func parseSessionFile(at url: URL) -> SessionInfo? {
@@ -274,7 +314,10 @@ class ClaudeSessionMonitor {
 
     // MARK: - State Update
 
-    private func updateStatus(isActive: Bool, status: String?, allSessions: [SessionInfo]) {
+    /// Currently monitored session ID
+    private(set) var currentSessionId: String?
+
+    private func updateStatus(isActive: Bool, status: String?, sessionId: String?, allSessions: [SessionInfo]) {
         // Check if session list changed
         let sessionsChanged = activeSessions != allSessions
         if sessionsChanged {
@@ -289,11 +332,16 @@ class ClaudeSessionMonitor {
         }
 
         // Only fire status callback if state actually changed
-        guard isActive != self.isActive || status != self.currentStatus else { return }
+        let statusChanged = isActive != self.isActive || status != self.currentStatus || sessionId != self.currentSessionId
+        print("Clawdachi: updateStatus check - new(\(isActive), \(status ?? "nil"), \(sessionId ?? "nil")) vs current(\(self.isActive), \(self.currentStatus ?? "nil"), \(self.currentSessionId ?? "nil")) -> changed: \(statusChanged)")
+
+        guard statusChanged else { return }
 
         self.isActive = isActive
         self.currentStatus = status
-        onStatusChanged?(isActive, status)
+        self.currentSessionId = sessionId
+        print("Clawdachi: Firing onStatusChanged callback")
+        onStatusChanged?(isActive, status, sessionId)
     }
 }
 

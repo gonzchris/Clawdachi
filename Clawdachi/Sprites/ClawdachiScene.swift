@@ -17,6 +17,10 @@ class ClawdachiScene: SKScene {
     private var terminalFocusMonitor: TerminalFocusMonitor!
     private var wasClaudeActive = false
 
+    // Track which sessions have already played sounds (to avoid replay on tab switch)
+    private var sessionsPlayedQuestionSound: Set<String> = []
+    private var sessionsPlayedCompleteSound: Set<String> = []
+
     // MARK: - Initialization
 
     override init() {
@@ -38,6 +42,7 @@ class ClawdachiScene: SKScene {
         setupCharacter()
         setupMusicMonitor()
         setupClaudeMonitor()
+        setupVoiceInput()
 
         // Watch for app losing focus to cancel drag
         NotificationCenter.default.addObserver(
@@ -77,8 +82,8 @@ class ClawdachiScene: SKScene {
             claudeMonitor.autoSelectByTTY = false  // Manual selection overrides TTY
         }
 
-        claudeMonitor.onStatusChanged = { [weak self] isActive, status in
-            self?.handleClaudeStatusChanged(isActive: isActive, status: status)
+        claudeMonitor.onStatusChanged = { [weak self] isActive, status, sessionId in
+            self?.handleClaudeStatusChanged(isActive: isActive, status: status, sessionId: sessionId)
         }
 
         // Set up terminal focus monitor to auto-select session by focused tab
@@ -88,7 +93,9 @@ class ClawdachiScene: SKScene {
         }
     }
 
-    private func handleClaudeStatusChanged(isActive: Bool, status: String?) {
+    private func handleClaudeStatusChanged(isActive: Bool, status: String?, sessionId: String?) {
+        print("Clawdachi: Status changed - isActive: \(isActive), status: \(status ?? "nil"), sessionId: \(sessionId ?? "nil")")
+
         // Don't interrupt sleep
         guard !isSleeping else { return }
 
@@ -96,6 +103,12 @@ class ClawdachiScene: SKScene {
             // Claude is in plan mode - show planning pose (thinking + lightbulb)
             clawdachi.dismissQuestionMark()
             clawdachi.dismissPartyCelebration()
+
+            // Session is active - clear sound tracking so sounds can play for new events
+            if let id = sessionId {
+                sessionsPlayedQuestionSound.remove(id)
+                sessionsPlayedCompleteSound.remove(id)
+            }
 
             // Only start if not already planning
             if !clawdachi.isClaudePlanning {
@@ -113,6 +126,12 @@ class ClawdachiScene: SKScene {
             clawdachi.dismissLightbulb()
             clawdachi.dismissQuestionMark()
             clawdachi.dismissPartyCelebration()
+
+            // Session is active - clear sound tracking so sounds can play for new events
+            if let id = sessionId {
+                sessionsPlayedQuestionSound.remove(id)
+                sessionsPlayedCompleteSound.remove(id)
+            }
 
             // Stop planning if was planning, then start thinking
             if clawdachi.isClaudePlanning {
@@ -132,12 +151,52 @@ class ClawdachiScene: SKScene {
             clawdachi.stopDancing()  // Stop dancing while waiting
             clawdachi.dismissPartyCelebration()
             clawdachi.showQuestionMark()
-            SoundManager.shared.playQuestionSound()
 
-            // Show waiting message
-            showChatBubble(randomWaitingMessage(), duration: 4.0)
+            // Only play sound if this session hasn't played it yet
+            let shouldPlayQuestion: Bool
+            if let id = sessionId {
+                shouldPlayQuestion = !sessionsPlayedQuestionSound.contains(id)
+                print("Clawdachi: Question sound decision for \(id): shouldPlay=\(shouldPlayQuestion), alreadyPlayed=\(sessionsPlayedQuestionSound.contains(id))")
+                if shouldPlayQuestion {
+                    sessionsPlayedQuestionSound.insert(id)
+                }
+            } else {
+                // No sessionId - fall back to playing (rare edge case)
+                print("Clawdachi: Question sound - no sessionId, playing anyway")
+                shouldPlayQuestion = true
+            }
+            if shouldPlayQuestion {
+                SoundManager.shared.playQuestionSound()
+                showChatBubble(randomWaitingMessage(), duration: 4.0)
+            }
             // Keep wasClaudeActive true - still in session
             // Don't resume dancing - question mark means user interaction needed
+        } else if isActive && status == "idle" {
+            // Session is idle (Claude finished responding, waiting for next user prompt)
+            clawdachi.stopClaudeThinking()
+            clawdachi.stopClaudePlanning()
+            clawdachi.dismissQuestionMark()
+
+            // Play completion sound/celebration when transitioning from working → idle
+            if wasClaudeActive {
+                clawdachi.showPartyCelebration()
+
+                let shouldPlayComplete: Bool
+                if let id = sessionId {
+                    shouldPlayComplete = !sessionsPlayedCompleteSound.contains(id)
+                    print("Clawdachi: Complete sound decision for \(id): shouldPlay=\(shouldPlayComplete)")
+                    if shouldPlayComplete {
+                        sessionsPlayedCompleteSound.insert(id)
+                    }
+                } else {
+                    shouldPlayComplete = true
+                }
+                if shouldPlayComplete {
+                    SoundManager.shared.playCompleteSound()
+                    showChatBubble(randomCompletionMessage(), duration: 4.0)
+                }
+                wasClaudeActive = false
+            }
         } else {
             // Claude session truly ended - show completion celebration
             clawdachi.stopClaudeThinking()
@@ -145,11 +204,24 @@ class ClawdachiScene: SKScene {
             clawdachi.dismissQuestionMark()
 
             // Show party celebration when transitioning from active → complete
-            // Persists until user clicks sprite or new CLI status
+            // Only play sound if this session hasn't played it yet
             if wasClaudeActive {
                 clawdachi.showPartyCelebration()
-                SoundManager.shared.playCompleteSound()
-                showChatBubble(randomCompletionMessage(), duration: 4.0)
+
+                let shouldPlayComplete: Bool
+                if let id = sessionId {
+                    shouldPlayComplete = !sessionsPlayedCompleteSound.contains(id)
+                    if shouldPlayComplete {
+                        sessionsPlayedCompleteSound.insert(id)
+                    }
+                } else {
+                    // No sessionId (session ended) - play sound since wasClaudeActive gate handles replay
+                    shouldPlayComplete = true
+                }
+                if shouldPlayComplete {
+                    SoundManager.shared.playCompleteSound()
+                    showChatBubble(randomCompletionMessage(), duration: 4.0)
+                }
                 wasClaudeActive = false
             }
         }
@@ -204,6 +276,47 @@ class ClawdachiScene: SKScene {
         clawdachi = ClawdachiSprite()
         clawdachi.position = CGPoint(x: 24, y: 24)
         addChild(clawdachi)
+    }
+
+    // MARK: - Voice Input Setup
+
+    private func setupVoiceInput() {
+        let voiceService = VoiceInputService.shared
+
+        // Wire up recording state to sprite animation
+        voiceService.onRecordingStateChanged = { [weak self] isRecording in
+            guard let self = self else { return }
+            if isRecording {
+                self.clawdachi.startListening()
+                self.showChatBubble(self.randomListeningMessage(), duration: nil)
+            } else {
+                self.clawdachi.stopListening()
+                ChatBubbleWindow.dismiss(animated: true)
+            }
+        }
+
+        // Wire up transcription completion
+        voiceService.onTranscriptionComplete = { [weak self] text in
+            guard let self = self, let text = text else { return }
+            // Show brief confirmation
+            let truncated = text.count > 30 ? String(text.prefix(27)) + "..." : text
+            self.showChatBubble("sent: \(truncated)", duration: 2.0)
+        }
+
+        // Wire up errors
+        voiceService.onError = { [weak self] message in
+            self?.showChatBubble(message, duration: 3.0)
+        }
+    }
+
+    private func randomListeningMessage() -> String {
+        let messages = [
+            "listening...",
+            "go ahead!",
+            "speak up!",
+            "i'm all ears!"
+        ]
+        return messages.randomElement() ?? "listening..."
     }
 
     // MARK: - Update Loop
@@ -393,6 +506,24 @@ class ClawdachiScene: SKScene {
 
     @objc private func appDidResignActive() {
         endDragIfNeeded()
+
+        // Cancel voice recording if app loses focus
+        if VoiceInputService.shared.isRecording {
+            VoiceInputService.shared.cancelRecording()
+        }
+    }
+
+    // MARK: - Keyboard Handling (Voice Input)
+
+    override func keyDown(with event: NSEvent) {
+        // Spacebar (keyCode 49) toggles voice input when window is focused
+        if event.keyCode == 49 && !event.isARepeat {
+            if VoiceInputService.shared.isRecording {
+                VoiceInputService.shared.stopRecording()
+            } else {
+                VoiceInputService.shared.startRecording()
+            }
+        }
     }
 
     // MARK: - Context Menu
@@ -420,12 +551,26 @@ class ClawdachiScene: SKScene {
 
         menu.addItem(NSMenuItem.separator())
 
+        // Launch Claude submenu
+        let launchItem = NSMenuItem(title: "Launch Claude", action: nil, keyEquivalent: "")
+        let launchSubmenu = NSMenu(title: "Launch Claude")
+        buildLaunchClaudeSubmenu(launchSubmenu)
+        launchItem.submenu = launchSubmenu
+        menu.addItem(launchItem)
+
         // Monitor Instance submenu
         let instanceItem = NSMenuItem(title: "Monitor Instance", action: nil, keyEquivalent: "")
         let instanceSubmenu = NSMenu(title: "Monitor Instance")
         buildInstanceSubmenu(instanceSubmenu)
         instanceItem.submenu = instanceSubmenu
         menu.addItem(instanceItem)
+
+        // Voice Input submenu
+        let voiceItem = NSMenuItem(title: "Voice Input", action: nil, keyEquivalent: "")
+        let voiceSubmenu = NSMenu(title: "Voice Input")
+        buildVoiceInputSubmenu(voiceSubmenu)
+        voiceItem.submenu = voiceSubmenu
+        menu.addItem(voiceItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -532,6 +677,232 @@ class ClawdachiScene: SKScene {
         } else {
             defaults.removeObject(forKey: "clawdachi.monitoring.instanceId")
         }
+    }
+
+    // MARK: - Voice Input Menu
+
+    private func buildVoiceInputSubmenu(_ menu: NSMenu) {
+        let useWhisper = VoiceInputService.useWhisper
+        let whisperDownloaded = WhisperModelManager.shared.isModelDownloaded
+
+        // Native option
+        let nativeItem = NSMenuItem(
+            title: "macOS Native",
+            action: #selector(selectNativeRecognition),
+            keyEquivalent: ""
+        )
+        nativeItem.target = self
+        nativeItem.state = useWhisper ? .off : .on
+        menu.addItem(nativeItem)
+
+        // Whisper option (or download option)
+        if whisperDownloaded {
+            let whisperItem = NSMenuItem(
+                title: "Whisper (Better Accuracy)",
+                action: #selector(selectWhisperRecognition),
+                keyEquivalent: ""
+            )
+            whisperItem.target = self
+            whisperItem.state = useWhisper ? .on : .off
+            menu.addItem(whisperItem)
+        } else if WhisperModelManager.shared.isDownloading {
+            let downloadingItem = NSMenuItem(
+                title: "Downloading... \(Int(WhisperModelManager.shared.downloadProgress * 100))%",
+                action: nil,
+                keyEquivalent: ""
+            )
+            downloadingItem.isEnabled = false
+            menu.addItem(downloadingItem)
+        } else {
+            let downloadItem = NSMenuItem(
+                title: "Download Whisper (~\(WhisperModelManager.shared.modelSizeDescription))",
+                action: #selector(downloadWhisperModel),
+                keyEquivalent: ""
+            )
+            downloadItem.target = self
+            menu.addItem(downloadItem)
+        }
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Hotkey hint
+        let hotkeyItem = NSMenuItem(
+            title: "Hotkey: Ctrl+Opt+Cmd (hold)",
+            action: nil,
+            keyEquivalent: ""
+        )
+        hotkeyItem.isEnabled = false
+        menu.addItem(hotkeyItem)
+
+        let spacebarItem = NSMenuItem(
+            title: "Or: Click sprite + hold Space",
+            action: nil,
+            keyEquivalent: ""
+        )
+        spacebarItem.isEnabled = false
+        menu.addItem(spacebarItem)
+    }
+
+    @objc private func selectNativeRecognition() {
+        VoiceInputService.useWhisper = false
+    }
+
+    @objc private func selectWhisperRecognition() {
+        VoiceInputService.useWhisper = true
+    }
+
+    @objc private func downloadWhisperModel() {
+        showChatBubble("downloading whisper...", duration: nil)
+
+        WhisperModelManager.shared.onDownloadProgress = { [weak self] progress in
+            let percent = Int(progress * 100)
+            // Update bubble periodically
+            if percent % 10 == 0 || percent == 100 {
+                ChatBubbleWindow.dismiss(animated: false)
+                self?.showChatBubble("downloading: \(percent)%", duration: nil)
+            }
+        }
+
+        WhisperModelManager.shared.onDownloadComplete = { [weak self] result in
+            ChatBubbleWindow.dismiss(animated: true)
+            switch result {
+            case .success:
+                self?.showChatBubble("whisper ready!", duration: 3.0)
+                VoiceInputService.shared.reloadWhisperRecognizer()
+            case .failure:
+                self?.showChatBubble("download failed", duration: 3.0)
+            }
+        }
+
+        WhisperModelManager.shared.downloadModel()
+    }
+
+    // MARK: - Launch Claude Menu
+
+    private func buildLaunchClaudeSubmenu(_ menu: NSMenu) {
+        let launcher = ClaudeLauncher.shared
+        let recentDirs = launcher.recentDirectories(limit: 5)
+        let availableTerminals = launcher.availableTerminals()
+        let preferredTerminal = launcher.preferredTerminal
+
+        // Recent directories
+        if recentDirs.isEmpty {
+            let emptyItem = NSMenuItem(
+                title: "(No recent projects)",
+                action: nil,
+                keyEquivalent: ""
+            )
+            emptyItem.isEnabled = false
+            menu.addItem(emptyItem)
+        } else {
+            for dir in recentDirs {
+                let item = NSMenuItem(
+                    title: dir.displayName,
+                    action: #selector(launchClaudeInDirectory(_:)),
+                    keyEquivalent: ""
+                )
+                item.target = self
+                item.representedObject = dir.path
+                menu.addItem(item)
+            }
+        }
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Browse option
+        let browseItem = NSMenuItem(
+            title: "Browse...",
+            action: #selector(launchClaudeBrowse),
+            keyEquivalent: ""
+        )
+        browseItem.target = self
+        menu.addItem(browseItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Terminal preference
+        if availableTerminals.isEmpty {
+            let noTerminalItem = NSMenuItem(
+                title: "No supported terminal found",
+                action: nil,
+                keyEquivalent: ""
+            )
+            noTerminalItem.isEnabled = false
+            menu.addItem(noTerminalItem)
+        } else {
+            for terminal in availableTerminals {
+                let item = NSMenuItem(
+                    title: terminal.displayName,
+                    action: #selector(selectPreferredTerminal(_:)),
+                    keyEquivalent: ""
+                )
+                item.target = self
+                item.representedObject = terminal.rawValue
+                item.state = (terminal == preferredTerminal) ? .on : .off
+                menu.addItem(item)
+            }
+        }
+    }
+
+    @objc private func launchClaudeInDirectory(_ sender: NSMenuItem) {
+        guard let path = sender.representedObject as? URL else { return }
+
+        showChatBubble("launching claude...", duration: 2.0)
+
+        ClaudeLauncher.shared.launch(in: path) { [weak self] result in
+            switch result {
+            case .success:
+                break  // Already showed launching message
+            case .terminalNotInstalled(let terminal):
+                self?.showChatBubble("\(terminal.displayName) not found", duration: 3.0)
+            case .directoryNotFound:
+                self?.showChatBubble("folder not found", duration: 3.0)
+            case .appleScriptError(let message):
+                self?.showChatBubble("error: \(message)", duration: 3.0)
+            }
+        }
+    }
+
+    @objc private func launchClaudeBrowse() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.message = "Choose a directory to launch Claude Code in"
+        panel.prompt = "Launch Claude"
+
+        // Start in last used location or home directory
+        if let lastPath = UserDefaults.standard.string(forKey: "clawdachi.launch.lastBrowsedDirectory") {
+            panel.directoryURL = URL(fileURLWithPath: lastPath)
+        }
+
+        panel.begin { [weak self] response in
+            guard response == .OK, let url = panel.url else { return }
+
+            // Save last used location
+            UserDefaults.standard.set(url.deletingLastPathComponent().path, forKey: "clawdachi.launch.lastBrowsedDirectory")
+
+            self?.showChatBubble("launching claude...", duration: 2.0)
+
+            ClaudeLauncher.shared.launch(in: url) { [weak self] result in
+                switch result {
+                case .success:
+                    break
+                case .terminalNotInstalled(let terminal):
+                    self?.showChatBubble("\(terminal.displayName) not found", duration: 3.0)
+                case .directoryNotFound:
+                    self?.showChatBubble("folder not found", duration: 3.0)
+                case .appleScriptError(let message):
+                    self?.showChatBubble("error: \(message)", duration: 3.0)
+                }
+            }
+        }
+    }
+
+    @objc private func selectPreferredTerminal(_ sender: NSMenuItem) {
+        guard let rawValue = sender.representedObject as? String,
+              let terminal = ClaudeLauncher.Terminal(rawValue: rawValue) else { return }
+        ClaudeLauncher.shared.preferredTerminal = terminal
     }
 
     @objc private func toggleSleep() {
