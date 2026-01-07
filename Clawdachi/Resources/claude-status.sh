@@ -103,7 +103,14 @@ case "$EVENT_TYPE" in
     ;;
   "notification")
     # Notification hook fires during long operations - use as heartbeat
-    # to keep session alive (prevents staleness timeout)
+    # Only update timestamp if already in working state, don't change idle to thinking
+    if [ -f "$SESSION_FILE" ]; then
+      CURRENT_STATUS=$(python3 -c "import sys, json; print(json.load(open('$SESSION_FILE')).get('status', 'idle'))" 2>/dev/null || echo "idle")
+      if [ "$CURRENT_STATUS" = "idle" ] || [ "$CURRENT_STATUS" = "waiting" ]; then
+        # Don't change status, just exit (no update needed for idle/waiting)
+        exit 0
+      fi
+    fi
     if [ -f "$PLAN_MODE_FILE" ]; then
       STATUS="planning"
     else
