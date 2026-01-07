@@ -213,16 +213,18 @@ class ClaudeSessionMonitor {
                    let currentModDate = fileModDate,
                    cachedModDate == currentModDate,
                    let cachedSession = cachedSessions[filename] {
-                    // For idle sessions, check if terminal is still open
+                    // First check if terminal is still open (applies to ALL sessions)
+                    if !isTerminalOpen(tty: cachedSession.tty) {
+                        // Terminal closed - mark for cleanup regardless of status
+                        sessionsToDelete.append(file)
+                        continue
+                    }
+
+                    // For idle sessions, terminal check is sufficient
                     if cachedSession.status == "idle" {
-                        if isTerminalOpen(tty: cachedSession.tty) {
-                            sessions.append(cachedSession)
-                        } else {
-                            // Terminal closed - mark for cleanup
-                            sessionsToDelete.append(file)
-                        }
+                        sessions.append(cachedSession)
                     } else {
-                        // For active sessions, apply staleness threshold
+                        // For active sessions, also apply staleness threshold
                         let age = now - cachedSession.timestamp
                         if age <= AnimationTimings.sessionStalenessThreshold {
                             sessions.append(cachedSession)
@@ -240,16 +242,18 @@ class ClaudeSessionMonitor {
                     cachedSessions[filename] = session
                     fileModDates[filename] = fileModDate
 
-                    // For idle sessions, check if terminal is still open
+                    // First check if terminal is still open (applies to ALL sessions)
+                    if !isTerminalOpen(tty: session.tty) {
+                        // Terminal closed - mark for cleanup regardless of status
+                        sessionsToDelete.append(file)
+                        continue
+                    }
+
+                    // For idle sessions, terminal check is sufficient
                     if session.status == "idle" {
-                        if isTerminalOpen(tty: session.tty) {
-                            sessions.append(session)
-                        } else {
-                            // Terminal closed - mark for cleanup
-                            sessionsToDelete.append(file)
-                        }
+                        sessions.append(session)
                     } else {
-                        // For active sessions, apply staleness threshold
+                        // For active sessions, also apply staleness threshold
                         let age = now - session.timestamp
                         if age <= AnimationTimings.sessionStalenessThreshold {
                             sessions.append(session)
@@ -290,8 +294,9 @@ class ClaudeSessionMonitor {
                 // TTY-based selection: only show session for focused terminal
                 monitoredSession = sessions.first { $0.tty == tty }
             } else {
-                // No TTY info (terminal not focused) - use most recent session
-                monitoredSession = sessions.first
+                // No TTY info (terminal not focused) - show idle state
+                // Don't pick up stale sessions when user isn't focused on a terminal
+                monitoredSession = nil
             }
 
             let hasActiveSession = monitoredSession != nil

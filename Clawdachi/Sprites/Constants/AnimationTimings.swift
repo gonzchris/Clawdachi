@@ -141,9 +141,9 @@ enum AnimationTimings {
     static let thinkingBlinkMaxInterval: TimeInterval = 7.0
 
     /// Maximum age of session file before considered stale (seconds)
-    /// Set to 5 minutes to allow for long thinking periods between hook events.
-    /// The Notification hook fires after 60s of inactivity to refresh the timestamp.
-    static let sessionStalenessThreshold: TimeInterval = 300.0
+    /// The Notification hook fires every 60s during long operations to refresh the timestamp.
+    /// Set to 90s to allow for slight delays while still cleaning up crashed sessions quickly.
+    static let sessionStalenessThreshold: TimeInterval = 90.0
 
     // MARK: - Claude Planning Animation
 

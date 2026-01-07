@@ -91,13 +91,15 @@ extension ClawdachiSprite {
     ///   - animated: Whether to fade out visuals gracefully (default: false for quick cleanup)
     ///   - completion: Called after cleanup is complete
     private func cleanupClaudeAnimations(animated: Bool = false, completion: (() -> Void)? = nil) {
-        // Remove spawner actions immediately (particles will finish naturally)
+        // Remove all thinking-related actions
         removeAction(forKey: AnimationKey.thinkingTilt.rawValue)
         removeAction(forKey: AnimationKey.thinkingBob.rawValue)
         removeAction(forKey: AnimationKey.thinkingParticleSpawner.rawValue)
         removeAction(forKey: AnimationKey.thinkingBlink.rawValue)
         removeAction(forKey: AnimationKey.thinkingBlinkSequence.rawValue)
+        removeAction(forKey: AnimationKey.thinkingArmTilt.rawValue)
 
+        // Remove all planning-related actions
         removeAction(forKey: AnimationKey.planningTilt.rawValue)
         removeAction(forKey: AnimationKey.planningBob.rawValue)
         removeAction(forKey: AnimationKey.planningBlink.rawValue)
@@ -108,10 +110,17 @@ extension ClawdachiSprite {
         leftEyeNode.removeAction(forKey: AnimationKey.blink.rawValue)
         rightEyeNode.removeAction(forKey: AnimationKey.blink.rawValue)
 
+        // Remove party celebration actions
         removeAction(forKey: AnimationKey.blowerCycle.rawValue)
         removeAction(forKey: AnimationKey.partyBounce.rawValue)
         leftArmNode.removeAction(forKey: AnimationKey.partyArm.rawValue)
         rightArmNode.removeAction(forKey: AnimationKey.partyArm.rawValue)
+
+        // Reset arm positions (in case thinking arm tilt was in progress)
+        leftArmNode.removeAllActions()
+        rightArmNode.removeAllActions()
+        leftArmNode.zRotation = 0
+        rightArmNode.zRotation = 0
 
         // Reset body transform
         let resetDuration = animated ? AnimationTimings.overlayFadeDuration : 0.1
