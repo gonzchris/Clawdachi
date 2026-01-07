@@ -49,10 +49,10 @@ enum AnimationTimings {
     // MARK: - Whistling
 
     /// Minimum interval between whistles
-    static let whistleMinInterval: TimeInterval = 18.0
+    static let whistleMinInterval: TimeInterval = 120.0
 
     /// Maximum interval between whistles
-    static let whistleMaxInterval: TimeInterval = 35.0
+    static let whistleMaxInterval: TimeInterval = 180.0
 
     /// Duration of the whistle animation
     static let whistleDuration: TimeInterval = 2.0
@@ -159,10 +159,10 @@ enum AnimationTimings {
     // MARK: - Smoking Animation
 
     /// Minimum interval between smoking animations
-    static let smokingMinInterval: TimeInterval = 20.0
+    static let smokingMinInterval: TimeInterval = 120.0
 
     /// Maximum interval between smoking animations
-    static let smokingMaxInterval: TimeInterval = 40.0
+    static let smokingMaxInterval: TimeInterval = 180.0
 
     /// Duration of the smoking animation
     static let smokingDuration: TimeInterval = 18.0
