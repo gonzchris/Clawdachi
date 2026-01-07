@@ -152,8 +152,11 @@ enum AnimationKey: String {
     /// Thinking particle spawner
     case thinkingParticleSpawner
 
-    /// Blink animation during thinking
+    /// Blink animation scheduler during thinking
     case thinkingBlink
+
+    /// Active thinking blink sequence (cancellable)
+    case thinkingBlinkSequence
 
     // MARK: - Claude Planning Animations
 
@@ -163,8 +166,11 @@ enum AnimationKey: String {
     /// Head bob during planning
     case planningBob
 
-    /// Blink animation during planning
+    /// Blink animation scheduler during planning
     case planningBlink
+
+    /// Active planning blink sequence (cancellable)
+    case planningBlinkSequence
 
     /// Lightbulb spark spawner
     case lightbulbSparkSpawner

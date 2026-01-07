@@ -221,18 +221,36 @@ extension ClawdachiSprite {
 
     func performBlink() {
         guard !isBlinking else { return }
+        // Don't blink if in Claude state (prevents texture conflicts)
+        guard !currentState.isClaudeState else {
+            scheduleNextBlink()
+            return
+        }
         isBlinking = true
 
+        // Use manual texture management instead of restore:true to prevent
+        // race conditions when state changes mid-blink
         let blinkAnimation = SKAction.animate(
             with: blinkFrames,
             timePerFrame: blinkDuration / Double(blinkFrames.count),
             resize: false,
-            restore: true
+            restore: false
         )
 
         let completion = SKAction.run { [weak self] in
-            self?.isBlinking = false
-            self?.scheduleNextBlink()
+            guard let self = self else { return }
+            self.isBlinking = false
+            // Only restore to open eyes if still in idle state
+            // (prevents overwriting focused eyes if state changed mid-blink)
+            if !self.currentState.isClaudeState && self.currentState != .sleeping {
+                self.leftEyeNode.texture = self.eyeOpenTexture
+                self.rightEyeNode.texture = self.eyeOpenTexture
+            }
+            // Only schedule next blink if still in an idle-compatible state
+            // (prevents scheduling blinks during Claude states)
+            if self.currentState == .idle || self.currentState == .dancing {
+                self.scheduleNextBlink()
+            }
         }
 
         leftEyeNode.run(SKAction.sequence([blinkAnimation, completion]), withKey: AnimationKey.blink.rawValue)
@@ -328,6 +346,18 @@ extension ClawdachiSprite {
     func resumeIdleAnimations() {
         isPerformingAction = false
         setScale(1.0)
+
+        // Reset eye textures to open state (prevents stuck focused eyes)
+        leftEyeNode.texture = eyeOpenTexture
+        rightEyeNode.texture = eyeOpenTexture
+
+        // Reset eye positions to base (in case they were modified)
+        leftEyeNode.position = leftEyeBasePos
+        rightEyeNode.position = rightEyeBasePos
+
+        // Re-enable mouse tracking
+        isMouseTrackingEnabled = true
+
         startSwayAnimation()
         scheduleNextBlink()
         scheduleNextLookAround()

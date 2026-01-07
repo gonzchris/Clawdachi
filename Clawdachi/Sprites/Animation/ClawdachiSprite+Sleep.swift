@@ -63,6 +63,10 @@ extension ClawdachiSprite {
         removeAction(forKey: AnimationKey.sleepZSchedule.rawValue)
         removeAction(forKey: AnimationKey.sleepSway.rawValue)
 
+        // Cancel any running blink animations to prevent texture conflicts
+        leftEyeNode.removeAction(forKey: AnimationKey.blink.rawValue)
+        rightEyeNode.removeAction(forKey: AnimationKey.blink.rawValue)
+
         // Phase 1: Start drowsy - eyes half open
         leftEyeNode.texture = blinkFrames[1]
         rightEyeNode.texture = blinkFrames[1]

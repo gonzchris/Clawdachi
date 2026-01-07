@@ -83,11 +83,17 @@ extension ClawdachiSprite {
         removeAction(forKey: AnimationKey.thinkingBob.rawValue)
         removeAction(forKey: AnimationKey.thinkingParticleSpawner.rawValue)
         removeAction(forKey: AnimationKey.thinkingBlink.rawValue)
+        removeAction(forKey: AnimationKey.thinkingBlinkSequence.rawValue)
 
         removeAction(forKey: AnimationKey.planningTilt.rawValue)
         removeAction(forKey: AnimationKey.planningBob.rawValue)
         removeAction(forKey: AnimationKey.planningBlink.rawValue)
+        removeAction(forKey: AnimationKey.planningBlinkSequence.rawValue)
         removeAction(forKey: AnimationKey.lightbulbSparkSpawner.rawValue)
+
+        // Cancel any blink animations on eye nodes to prevent texture conflicts
+        leftEyeNode.removeAction(forKey: AnimationKey.blink.rawValue)
+        rightEyeNode.removeAction(forKey: AnimationKey.blink.rawValue)
 
         removeAction(forKey: AnimationKey.blowerCycle.rawValue)
         removeAction(forKey: AnimationKey.partyBounce.rawValue)
@@ -196,11 +202,16 @@ extension ClawdachiSprite {
         guard isClaudePlanning else { return }
         isClaudePlanning = false
 
-        // Stop planning animations
+        // Stop planning animations (including active blink sequence)
         removeAction(forKey: AnimationKey.planningTilt.rawValue)
         removeAction(forKey: AnimationKey.planningBob.rawValue)
         removeAction(forKey: AnimationKey.planningBlink.rawValue)
+        removeAction(forKey: AnimationKey.planningBlinkSequence.rawValue)
         removeAction(forKey: AnimationKey.lightbulbSparkSpawner.rawValue)
+
+        // Also cancel any blink animations on eye nodes to prevent texture conflicts
+        leftEyeNode.removeAction(forKey: AnimationKey.blink.rawValue)
+        rightEyeNode.removeAction(forKey: AnimationKey.blink.rawValue)
 
         // Dismiss the planning lightbulb
         dismissLightbulb()
@@ -210,7 +221,7 @@ extension ClawdachiSprite {
         resetScale.timingMode = .easeOut
         run(resetScale)
 
-        // Reset eyes to open
+        // Force reset eyes to open (done after action removal to ensure no race)
         leftEyeNode.texture = eyeOpenTexture
         rightEyeNode.texture = eyeOpenTexture
 
@@ -234,12 +245,16 @@ extension ClawdachiSprite {
     }
 
     private func performPlanningBlink() {
+        // Cancel any pending blink sequence before starting new one
+        removeAction(forKey: AnimationKey.planningBlinkSequence.rawValue)
+
         let close = SKAction.run { [weak self] in
             self?.leftEyeNode.texture = self?.eyeClosedTexture
             self?.rightEyeNode.texture = self?.eyeClosedTexture
         }
         let open = SKAction.run { [weak self] in
-            guard let self = self, self.isClaudePlanning else { return }
+            // Double-check state to prevent stuck eyes after state change
+            guard let self = self, self.currentState == .claudePlanning else { return }
             self.leftEyeNode.texture = Self.focusedLeftEyeTexture
             self.rightEyeNode.texture = Self.focusedRightEyeTexture
         }
@@ -248,7 +263,7 @@ extension ClawdachiSprite {
             SKAction.wait(forDuration: 0.1),
             open
         ])
-        run(blinkSequence)
+        run(blinkSequence, withKey: AnimationKey.planningBlinkSequence.rawValue)
     }
 
     // MARK: - Lightbulb Sparks
@@ -397,18 +412,23 @@ extension ClawdachiSprite {
         guard isClaudeThinking else { return }
         isClaudeThinking = false
 
-        // Stop thinking animations
+        // Stop thinking animations (including active blink sequence)
         removeAction(forKey: AnimationKey.thinkingTilt.rawValue)
         removeAction(forKey: AnimationKey.thinkingBob.rawValue)
         removeAction(forKey: AnimationKey.thinkingParticleSpawner.rawValue)
         removeAction(forKey: AnimationKey.thinkingBlink.rawValue)
+        removeAction(forKey: AnimationKey.thinkingBlinkSequence.rawValue)
+
+        // Also cancel any blink animations on eye nodes to prevent texture conflicts
+        leftEyeNode.removeAction(forKey: AnimationKey.blink.rawValue)
+        rightEyeNode.removeAction(forKey: AnimationKey.blink.rawValue)
 
         // Reset body scale
         let resetScale = SKAction.scaleY(to: 1.0, duration: 0.2)
         resetScale.timingMode = .easeOut
         run(resetScale)
 
-        // Reset eyes to open
+        // Force reset eyes to open (done after action removal to ensure no race)
         leftEyeNode.texture = eyeOpenTexture
         rightEyeNode.texture = eyeOpenTexture
 
@@ -487,13 +507,17 @@ extension ClawdachiSprite {
     }
 
     private func performThinkingBlink() {
+        // Cancel any pending blink sequence before starting new one
+        removeAction(forKey: AnimationKey.thinkingBlinkSequence.rawValue)
+
         // Quick blink: > < → closed → > <
         let close = SKAction.run { [weak self] in
             self?.leftEyeNode.texture = self?.eyeClosedTexture
             self?.rightEyeNode.texture = self?.eyeClosedTexture
         }
         let open = SKAction.run { [weak self] in
-            guard let self = self, self.isClaudeThinking else { return }
+            // Double-check state to prevent stuck eyes after state change
+            guard let self = self, self.currentState == .claudeThinking else { return }
             self.leftEyeNode.texture = Self.focusedLeftEyeTexture
             self.rightEyeNode.texture = Self.focusedRightEyeTexture
         }
@@ -502,7 +526,7 @@ extension ClawdachiSprite {
             SKAction.wait(forDuration: 0.1),
             open
         ])
-        run(blinkSequence)
+        run(blinkSequence, withKey: AnimationKey.thinkingBlinkSequence.rawValue)
     }
 
     // MARK: - Completion Lightbulb
