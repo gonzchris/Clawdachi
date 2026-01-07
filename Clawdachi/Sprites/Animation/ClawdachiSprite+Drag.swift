@@ -25,14 +25,14 @@ extension ClawdachiSprite {
         leftArmUp.timingMode = .easeInEaseOut
         leftArmDown.timingMode = .easeInEaseOut
         let leftArmWiggle = SKAction.sequence([leftArmUp, leftArmDown])
-        leftArmNode.run(SKAction.repeatForever(leftArmWiggle), withKey: "dragWiggle")
+        leftArmNode.run(SKAction.repeatForever(leftArmWiggle), withKey: AnimationKey.dragWiggle.rawValue)
 
         let rightArmUp = SKAction.rotate(toAngle: -0.4, duration: armWiggleDuration)
         let rightArmDown = SKAction.rotate(toAngle: 0.3, duration: armWiggleDuration)
         rightArmUp.timingMode = .easeInEaseOut
         rightArmDown.timingMode = .easeInEaseOut
         let rightArmWiggle = SKAction.sequence([rightArmDown, rightArmUp])
-        rightArmNode.run(SKAction.repeatForever(rightArmWiggle), withKey: "dragWiggle")
+        rightArmNode.run(SKAction.repeatForever(rightArmWiggle), withKey: AnimationKey.dragWiggle.rawValue)
 
         let legWiggleDuration: TimeInterval = 0.15
 
@@ -42,14 +42,14 @@ extension ClawdachiSprite {
         outerLeftOut.timingMode = .easeInEaseOut
         outerLeftIn.timingMode = .easeInEaseOut
         let outerLeftWiggle = SKAction.sequence([outerLeftOut, outerLeftIn])
-        outerLeftLegNode.run(SKAction.repeatForever(outerLeftWiggle), withKey: "dragWiggle")
+        outerLeftLegNode.run(SKAction.repeatForever(outerLeftWiggle), withKey: AnimationKey.dragWiggle.rawValue)
 
         let outerRightOut = SKAction.rotate(toAngle: 0.3, duration: legWiggleDuration)
         let outerRightIn = SKAction.rotate(toAngle: -0.15, duration: legWiggleDuration)
         outerRightOut.timingMode = .easeInEaseOut
         outerRightIn.timingMode = .easeInEaseOut
         let outerRightWiggle = SKAction.sequence([outerRightIn, outerRightOut])
-        outerRightLegNode.run(SKAction.repeatForever(outerRightWiggle), withKey: "dragWiggle")
+        outerRightLegNode.run(SKAction.repeatForever(outerRightWiggle), withKey: AnimationKey.dragWiggle.rawValue)
 
         // Inner legs wiggle with offset timing
         let innerLeftOut = SKAction.rotate(toAngle: -0.2, duration: legWiggleDuration)
@@ -57,28 +57,31 @@ extension ClawdachiSprite {
         innerLeftOut.timingMode = .easeInEaseOut
         innerLeftIn.timingMode = .easeInEaseOut
         let innerLeftWiggle = SKAction.sequence([innerLeftIn, innerLeftOut])
-        innerLeftLegNode.run(SKAction.repeatForever(innerLeftWiggle), withKey: "dragWiggle")
+        innerLeftLegNode.run(SKAction.repeatForever(innerLeftWiggle), withKey: AnimationKey.dragWiggle.rawValue)
 
         let innerRightOut = SKAction.rotate(toAngle: 0.2, duration: legWiggleDuration)
         let innerRightIn = SKAction.rotate(toAngle: -0.25, duration: legWiggleDuration)
         innerRightOut.timingMode = .easeInEaseOut
         innerRightIn.timingMode = .easeInEaseOut
         let innerRightWiggle = SKAction.sequence([innerRightOut, innerRightIn])
-        innerRightLegNode.run(SKAction.repeatForever(innerRightWiggle), withKey: "dragWiggle")
+        innerRightLegNode.run(SKAction.repeatForever(innerRightWiggle), withKey: AnimationKey.dragWiggle.rawValue)
 
         // Delay sweat drops so they only appear during prolonged drags
         let sweatDelay = TimeInterval.random(in: 1.0...2.0)
         run(SKAction.sequence([
             SKAction.wait(forDuration: sweatDelay),
             SKAction.run { [weak self] in self?.spawnSweatDrop() }
-        ]), withKey: "sweatDropSchedule")
+        ]), withKey: AnimationKey.sweatDropSchedule.rawValue)
 
         // Start surprised "O" mouth animation
         startDragMouthAnimation()
     }
 
     private func startDragMouthAnimation() {
-        mouthNode.removeAction(forKey: "faceBreathing")
+        // Try to acquire mouth ownership
+        guard acquireMouth(for: .dragging) else { return }
+
+        mouthNode.removeAction(forKey: AnimationKey.faceBreathing.rawValue)
         mouthNode.position = SpritePositions.mouth  // Center on face
         mouthNode.texture = whistleMouthTexture
         mouthNode.setScale(0.8)
@@ -94,7 +97,7 @@ extension ClawdachiSprite {
             SKAction.wait(forDuration: showDelay),
             SKAction.group([fadeIn, popIn]),
             SKAction.run { [weak self] in self?.scheduleDragMouthPop() }
-        ]), withKey: "dragMouthPop")
+        ]), withKey: AnimationKey.dragMouthPop.rawValue)
     }
 
     private func scheduleDragMouthPop() {
@@ -145,27 +148,25 @@ extension ClawdachiSprite {
         }
 
         actions.append(SKAction.run { [weak self] in self?.scheduleDragMouthPop() })
-        mouthNode.run(SKAction.sequence(actions), withKey: "dragMouthPop")
+        mouthNode.run(SKAction.sequence(actions), withKey: AnimationKey.dragMouthPop.rawValue)
     }
 
     func stopDragWiggle() {
         // Always clean up, even if not currently dragging (safety)
         isDragging = false
 
-        removeAction(forKey: "sweatDropSchedule")
+        removeAction(forKey: AnimationKey.sweatDropSchedule.rawValue)
 
-        // Hide mouth and reset position
-        mouthNode.removeAction(forKey: "dragMouthPop")
-        mouthNode.run(SKAction.fadeOut(withDuration: 0.15))
-        mouthNode.run(SKAction.scale(to: 1.0, duration: 0.1))
-        mouthNode.run(SKAction.move(to: SpritePositions.mouth, duration: 0.1))
+        // Release mouth ownership (handles cleanup)
+        mouthNode.removeAction(forKey: AnimationKey.dragMouthPop.rawValue)
+        releaseMouth(from: .dragging)
 
-        leftArmNode.removeAction(forKey: "dragWiggle")
-        rightArmNode.removeAction(forKey: "dragWiggle")
-        outerLeftLegNode.removeAction(forKey: "dragWiggle")
-        innerLeftLegNode.removeAction(forKey: "dragWiggle")
-        innerRightLegNode.removeAction(forKey: "dragWiggle")
-        outerRightLegNode.removeAction(forKey: "dragWiggle")
+        leftArmNode.removeAction(forKey: AnimationKey.dragWiggle.rawValue)
+        rightArmNode.removeAction(forKey: AnimationKey.dragWiggle.rawValue)
+        outerLeftLegNode.removeAction(forKey: AnimationKey.dragWiggle.rawValue)
+        innerLeftLegNode.removeAction(forKey: AnimationKey.dragWiggle.rawValue)
+        innerRightLegNode.removeAction(forKey: AnimationKey.dragWiggle.rawValue)
+        outerRightLegNode.removeAction(forKey: AnimationKey.dragWiggle.rawValue)
 
         let resetDuration: TimeInterval = 0.15
         let resetRotation = SKAction.rotate(toAngle: 0, duration: resetDuration)
@@ -193,7 +194,7 @@ extension ClawdachiSprite {
         run(SKAction.sequence([
             SKAction.wait(forDuration: nextDelay),
             SKAction.run { [weak self] in self?.spawnSweatDrop() }
-        ]), withKey: "sweatDropSchedule")
+        ]), withKey: AnimationKey.sweatDropSchedule.rawValue)
     }
 
     // MARK: - Sleepy Drag (disturbed while sleeping)
@@ -209,8 +210,8 @@ extension ClawdachiSprite {
             resize: false,
             restore: false
         )
-        leftEyeNode.run(openUp, withKey: "sleepyPeek")
-        rightEyeNode.run(openUp, withKey: "sleepyPeek")
+        leftEyeNode.run(openUp, withKey: AnimationKey.sleepyPeek.rawValue)
+        rightEyeNode.run(openUp, withKey: AnimationKey.sleepyPeek.rawValue)
 
         // Schedule sleepy blinks
         scheduleSleepyBlink()
@@ -223,7 +224,7 @@ extension ClawdachiSprite {
         run(SKAction.sequence([
             SKAction.wait(forDuration: delay),
             SKAction.run { [weak self] in self?.performSleepyBlink() }
-        ]), withKey: "sleepyBlinkSchedule")
+        ]), withKey: AnimationKey.sleepyBlinkSchedule.rawValue)
     }
 
     private func performSleepyBlink() {
@@ -236,8 +237,8 @@ extension ClawdachiSprite {
             resize: false,
             restore: false
         )
-        leftEyeNode.run(blink, withKey: "sleepyBlink")
-        rightEyeNode.run(blink, withKey: "sleepyBlink")
+        leftEyeNode.run(blink, withKey: AnimationKey.sleepyBlink.rawValue)
+        rightEyeNode.run(blink, withKey: AnimationKey.sleepyBlink.rawValue)
 
         // Schedule next blink
         scheduleSleepyBlink()
@@ -247,11 +248,11 @@ extension ClawdachiSprite {
         isDragging = false
 
         // Stop blink scheduling
-        removeAction(forKey: "sleepyBlinkSchedule")
-        leftEyeNode.removeAction(forKey: "sleepyPeek")
-        leftEyeNode.removeAction(forKey: "sleepyBlink")
-        rightEyeNode.removeAction(forKey: "sleepyPeek")
-        rightEyeNode.removeAction(forKey: "sleepyBlink")
+        removeAction(forKey: AnimationKey.sleepyBlinkSchedule.rawValue)
+        leftEyeNode.removeAction(forKey: AnimationKey.sleepyPeek.rawValue)
+        leftEyeNode.removeAction(forKey: AnimationKey.sleepyBlink.rawValue)
+        rightEyeNode.removeAction(forKey: AnimationKey.sleepyPeek.rawValue)
+        rightEyeNode.removeAction(forKey: AnimationKey.sleepyBlink.rawValue)
 
         // Animate both eyes closing back down
         let closeDown = SKAction.animate(
@@ -260,7 +261,7 @@ extension ClawdachiSprite {
             resize: false,
             restore: false
         )
-        leftEyeNode.run(closeDown, withKey: "sleepyClose")
-        rightEyeNode.run(closeDown, withKey: "sleepyClose")
+        leftEyeNode.run(closeDown, withKey: AnimationKey.sleepyClose.rawValue)
+        rightEyeNode.run(closeDown, withKey: AnimationKey.sleepyClose.rawValue)
     }
 }

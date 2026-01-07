@@ -17,8 +17,8 @@ extension ClawdachiSprite {
         isDancing = true
 
         // Stop any pending idle animation schedules
-        removeAction(forKey: "idleAnimationCycle")
-        removeAction(forKey: "lookAroundSchedule")
+        removeAction(forKey: AnimationKey.idleAnimationCycle.rawValue)
+        removeAction(forKey: AnimationKey.lookAroundSchedule.rawValue)
 
         // Start dance animations
         startBodySway()
@@ -29,17 +29,17 @@ extension ClawdachiSprite {
 
     func stopDancing() {
         // Check state OR presence of dance animation (handles state machine transitions)
-        guard isDancing || bodyNode.action(forKey: "bodySway") != nil else { return }
+        guard isDancing || bodyNode.action(forKey: AnimationKey.bodySway.rawValue) != nil else { return }
 
         // Stop dance animations on their respective nodes
-        bodyNode.removeAction(forKey: "bodySway")
-        leftArmNode.removeAction(forKey: "leftArmWave")
-        rightArmNode.removeAction(forKey: "rightArmWave")
-        outerLeftLegNode.removeAction(forKey: "leftLegTap")
-        innerLeftLegNode.removeAction(forKey: "leftLegTap")
-        outerRightLegNode.removeAction(forKey: "rightLegTap")
-        innerRightLegNode.removeAction(forKey: "rightLegTap")
-        removeAction(forKey: "danceMusicNotes")
+        bodyNode.removeAction(forKey: AnimationKey.bodySway.rawValue)
+        leftArmNode.removeAction(forKey: AnimationKey.leftArmWave.rawValue)
+        rightArmNode.removeAction(forKey: AnimationKey.rightArmWave.rawValue)
+        outerLeftLegNode.removeAction(forKey: AnimationKey.leftLegTap.rawValue)
+        innerLeftLegNode.removeAction(forKey: AnimationKey.leftLegTap.rawValue)
+        outerRightLegNode.removeAction(forKey: AnimationKey.rightLegTap.rawValue)
+        innerRightLegNode.removeAction(forKey: AnimationKey.rightLegTap.rawValue)
+        removeAction(forKey: AnimationKey.danceMusicNotes.rawValue)
 
         // Reset positions
         bodyNode.zRotation = 0
@@ -70,7 +70,7 @@ extension ClawdachiSprite {
         leanRight.timingMode = .easeInEaseOut
 
         let swayCycle = SKAction.repeatForever(SKAction.sequence([leanLeft, leanRight]))
-        bodyNode.run(swayCycle, withKey: "bodySway")
+        bodyNode.run(swayCycle, withKey: AnimationKey.bodySway.rawValue)
     }
 
     // MARK: - Arm Wave (alternating up/down like "raise the roof")
@@ -85,7 +85,7 @@ extension ClawdachiSprite {
         leftUp.timingMode = .easeOut
         leftDown.timingMode = .easeIn
         let leftWave = SKAction.repeatForever(SKAction.sequence([leftUp, leftDown]))
-        leftArmNode.run(leftWave, withKey: "leftArmWave")
+        leftArmNode.run(leftWave, withKey: AnimationKey.leftArmWave.rawValue)
 
         // Right arm - starts down (opposite phase)
         let rightDown = SKAction.rotate(toAngle: -waveAngle, duration: waveDuration)
@@ -93,7 +93,7 @@ extension ClawdachiSprite {
         rightDown.timingMode = .easeOut
         rightUp.timingMode = .easeIn
         let rightWave = SKAction.repeatForever(SKAction.sequence([rightDown, rightUp]))
-        rightArmNode.run(rightWave, withKey: "rightArmWave")
+        rightArmNode.run(rightWave, withKey: AnimationKey.rightArmWave.rawValue)
     }
 
     // MARK: - Leg Tap (alternating little kicks)
@@ -109,8 +109,8 @@ extension ClawdachiSprite {
         leftOut.timingMode = .easeOut
         leftBack.timingMode = .easeIn
         let leftTap = SKAction.repeatForever(SKAction.sequence([leftOut, leftBack, leftWait]))
-        outerLeftLegNode.run(leftTap, withKey: "leftLegTap")
-        innerLeftLegNode.run(leftTap, withKey: "leftLegTap")
+        outerLeftLegNode.run(leftTap, withKey: AnimationKey.leftLegTap.rawValue)
+        innerLeftLegNode.run(leftTap, withKey: AnimationKey.leftLegTap.rawValue)
 
         // Right legs tap (offset)
         let rightOut = SKAction.rotate(toAngle: -tapAngle, duration: tapDuration / 2)
@@ -119,8 +119,8 @@ extension ClawdachiSprite {
         rightOut.timingMode = .easeOut
         rightBack.timingMode = .easeIn
         let rightTap = SKAction.repeatForever(SKAction.sequence([rightWait, rightOut, rightBack]))
-        outerRightLegNode.run(rightTap, withKey: "rightLegTap")
-        innerRightLegNode.run(rightTap, withKey: "rightLegTap")
+        outerRightLegNode.run(rightTap, withKey: AnimationKey.rightLegTap.rawValue)
+        innerRightLegNode.run(rightTap, withKey: AnimationKey.rightLegTap.rawValue)
     }
 
     // MARK: - Music Notes (from both sides)
@@ -138,7 +138,7 @@ extension ClawdachiSprite {
         let wait = SKAction.wait(forDuration: spawnInterval)
         let loop = SKAction.repeatForever(SKAction.sequence([spawnAction, wait]))
 
-        run(loop, withKey: "danceMusicNotes")
+        run(loop, withKey: AnimationKey.danceMusicNotes.rawValue)
     }
 
     private func spawnDanceNote(fromLeft: Bool) {

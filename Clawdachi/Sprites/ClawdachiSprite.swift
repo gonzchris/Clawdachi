@@ -60,6 +60,63 @@ class ClawdachiSprite: SKNode {
     var isBlinking = false
     var isSpeaking = false
 
+    // MARK: - Idle Animation Cycle
+
+    /// Which idle animation (whistle or smoke) comes next in the alternating cycle
+    enum IdleAnimationType {
+        case whistle
+        case smoke
+    }
+
+    /// Tracks which idle animation is next (instance-based, not static)
+    var nextIdleAnimation: IdleAnimationType = .whistle
+
+    // MARK: - Mouth Ownership System
+
+    /// Which animation currently owns the mouth (prevents conflicts)
+    enum MouthOwner: String {
+        case none
+        case whistling
+        case speaking
+        case dragging
+        case smoking
+    }
+
+    /// Current owner of the mouth animation
+    private(set) var currentMouthOwner: MouthOwner = .none
+
+    /// Request ownership of the mouth for an animation
+    /// - Parameters:
+    ///   - owner: The animation requesting ownership
+    /// - Returns: True if ownership was granted, false if denied
+    func acquireMouth(for owner: MouthOwner) -> Bool {
+        // Speaking can briefly interrupt whistling (common case)
+        if currentMouthOwner == .whistling && owner == .speaking {
+            return true
+        }
+        // Otherwise, only acquire if mouth is free
+        guard currentMouthOwner == .none else { return false }
+        currentMouthOwner = owner
+        return true
+    }
+
+    /// Release ownership of the mouth
+    /// - Parameter owner: The animation releasing ownership
+    func releaseMouth(from owner: MouthOwner) {
+        if currentMouthOwner == owner {
+            currentMouthOwner = .none
+            // Reset mouth to default state
+            mouthNode.alpha = 0
+            mouthNode.position = SpritePositions.mouth
+            mouthNode.texture = whistleMouthTexture
+        }
+    }
+
+    /// Force release mouth ownership (for cleanup)
+    func forceReleaseMouth() {
+        currentMouthOwner = .none
+    }
+
     // MARK: - State Machine Computed Properties
     // These provide backwards-compatible boolean access to the centralized state machine
 
@@ -75,10 +132,8 @@ class ClawdachiSprite: SKNode {
         get { currentState == .lookingAround }
         set { if newValue { stateManager.transitionTo(.lookingAround) } else if currentState == .lookingAround { stateManager.transitionTo(.idle) } }
     }
-    var isDragging: Bool {
-        get { currentState == .dragging }
-        set { if newValue { stateManager.transitionTo(.dragging) } else if currentState == .dragging { stateManager.transitionTo(.idle) } }
-    }
+    // Dragging is an overlay behavior (like blinking/speaking) - can occur during any state
+    var isDragging = false
     var isDancing: Bool {
         get { currentState == .dancing }
         set { if newValue { stateManager.transitionTo(.dancing) } else if currentState == .dancing { stateManager.transitionTo(.idle) } }
@@ -108,6 +163,8 @@ class ClawdachiSprite: SKNode {
 
     // Smoking animation node (created/destroyed during animation)
     var cigaretteNode: SKSpriteNode?
+    // Controls tip smoke to prevent particle overload during puffs
+    var tipSmokeEnabled = true
 
     // MARK: - Eye Tracking State
 

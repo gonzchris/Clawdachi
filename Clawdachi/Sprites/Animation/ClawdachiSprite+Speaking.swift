@@ -38,7 +38,10 @@ extension ClawdachiSprite {
 
     /// Start the speaking animation with variety
     func startSpeaking(duration: TimeInterval = 2.0) {
-        guard !isSpeaking && !isWhistling else { return }
+        guard !isSpeaking else { return }
+
+        // Try to acquire mouth ownership
+        guard acquireMouth(for: .speaking) else { return }
         isSpeaking = true
 
         // Show the mouth node with speaking texture, centered on face
@@ -70,18 +73,15 @@ extension ClawdachiSprite {
             self?.stopSpeaking()
         })
 
-        mouthNode.run(SKAction.sequence(actions), withKey: "speaking")
+        mouthNode.run(SKAction.sequence(actions), withKey: AnimationKey.speaking.rawValue)
     }
 
     /// Stop the speaking animation
     func stopSpeaking() {
         isSpeaking = false
-        mouthNode.removeAction(forKey: "speaking")
+        mouthNode.removeAction(forKey: AnimationKey.speaking.rawValue)
 
-        // Restore mouth to center position and fade out
-        mouthNode.position = SpritePositions.mouth
-        mouthNode.texture = whistleMouthTexture
-        mouthNode.size = CGSize(width: 3, height: 3)
-        mouthNode.alpha = 0
+        // Release mouth ownership (this also resets mouth state)
+        releaseMouth(from: .speaking)
     }
 }

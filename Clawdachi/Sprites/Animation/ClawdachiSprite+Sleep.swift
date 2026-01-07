@@ -17,10 +17,10 @@ extension ClawdachiSprite {
 
         disableMouseTracking()
 
-        removeAction(forKey: "whistleSchedule")
-        removeAction(forKey: "blinkSchedule")
-        removeAction(forKey: "lookAroundSchedule")
-        removeAction(forKey: "sway")
+        removeAction(forKey: AnimationKey.whistleSchedule.rawValue)
+        removeAction(forKey: AnimationKey.blinkSchedule.rawValue)
+        removeAction(forKey: AnimationKey.lookAroundSchedule.rawValue)
+        removeAction(forKey: AnimationKey.sway.rawValue)
 
         let droop = SKAction.scaleY(to: 0.95, duration: 0.5)
         droop.timingMode = .easeInEaseOut
@@ -40,7 +40,7 @@ extension ClawdachiSprite {
             SKAction.scaleX(to: 0.98, duration: 2.0)
         ])
         sleepBreath.timingMode = .easeInEaseOut
-        run(SKAction.repeatForever(sleepBreath), withKey: "sleepSway")
+        run(SKAction.repeatForever(sleepBreath), withKey: AnimationKey.sleepSway.rawValue)
 
         run(SKAction.sequence([
             SKAction.wait(forDuration: 0.8),
@@ -56,12 +56,12 @@ extension ClawdachiSprite {
         run(SKAction.sequence([
             SKAction.wait(forDuration: 2.5),
             SKAction.run { [weak self] in self?.spawnSleepZ() }
-        ]), withKey: "sleepZSchedule")
+        ]), withKey: AnimationKey.sleepZSchedule.rawValue)
     }
 
     func wakeUp(completion: (() -> Void)? = nil) {
-        removeAction(forKey: "sleepZSchedule")
-        removeAction(forKey: "sleepSway")
+        removeAction(forKey: AnimationKey.sleepZSchedule.rawValue)
+        removeAction(forKey: AnimationKey.sleepSway.rawValue)
 
         // Phase 1: Start drowsy - eyes half open
         leftEyeNode.texture = blinkFrames[1]
@@ -97,7 +97,7 @@ extension ClawdachiSprite {
             peakHold,
             mouthClose,
             resetMouth
-        ]), withKey: "yawn")
+        ]), withKey: AnimationKey.yawn.rawValue)
 
         // Eye animation - squint tighter at peak, then open
         run(SKAction.sequence([
@@ -134,7 +134,7 @@ extension ClawdachiSprite {
         let shakeBack = SKAction.moveBy(x: -0.3, y: 0, duration: 0.03)
         let shake = SKAction.sequence([shakeL, shakeR, shakeBack])
 
-        run(SKAction.sequence([tiltBack, holdTilt, settleBack, shake]), withKey: "wakeUp")
+        run(SKAction.sequence([tiltBack, holdTilt, settleBack, shake]), withKey: AnimationKey.wakeUp.rawValue)
 
         let completionAction = SKAction.run { [weak self] in
             self?.isPerformingAction = false

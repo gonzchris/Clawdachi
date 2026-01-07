@@ -7,6 +7,23 @@
 
 import Foundation
 
+/// Weighted random timing for organic feel
+/// Occasionally produces longer intervals to break predictability
+struct IdleTiming {
+    let baseInterval: TimeInterval
+    let variance: TimeInterval
+    let rareChanceMultiplier: Double  // e.g., 0.15 = 15% chance of 2x interval
+
+    /// Generate the next interval with optional rare long pause
+    func nextInterval() -> TimeInterval {
+        var interval = baseInterval + .random(in: -variance...variance)
+        if Double.random(in: 0...1) < rareChanceMultiplier {
+            interval *= 2  // Occasional longer pause for natural feel
+        }
+        return interval
+    }
+}
+
 /// Animation timing constants for Clawdachi
 enum AnimationTimings {
 
@@ -47,6 +64,14 @@ enum AnimationTimings {
 
     /// Maximum interval between look-around animations
     static let lookAroundMaxInterval: TimeInterval = 12.0
+
+    // MARK: - Organic Idle Timing (weighted randomness for natural feel)
+
+    /// Look-around timing with occasional longer pauses
+    static let lookAroundTiming = IdleTiming(baseInterval: 8.5, variance: 3.5, rareChanceMultiplier: 0.15)
+
+    /// Blink timing with occasional longer pauses
+    static let blinkTiming = IdleTiming(baseInterval: 4.0, variance: 1.5, rareChanceMultiplier: 0.1)
 
     // MARK: - Action Animations
 
@@ -145,4 +170,12 @@ enum AnimationTimings {
 
     /// Duration of smoke particle float
     static let smokeFloatDuration: TimeInterval = 1.5
+
+    // MARK: - State Transitions
+
+    /// Duration for graceful state transitions (fade out current visuals)
+    static let stateTransitionDuration: TimeInterval = 0.25
+
+    /// Duration for overlay effects to fade out
+    static let overlayFadeDuration: TimeInterval = 0.2
 }

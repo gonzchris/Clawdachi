@@ -130,7 +130,8 @@ class SpriteStateManager {
         if currentState == newState { return false }
 
         switch (currentState, newState) {
-        // Dragging has highest priority (user interaction)
+        // Note: Dragging is now an overlay behavior, not a state transition
+        // This case is kept for backwards compatibility but rarely used
         case (_, .dragging):
             return true
 

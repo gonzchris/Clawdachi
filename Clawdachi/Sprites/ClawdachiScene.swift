@@ -261,6 +261,7 @@ class ClawdachiScene: SKScene {
         guard dragStartedOnSprite else { return }
 
         // Start drag animation only on first movement
+        // Dragging is an overlay - works alongside any current animation
         if !isDragging {
             if isSleeping {
                 clawdachi.startSleepyDrag()  // Annoyed squint when disturbed
@@ -296,6 +297,7 @@ class ClawdachiScene: SKScene {
             let hadLightbulb = clawdachi.isLightbulbVisible
             let hadQuestionMark = clawdachi.isQuestionMarkVisible
             let hadPartyCelebration = clawdachi.isPartyCelebrationVisible
+            let isThinkingOrPlanning = clawdachi.isClaudeThinking || clawdachi.isClaudePlanning
 
             if isSleeping {
                 clawdachi.dismissLightbulb()
@@ -308,8 +310,12 @@ class ClawdachiScene: SKScene {
                         self?.clawdachi.startDancing()
                     }
                 }
+            } else if isThinkingOrPlanning {
+                // Don't react to clicks while Claude is thinking or planning
+                // Let the animation continue undisturbed
+                return
             } else if hadLightbulb {
-                // Click was to dismiss lightbulb - resume idle/dancing after fade completes
+                // Click was to dismiss completion lightbulb - resume idle/dancing
                 clawdachi.dismissLightbulb { [weak self] in
                     guard let self = self else { return }
                     self.clawdachi.resumeIdleAnimations()

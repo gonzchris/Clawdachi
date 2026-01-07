@@ -12,7 +12,7 @@ extension ClawdachiSprite {
     // MARK: - Public Methods
 
     func triggerBlink() {
-        removeAction(forKey: "blinkSchedule")
+        removeAction(forKey: AnimationKey.blinkSchedule.rawValue)
         isBlinking = false  // Reset flag so performBlink doesn't early-return
         performBlink()
     }
@@ -73,7 +73,7 @@ extension ClawdachiSprite {
             self?.isPerformingAction = false
         }
 
-        run(SKAction.sequence([waveSequence, completion]), withKey: "wave")
+        run(SKAction.sequence([waveSequence, completion]), withKey: AnimationKey.wave.rawValue)
     }
 
     // MARK: - Bounce Animation
@@ -131,7 +131,7 @@ extension ClawdachiSprite {
             self?.isPerformingAction = false
         }
 
-        run(SKAction.sequence([doubleBounce, completion]), withKey: "bounce")
+        run(SKAction.sequence([doubleBounce, completion]), withKey: AnimationKey.bounce.rawValue)
     }
 
     // MARK: - Heart Reaction

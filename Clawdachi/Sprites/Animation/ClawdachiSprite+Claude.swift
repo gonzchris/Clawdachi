@@ -74,33 +74,69 @@ extension ClawdachiSprite {
     // MARK: - Claude Animation Cleanup
 
     /// Clean up all Claude-related animations (called before transitioning between Claude states)
-    private func cleanupClaudeAnimations() {
-        // Remove thinking animations
-        removeAction(forKey: "thinkingTilt")
-        removeAction(forKey: "thinkingBob")
-        removeAction(forKey: "thinkingParticleSpawner")
-        removeAction(forKey: "thinkingBlink")
+    /// - Parameters:
+    ///   - animated: Whether to fade out visuals gracefully (default: false for quick cleanup)
+    ///   - completion: Called after cleanup is complete
+    private func cleanupClaudeAnimations(animated: Bool = false, completion: (() -> Void)? = nil) {
+        // Remove spawner actions immediately (particles will finish naturally)
+        removeAction(forKey: AnimationKey.thinkingTilt.rawValue)
+        removeAction(forKey: AnimationKey.thinkingBob.rawValue)
+        removeAction(forKey: AnimationKey.thinkingParticleSpawner.rawValue)
+        removeAction(forKey: AnimationKey.thinkingBlink.rawValue)
 
-        // Remove planning animations
-        removeAction(forKey: "planningTilt")
-        removeAction(forKey: "planningBob")
-        removeAction(forKey: "planningBlink")
-        removeAction(forKey: "lightbulbSparkSpawner")
+        removeAction(forKey: AnimationKey.planningTilt.rawValue)
+        removeAction(forKey: AnimationKey.planningBob.rawValue)
+        removeAction(forKey: AnimationKey.planningBlink.rawValue)
+        removeAction(forKey: AnimationKey.lightbulbSparkSpawner.rawValue)
 
-        // Remove party celebration animations
-        removeAction(forKey: "blowerCycle")
-        removeAction(forKey: "partyBounce")
-        leftArmNode.removeAction(forKey: "partyArm")
-        rightArmNode.removeAction(forKey: "partyArm")
-
-        // Dismiss any visible Claude UI elements
-        dismissLightbulb()
-        dismissQuestionMark()
-        dismissPartyCelebration()
+        removeAction(forKey: AnimationKey.blowerCycle.rawValue)
+        removeAction(forKey: AnimationKey.partyBounce.rawValue)
+        leftArmNode.removeAction(forKey: AnimationKey.partyArm.rawValue)
+        rightArmNode.removeAction(forKey: AnimationKey.partyArm.rawValue)
 
         // Reset body transform
-        let resetScale = SKAction.scaleY(to: 1.0, duration: 0.1)
+        let resetDuration = animated ? AnimationTimings.overlayFadeDuration : 0.1
+        let resetScale = SKAction.scaleY(to: 1.0, duration: resetDuration)
         run(resetScale)
+
+        if animated {
+            // Dismiss visuals gracefully, then call completion
+            let transitionDelay = AnimationTimings.overlayFadeDuration
+            dismissLightbulb()
+            dismissQuestionMark()
+            dismissPartyCelebration()
+
+            // Short delay to let visuals fade, then proceed
+            run(SKAction.sequence([
+                SKAction.wait(forDuration: transitionDelay),
+                SKAction.run { completion?() }
+            ]))
+        } else {
+            // Immediate cleanup
+            dismissLightbulb()
+            dismissQuestionMark()
+            dismissPartyCelebration()
+            completion?()
+        }
+    }
+
+    /// Gracefully transition between Claude states
+    /// - Parameters:
+    ///   - newState: The target Claude state
+    ///   - setupNewState: Closure to set up the new state after cleanup
+    private func transitionToClaudeState(_ newState: SpriteState, setupNewState: @escaping () -> Void) {
+        let current = currentState
+
+        // If transitioning between different Claude states, animate the transition
+        if current.isClaudeState && current != newState {
+            cleanupClaudeAnimations(animated: true) {
+                setupNewState()
+            }
+        } else {
+            // Coming from non-Claude state, do immediate cleanup
+            cleanupClaudeAnimations(animated: false)
+            setupNewState()
+        }
     }
 
     // MARK: - Planning Animation
@@ -108,11 +144,16 @@ extension ClawdachiSprite {
     /// Start the planning animation (when Claude is in plan mode)
     /// Shows lightbulb with flickering sparks - designing a solution
     func startClaudePlanning() {
-        guard !isClaudePlanning, !isDragging else { return }
+        guard !isClaudePlanning else { return }
 
-        // Clean up any other Claude state first (before changing state)
-        cleanupClaudeAnimations()
+        // Use graceful transition helper for smooth state changes
+        transitionToClaudeState(.claudePlanning) { [weak self] in
+            self?.setupPlanningState()
+        }
+    }
 
+    /// Set up the planning state (called after transition cleanup)
+    private func setupPlanningState() {
         isClaudePlanning = true
 
         // Pause competing animations
@@ -131,7 +172,7 @@ extension ClawdachiSprite {
         // Subtle body tilt forward (concentrating)
         let tiltForward = SKAction.scaleY(to: 0.97, duration: 0.3)
         tiltForward.timingMode = .easeInEaseOut
-        run(tiltForward, withKey: "planningTilt")
+        run(tiltForward, withKey: AnimationKey.planningTilt.rawValue)
 
         // Gentle head bob loop
         let bobHalfDuration = AnimationTimings.thinkingBobDuration / 2
@@ -140,7 +181,7 @@ extension ClawdachiSprite {
         bobUp.timingMode = .easeInEaseOut
         bobDown.timingMode = .easeInEaseOut
         let bobCycle = SKAction.repeatForever(SKAction.sequence([bobUp, bobDown]))
-        run(bobCycle, withKey: "planningBob")
+        run(bobCycle, withKey: AnimationKey.planningBob.rawValue)
 
         // Start occasional blinks
         startPlanningBlinks()
@@ -156,10 +197,10 @@ extension ClawdachiSprite {
         isClaudePlanning = false
 
         // Stop planning animations
-        removeAction(forKey: "planningTilt")
-        removeAction(forKey: "planningBob")
-        removeAction(forKey: "planningBlink")
-        removeAction(forKey: "lightbulbSparkSpawner")
+        removeAction(forKey: AnimationKey.planningTilt.rawValue)
+        removeAction(forKey: AnimationKey.planningBob.rawValue)
+        removeAction(forKey: AnimationKey.planningBlink.rawValue)
+        removeAction(forKey: AnimationKey.lightbulbSparkSpawner.rawValue)
 
         // Dismiss the planning lightbulb
         dismissLightbulb()
@@ -189,7 +230,7 @@ extension ClawdachiSprite {
         }
         let wait = SKAction.wait(forDuration: TimeInterval.random(in: 4.0...7.0))
         let loop = SKAction.repeatForever(SKAction.sequence([wait, blinkAction]))
-        run(loop, withKey: "planningBlink")
+        run(loop, withKey: AnimationKey.planningBlink.rawValue)
     }
 
     private func performPlanningBlink() {
@@ -219,7 +260,7 @@ extension ClawdachiSprite {
         }
         let wait = SKAction.wait(forDuration: TimeInterval.random(in: 0.15...0.35))
         let loop = SKAction.repeatForever(SKAction.sequence([spawnAction, wait]))
-        run(loop, withKey: "lightbulbSparkSpawner")
+        run(loop, withKey: AnimationKey.lightbulbSparkSpawner.rawValue)
     }
 
     private func spawnLightbulbSpark() {
@@ -305,11 +346,16 @@ extension ClawdachiSprite {
     /// Start the thinking pose animation (when Claude is processing)
     func startClaudeThinking() {
         // Don't start regular thinking if already planning or thinking
-        guard !isClaudeThinking, !isClaudePlanning, !isDragging else { return }
+        guard !isClaudeThinking, !isClaudePlanning else { return }
 
-        // Clean up any other Claude state first (before changing state)
-        cleanupClaudeAnimations()
+        // Use graceful transition helper for smooth state changes
+        transitionToClaudeState(.claudeThinking) { [weak self] in
+            self?.setupThinkingState()
+        }
+    }
 
+    /// Set up the thinking state (called after transition cleanup)
+    private func setupThinkingState() {
         isClaudeThinking = true
 
         // Pause competing animations
@@ -328,7 +374,7 @@ extension ClawdachiSprite {
         // Subtle body tilt forward (concentrating)
         let tiltForward = SKAction.scaleY(to: 0.97, duration: 0.3)
         tiltForward.timingMode = .easeInEaseOut
-        run(tiltForward, withKey: "thinkingTilt")
+        run(tiltForward, withKey: AnimationKey.thinkingTilt.rawValue)
 
         // Gentle head bob loop (thinking rhythm)
         let bobHalfDuration = AnimationTimings.thinkingBobDuration / 2
@@ -337,7 +383,7 @@ extension ClawdachiSprite {
         bobUp.timingMode = .easeInEaseOut
         bobDown.timingMode = .easeInEaseOut
         let bobCycle = SKAction.repeatForever(SKAction.sequence([bobUp, bobDown]))
-        run(bobCycle, withKey: "thinkingBob")
+        run(bobCycle, withKey: AnimationKey.thinkingBob.rawValue)
 
         // Start spawning thinking particles
         startThinkingParticles()
@@ -352,10 +398,10 @@ extension ClawdachiSprite {
         isClaudeThinking = false
 
         // Stop thinking animations
-        removeAction(forKey: "thinkingTilt")
-        removeAction(forKey: "thinkingBob")
-        removeAction(forKey: "thinkingParticleSpawner")
-        removeAction(forKey: "thinkingBlink")
+        removeAction(forKey: AnimationKey.thinkingTilt.rawValue)
+        removeAction(forKey: AnimationKey.thinkingBob.rawValue)
+        removeAction(forKey: AnimationKey.thinkingParticleSpawner.rawValue)
+        removeAction(forKey: AnimationKey.thinkingBlink.rawValue)
 
         // Reset body scale
         let resetScale = SKAction.scaleY(to: 1.0, duration: 0.2)
@@ -383,7 +429,7 @@ extension ClawdachiSprite {
         // Spawn dots at a steady pace
         let wait = SKAction.wait(forDuration: TimeInterval.random(in: 0.6...1.0))
         let loop = SKAction.repeatForever(SKAction.sequence([spawnAction, wait]))
-        run(loop, withKey: "thinkingParticleSpawner")
+        run(loop, withKey: AnimationKey.thinkingParticleSpawner.rawValue)
     }
 
     private func spawnThinkingDot() {
@@ -437,7 +483,7 @@ extension ClawdachiSprite {
         // Blink occasionally (every 4-7 seconds)
         let wait = SKAction.wait(forDuration: TimeInterval.random(in: 4.0...7.0))
         let loop = SKAction.repeatForever(SKAction.sequence([wait, blinkAction]))
-        run(loop, withKey: "thinkingBlink")
+        run(loop, withKey: AnimationKey.thinkingBlink.rawValue)
     }
 
     private func performThinkingBlink() {
@@ -518,9 +564,14 @@ extension ClawdachiSprite {
 
     /// Show the question mark above the sprite's head (waiting for user input)
     func showQuestionMark() {
-        // Clean up any other Claude state first
-        cleanupClaudeAnimations()
+        // Use graceful transition helper for smooth state changes
+        transitionToClaudeState(.claudeWaiting) { [weak self] in
+            self?.setupQuestionMarkState()
+        }
+    }
 
+    /// Set up the question mark state (called after transition cleanup)
+    private func setupQuestionMarkState() {
         // Set state before pausing animations
         isClaudeWaiting = true
 
@@ -588,9 +639,14 @@ extension ClawdachiSprite {
     /// Show the party celebration - hat on head and blower cycling
     /// Persists until dismissed by user click or new CLI activity
     func showPartyCelebration() {
-        // Clean up any other Claude state first
-        cleanupClaudeAnimations()
+        // Use graceful transition helper for smooth state changes
+        transitionToClaudeState(.claudeCelebrating) { [weak self] in
+            self?.setupPartyCelebrationState()
+        }
+    }
 
+    /// Set up the party celebration state (called after transition cleanup)
+    private func setupPartyCelebrationState() {
         // Set state before pausing animations
         isClaudeCelebrating = true
 
@@ -742,14 +798,14 @@ extension ClawdachiSprite {
             fadeOut,
             waitInvisible,
             nextCycle
-        ]), withKey: "blowerCycle")
+        ]), withKey: AnimationKey.blowerCycle.rawValue)
 
         // Small body bounce for tactile feedback (toot!)
         let bounceUp = SKAction.moveBy(x: 0, y: 0.8, duration: 0.08)
         let bounceDown = SKAction.moveBy(x: 0, y: -0.8, duration: 0.12)
         bounceUp.timingMode = .easeOut
         bounceDown.timingMode = .easeIn
-        run(SKAction.sequence([bounceUp, bounceDown]), withKey: "partyBounce")
+        run(SKAction.sequence([bounceUp, bounceDown]), withKey: AnimationKey.partyBounce.rawValue)
 
         // Arms up during the toot!
         let armsUp = SKAction.rotate(toAngle: 0.6, duration: 0.1)
@@ -757,11 +813,11 @@ extension ClawdachiSprite {
         armsUp.timingMode = .easeOut
         armsDown.timingMode = .easeInEaseOut
         let armsCelebrate = SKAction.sequence([armsUp, armsDown])
-        leftArmNode.run(armsCelebrate, withKey: "partyArm")
+        leftArmNode.run(armsCelebrate, withKey: AnimationKey.partyArm.rawValue)
         rightArmNode.run(SKAction.sequence([
             SKAction.rotate(toAngle: -0.6, duration: 0.1),
             SKAction.rotate(toAngle: 0, duration: 0.15)
-        ]), withKey: "partyArm")
+        ]), withKey: AnimationKey.partyArm.rawValue)
     }
 
     /// Dismiss the party celebration with a fade out
@@ -783,9 +839,9 @@ extension ClawdachiSprite {
 
         hat?.removeAllActions()
         blower?.removeAllActions()
-        removeAction(forKey: "partyBounce")
-        leftArmNode.removeAction(forKey: "partyArm")
-        rightArmNode.removeAction(forKey: "partyArm")
+        removeAction(forKey: AnimationKey.partyBounce.rawValue)
+        leftArmNode.removeAction(forKey: AnimationKey.partyArm.rawValue)
+        rightArmNode.removeAction(forKey: AnimationKey.partyArm.rawValue)
         leftArmNode.zRotation = 0
         rightArmNode.zRotation = 0
 

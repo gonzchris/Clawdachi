@@ -15,6 +15,9 @@ enum AnimationKey: String {
     /// Body breathing animation
     case breathing
 
+    /// Coordinated whistle/smoke cycle scheduler
+    case idleAnimationCycle
+
     /// Face/mouth breathing animation
     case faceBreathing
 

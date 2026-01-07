@@ -22,26 +22,20 @@ extension ClawdachiSprite {
 
     // MARK: - Coordinated Whistle/Smoke Cycle
 
-    /// Tracks which idle animation is next in the cycle
-    private static var nextIdleAnimation: IdleAnimationType = .whistle
-
-    private enum IdleAnimationType {
-        case whistle
-        case smoke
-    }
+    // Note: IdleAnimationType enum and nextIdleAnimation property are defined in ClawdachiSprite.swift
 
     /// Start the alternating whistle/smoke cycle
     /// Pattern: 20s → whistle → 20s → smoke → 20s → whistle → ...
     func startIdleAnimationCycle() {
         // Reset to whistle first
-        Self.nextIdleAnimation = .whistle
+        nextIdleAnimation = .whistle
         scheduleNextIdleAnimation()
     }
 
     func scheduleNextIdleAnimation() {
         // Determine wait time based on which animation is next
         let waitTime: TimeInterval
-        switch Self.nextIdleAnimation {
+        switch nextIdleAnimation {
         case .whistle:
             waitTime = 20.0  // Whistle after 20s of idle
         case .smoke:
@@ -52,15 +46,15 @@ extension ClawdachiSprite {
         let perform = SKAction.run { [weak self] in
             self?.performNextIdleAnimation()
         }
-        run(SKAction.sequence([wait, perform]), withKey: "idleAnimationCycle")
+        run(SKAction.sequence([wait, perform]), withKey: AnimationKey.idleAnimationCycle.rawValue)
     }
 
     private func performNextIdleAnimation() {
-        switch Self.nextIdleAnimation {
+        switch nextIdleAnimation {
         case .whistle:
             // Try to perform whistle
             if canPerformWhistle() {
-                Self.nextIdleAnimation = .smoke  // Next will be smoke
+                nextIdleAnimation = .smoke  // Next will be smoke
                 performWhistleAnimation()
             } else {
                 // Can't whistle right now, try again in a few seconds
@@ -68,14 +62,14 @@ extension ClawdachiSprite {
                     SKAction.wait(forDuration: 3.0),
                     SKAction.run { [weak self] in self?.performNextIdleAnimation() }
                 ])
-                run(retry, withKey: "idleAnimationCycle")
+                run(retry, withKey: AnimationKey.idleAnimationCycle.rawValue)
                 return
             }
 
         case .smoke:
             // Try to perform smoke
             if canPerformSmoking() {
-                Self.nextIdleAnimation = .whistle  // Next will be whistle
+                nextIdleAnimation = .whistle  // Next will be whistle
                 performSmokingAnimation()
             } else {
                 // Can't smoke right now, try again in a few seconds
@@ -83,7 +77,7 @@ extension ClawdachiSprite {
                     SKAction.wait(forDuration: 3.0),
                     SKAction.run { [weak self] in self?.performNextIdleAnimation() }
                 ])
-                run(retry, withKey: "idleAnimationCycle")
+                run(retry, withKey: AnimationKey.idleAnimationCycle.rawValue)
                 return
             }
         }
@@ -103,7 +97,32 @@ extension ClawdachiSprite {
 
     /// Called when whistle animation completes - schedules next in cycle
     func onWhistleComplete() {
-        scheduleNextIdleAnimation()
+        // Show brief satisfied squint expression for personality
+        showPostWhistleExpression()
+    }
+
+    /// Show a brief satisfied squint after whistling for organic feel
+    private func showPostWhistleExpression() {
+        // Squint eyes briefly (satisfied expression)
+        let squint = SKAction.run { [weak self] in
+            self?.leftEyeNode.texture = self?.eyeSquintTexture
+            self?.rightEyeNode.texture = self?.eyeSquintTexture
+        }
+
+        let hold = SKAction.wait(forDuration: 0.35)
+
+        let reset = SKAction.run { [weak self] in
+            guard let self = self else { return }
+            // Only reset if still in idle/whistling state
+            if self.currentState == .idle || self.currentState == .whistling {
+                self.leftEyeNode.texture = self.eyeOpenTexture
+                self.rightEyeNode.texture = self.eyeOpenTexture
+            }
+            // Schedule next idle animation regardless
+            self.scheduleNextIdleAnimation()
+        }
+
+        run(SKAction.sequence([squint, hold, reset]))
     }
 
     /// Called when smoking animation completes - schedules next in cycle
@@ -120,7 +139,7 @@ extension ClawdachiSprite {
             resize: false,
             restore: false
         )
-        bodyNode.run(SKAction.repeatForever(breatheAction), withKey: "breathing")
+        bodyNode.run(SKAction.repeatForever(breatheAction), withKey: AnimationKey.breathing.rawValue)
 
         let faceUp = SKAction.moveBy(x: 0, y: 0.4, duration: breathingDuration / 2)
         let faceDown = SKAction.moveBy(x: 0, y: -0.4, duration: breathingDuration / 2)
@@ -135,7 +154,7 @@ extension ClawdachiSprite {
 
         // Note: Eye breathing is now handled by updateEyePositions() in EyeTracking extension
         // This allows eye tracking offset + breathing bob to coexist
-        mouthNode.run(SKAction.repeatForever(faceBreath), withKey: "faceBreathing")
+        mouthNode.run(SKAction.repeatForever(faceBreath), withKey: AnimationKey.faceBreathing.rawValue)
     }
 
     func startSwayAnimation() {
@@ -145,16 +164,17 @@ extension ClawdachiSprite {
         pulseDown.timingMode = .easeInEaseOut
 
         let swayCycle = SKAction.sequence([pulseUp, pulseDown])
-        run(SKAction.repeatForever(swayCycle), withKey: "sway")
+        run(SKAction.repeatForever(swayCycle), withKey: AnimationKey.sway.rawValue)
     }
 
     // MARK: - Looking Around
 
     func scheduleNextLookAround() {
-        let interval = TimeInterval.random(in: lookAroundMinInterval...lookAroundMaxInterval)
+        // Use organic timing with occasional longer pauses for natural feel
+        let interval = AnimationTimings.lookAroundTiming.nextInterval()
         let wait = SKAction.wait(forDuration: interval)
         let look = SKAction.run { [weak self] in self?.performLookAround() }
-        run(SKAction.sequence([wait, look]), withKey: "lookAroundSchedule")
+        run(SKAction.sequence([wait, look]), withKey: AnimationKey.lookAroundSchedule.rawValue)
     }
 
     func performLookAround() {
@@ -192,10 +212,11 @@ extension ClawdachiSprite {
     // MARK: - Blinking
 
     func scheduleNextBlink() {
-        let interval = TimeInterval.random(in: blinkMinInterval...blinkMaxInterval)
+        // Use organic timing with occasional longer pauses for natural feel
+        let interval = AnimationTimings.blinkTiming.nextInterval()
         let wait = SKAction.wait(forDuration: interval)
         let blink = SKAction.run { [weak self] in self?.performBlink() }
-        run(SKAction.sequence([wait, blink]), withKey: "blinkSchedule")
+        run(SKAction.sequence([wait, blink]), withKey: AnimationKey.blinkSchedule.rawValue)
     }
 
     func performBlink() {
@@ -214,14 +235,20 @@ extension ClawdachiSprite {
             self?.scheduleNextBlink()
         }
 
-        leftEyeNode.run(SKAction.sequence([blinkAnimation, completion]), withKey: "blink")
-        rightEyeNode.run(blinkAnimation, withKey: "blink")
+        leftEyeNode.run(SKAction.sequence([blinkAnimation, completion]), withKey: AnimationKey.blink.rawValue)
+        rightEyeNode.run(blinkAnimation, withKey: AnimationKey.blink.rawValue)
     }
 
     // MARK: - Whistling
 
     /// Perform the whistle animation (called by the coordinated idle cycle)
     func performWhistleAnimation() {
+        // Acquire mouth ownership
+        guard acquireMouth(for: .whistling) else {
+            // Can't get mouth, reschedule
+            scheduleNextIdleAnimation()
+            return
+        }
         isWhistling = true
 
         // Move mouth to side position for whistle (matches smoking position)
@@ -251,17 +278,18 @@ extension ClawdachiSprite {
         let holdLift = SKAction.wait(forDuration: whistleDuration - 0.5)
         let liftBack = SKAction.scaleY(to: 1.0, duration: 0.2)
         liftBack.timingMode = .easeInEaseOut
-        run(SKAction.sequence([liftUp, holdLift, liftBack]), withKey: "whistleLift")
+        run(SKAction.sequence([liftUp, holdLift, liftBack]), withKey: AnimationKey.whistleLift.rawValue)
 
         let completion = SKAction.sequence([
             SKAction.wait(forDuration: whistleDuration + 0.2),
             SKAction.run { [weak self] in
-                self?.mouthNode.texture = self?.whistleMouthTexture  // Reset texture
-                self?.isWhistling = false
-                self?.onWhistleComplete()  // Schedule next in coordinated cycle
+                guard let self = self else { return }
+                self.isWhistling = false
+                self.releaseMouth(from: .whistling)
+                self.onWhistleComplete()  // Schedule next in coordinated cycle
             }
         ])
-        run(completion, withKey: "whistleCompletion")
+        run(completion, withKey: AnimationKey.whistleCompletion.rawValue)
     }
 
     func spawnMusicNote(delay: TimeInterval, variation: Int) {
@@ -276,19 +304,22 @@ extension ClawdachiSprite {
     // MARK: - Idle Animation Control
 
     func pauseIdleAnimations() {
-        removeAction(forKey: "sway")
-        removeAction(forKey: "idleAnimationCycle")  // Stop coordinated whistle/smoke cycle
-        removeAction(forKey: "blinkSchedule")
-        removeAction(forKey: "lookAroundSchedule")
+        removeAction(forKey: AnimationKey.sway.rawValue)
+        removeAction(forKey: AnimationKey.idleAnimationCycle.rawValue)  // Stop coordinated whistle/smoke cycle
+        removeAction(forKey: AnimationKey.blinkSchedule.rawValue)
+        removeAction(forKey: AnimationKey.lookAroundSchedule.rawValue)
         // Stop any currently running blink animation on eye nodes
         // (prevents restore: true from overwriting thinking eye textures)
-        leftEyeNode.removeAction(forKey: "blink")
-        rightEyeNode.removeAction(forKey: "blink")
+        leftEyeNode.removeAction(forKey: AnimationKey.blink.rawValue)
+        rightEyeNode.removeAction(forKey: AnimationKey.blink.rawValue)
 
         // Stop whistling visuals if active
-        removeAction(forKey: "whistleLift")
-        removeAction(forKey: "whistleCompletion")
-        mouthNode.alpha = 0
+        removeAction(forKey: AnimationKey.whistleLift.rawValue)
+        removeAction(forKey: AnimationKey.whistleCompletion.rawValue)
+        if currentMouthOwner == .whistling {
+            releaseMouth(from: .whistling)
+        }
+        isWhistling = false
 
         // Always try to stop smoking (stopSmoking checks for cigarette node)
         stopSmoking()

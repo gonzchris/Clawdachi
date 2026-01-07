@@ -61,13 +61,26 @@ extension ClawdachiSprite {
     // MARK: - Position Update
 
     private func updateEyePositions(deltaTime: TimeInterval) {
-        // Update breathing phase (synced with body breathing duration)
-        eyeBreathPhase += CGFloat(deltaTime) * (2 * .pi / CGFloat(breathingDuration))
-        if eyeBreathPhase > 2 * .pi { eyeBreathPhase -= 2 * .pi }
+        // Skip all eye position updates during special states (eyes are controlled by those animations)
+        // This saves CPU by avoiding unnecessary calculations when eyes are closed/focused
+        let state = currentState
+        if state == .sleeping || state.isClaudeState {
+            return
+        }
 
-        // Calculate breathing bob (0.4 points amplitude, slightly delayed from body)
-        // Using sin with phase offset to approximate the original easeInEaseOut timing
-        let breathOffset = sin(eyeBreathPhase - 0.2) * 0.4
+        // Only calculate breathing bob when showing normal eyes
+        let needsBreathingBob = leftEyeNode.texture == eyeOpenTexture
+        var breathOffset: CGFloat = 0
+
+        if needsBreathingBob {
+            // Update breathing phase (synced with body breathing duration)
+            eyeBreathPhase += CGFloat(deltaTime) * (2 * .pi / CGFloat(breathingDuration))
+            if eyeBreathPhase > 2 * .pi { eyeBreathPhase -= 2 * .pi }
+
+            // Calculate breathing bob (0.4 points amplitude, slightly delayed from body)
+            // Using sin with phase offset to approximate the original easeInEaseOut timing
+            breathOffset = sin(eyeBreathPhase - 0.2) * 0.4
+        }
 
         // Smooth interpolation toward target (lerp factor 0.1 for smooth following)
         let lerpFactor: CGFloat = 0.1

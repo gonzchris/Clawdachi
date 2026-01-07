@@ -13,6 +13,12 @@ extension ClawdachiSprite {
 
     /// Perform the smoking animation (called by the coordinated idle cycle)
     func performSmokingAnimation() {
+        // Acquire mouth ownership for smoking
+        guard acquireMouth(for: .smoking) else {
+            // Can't get mouth, reschedule
+            scheduleNextIdleAnimation()
+            return
+        }
         isSmoking = true
 
         // Mouth starts hidden, will show during puff cycles
@@ -25,7 +31,7 @@ extension ClawdachiSprite {
         // Raise arm slightly for relaxed smoking pose
         let raiseArm = SKAction.rotate(toAngle: 0.3, duration: 0.3)
         raiseArm.timingMode = .easeOut
-        rightArmNode.run(raiseArm, withKey: "smokingArmRaise")
+        rightArmNode.run(raiseArm, withKey: AnimationKey.smokingArmRaise.rawValue)
 
         // Start puff cycle - puff every smokePuffInterval seconds
         startPuffCycle()
@@ -37,7 +43,7 @@ extension ClawdachiSprite {
                 self?.stopSmoking()
             }
         ])
-        run(endSmoking, withKey: "smokingEnd")
+        run(endSmoking, withKey: AnimationKey.smokingEnd.rawValue)
     }
 
     // MARK: - Cigarette Management
@@ -92,7 +98,7 @@ extension ClawdachiSprite {
         let glowUp = SKAction.colorize(with: NSColor(red: 1.0, green: 0.5, blue: 0.2, alpha: 1.0), colorBlendFactor: 0.15, duration: 0.8)
         let glowDown = SKAction.colorize(withColorBlendFactor: 0.0, duration: 0.8)
         let glowCycle = SKAction.sequence([glowUp, glowDown])
-        cig.run(SKAction.repeatForever(glowCycle), withKey: "emberGlow")
+        cig.run(SKAction.repeatForever(glowCycle), withKey: AnimationKey.emberGlow.rawValue)
     }
 
     private func startCigaretteSmoke() {
@@ -102,11 +108,11 @@ extension ClawdachiSprite {
         }
         let wait = SKAction.wait(forDuration: 2.5)  // Less frequent
         let cycle = SKAction.sequence([spawnSmoke, wait])
-        run(SKAction.repeatForever(cycle), withKey: "cigaretteSmoke")
+        run(SKAction.repeatForever(cycle), withKey: AnimationKey.cigaretteSmoke.rawValue)
     }
 
     private func spawnCigaretteTipSmoke() {
-        guard isSmoking, let cig = cigaretteNode else { return }
+        guard isSmoking, tipSmokeEnabled, let cig = cigaretteNode else { return }
 
         // Convert cigarette tip position from arm space to sprite space
         let tipInArm = CGPoint(x: cig.position.x + 2.5, y: cig.position.y)
@@ -145,11 +151,14 @@ extension ClawdachiSprite {
         let firstPuff = SKAction.run { [weak self] in
             self?.performPuff()
         }
-        run(SKAction.sequence([initialDelay, firstPuff]), withKey: "puffCycle")
+        run(SKAction.sequence([initialDelay, firstPuff]), withKey: AnimationKey.puffCycle.rawValue)
     }
 
     private func performPuff() {
         guard isSmoking else { return }
+
+        // Disable tip smoke during puff to prevent particle overload
+        tipSmokeEnabled = false
 
         // Arm raises cigarette toward mouth
         let raiseToMouth = SKAction.rotate(toAngle: 0.8, duration: 0.4)
@@ -164,7 +173,7 @@ extension ClawdachiSprite {
 
         // Arm sequence
         let armSequence = SKAction.sequence([raiseToMouth, holdAtMouth, lowerArm])
-        rightArmNode.run(armSequence, withKey: "puff")
+        rightArmNode.run(armSequence, withKey: AnimationKey.puff.rawValue)
 
         // Mouth and smoke sequence (runs in parallel with arm)
         let waitForLower = SKAction.wait(forDuration: 0.7)  // Wait for arm to start lowering
@@ -181,9 +190,12 @@ extension ClawdachiSprite {
         let shrinkCig = SKAction.run { [weak self] in
             self?.shrinkCigarette()
         }
+        let reEnableTipSmoke = SKAction.run { [weak self] in
+            self?.tipSmokeEnabled = true
+        }
 
-        let mouthSequence = SKAction.sequence([waitForLower, showMouth, exhale, shrinkCig, waitForSmokeToClear, hideMouth])
-        run(mouthSequence, withKey: "mouthPuff")
+        let mouthSequence = SKAction.sequence([waitForLower, showMouth, exhale, shrinkCig, waitForSmokeToClear, hideMouth, reEnableTipSmoke])
+        run(mouthSequence, withKey: AnimationKey.mouthPuff.rawValue)
 
         // Schedule next puff
         let scheduleNext = SKAction.sequence([
@@ -193,7 +205,7 @@ extension ClawdachiSprite {
                 self.performPuff()
             }
         ])
-        run(scheduleNext, withKey: "puffSchedule")
+        run(scheduleNext, withKey: AnimationKey.puffSchedule.rawValue)
     }
 
     private func exhaleSmoke() {
@@ -232,14 +244,14 @@ extension ClawdachiSprite {
         guard isSmoking || cigaretteNode != nil else { return }
 
         // Remove puff-related actions
-        removeAction(forKey: "puffCycle")
-        removeAction(forKey: "puffSchedule")
-        removeAction(forKey: "mouthPuff")
-        removeAction(forKey: "smokingEnd")
-        removeAction(forKey: "cigaretteSmoke")
-        rightArmNode.removeAction(forKey: "puff")
-        rightArmNode.removeAction(forKey: "smokingArmRaise")
-        cigaretteNode?.removeAction(forKey: "emberGlow")
+        removeAction(forKey: AnimationKey.puffCycle.rawValue)
+        removeAction(forKey: AnimationKey.puffSchedule.rawValue)
+        removeAction(forKey: AnimationKey.mouthPuff.rawValue)
+        removeAction(forKey: AnimationKey.smokingEnd.rawValue)
+        removeAction(forKey: AnimationKey.cigaretteSmoke.rawValue)
+        rightArmNode.removeAction(forKey: AnimationKey.puff.rawValue)
+        rightArmNode.removeAction(forKey: AnimationKey.smokingArmRaise.rawValue)
+        cigaretteNode?.removeAction(forKey: AnimationKey.emberGlow.rawValue)
 
         // Hide mouth
         mouthNode.alpha = 0
@@ -261,6 +273,9 @@ extension ClawdachiSprite {
             }
             cig.run(SKAction.sequence([fadeOut, remove]))
         }
+
+        // Release mouth ownership
+        releaseMouth(from: .smoking)
 
         // Only reset state and reschedule if we were actually in smoking state
         // (not if called during cleanup from another state transition)
