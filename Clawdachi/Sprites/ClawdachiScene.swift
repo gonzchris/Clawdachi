@@ -96,8 +96,6 @@ class ClawdachiScene: SKScene {
     }
 
     private func handleClaudeStatusChanged(isActive: Bool, status: String?, sessionId: String?) {
-        print("Clawdachi: Status changed - isActive: \(isActive), status: \(status ?? "nil"), sessionId: \(sessionId ?? "nil")")
-
         // Don't interrupt sleep
         guard !isSleeping else { return }
 
@@ -115,7 +113,6 @@ class ClawdachiScene: SKScene {
 
         // Check if this is an actual state transition (not just a tab switch)
         let isRealTransition = previousStatus != currentStatus
-        print("Clawdachi: Session \(id.prefix(8)) - prev: \(previousStatus ?? "nil") -> curr: \(currentStatus), isTransition: \(isRealTransition)")
 
         guard isRealTransition else {
             // Just switched tabs to view this session - no sounds
@@ -130,7 +127,6 @@ class ClawdachiScene: SKScene {
             // Transitioned from working to waiting - play question sound
             if !sessionsPlayedQuestionSound.contains(id) {
                 sessionsPlayedQuestionSound.insert(id)
-                print("Clawdachi: Playing question sound for \(id.prefix(8))")
                 SoundManager.shared.playQuestionSound()
                 showChatBubble(randomWaitingMessage(), duration: 4.0)
             }
@@ -138,7 +134,6 @@ class ClawdachiScene: SKScene {
             // Transitioned from working to idle - play complete sound
             if !sessionsPlayedCompleteSound.contains(id) {
                 sessionsPlayedCompleteSound.insert(id)
-                print("Clawdachi: Playing complete sound for \(id.prefix(8))")
                 clawdachi.showPartyCelebration()
                 SoundManager.shared.playCompleteSound()
                 showChatBubble(randomCompletionMessage(), duration: 4.0)

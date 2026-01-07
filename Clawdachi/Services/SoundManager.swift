@@ -25,14 +25,12 @@ final class SoundManager {
 
     /// Play sound when Claude is waiting for user input
     func playQuestionSound() {
-        print("Clawdachi: Playing question sound")
         questionSound?.stop()  // Reset if already playing
         questionSound?.play()
     }
 
     /// Play sound when Claude completes a task
     func playCompleteSound() {
-        print("Clawdachi: Playing complete sound")
         completeSound?.stop()
         completeSound?.play()
     }

@@ -131,7 +131,6 @@ class ClaudeSessionMonitor {
             guard let self = self else { return }
 
             let result = self.readSessionFiles()
-            print("Clawdachi: Poll result - isActive: \(result.isActive), status: \(result.status ?? "nil"), sessionId: \(result.sessionId ?? "nil")")
 
             DispatchQueue.main.async {
                 self.updateStatus(
@@ -333,14 +332,12 @@ class ClaudeSessionMonitor {
 
         // Only fire status callback if state actually changed
         let statusChanged = isActive != self.isActive || status != self.currentStatus || sessionId != self.currentSessionId
-        print("Clawdachi: updateStatus check - new(\(isActive), \(status ?? "nil"), \(sessionId ?? "nil")) vs current(\(self.isActive), \(self.currentStatus ?? "nil"), \(self.currentSessionId ?? "nil")) -> changed: \(statusChanged)")
 
         guard statusChanged else { return }
 
         self.isActive = isActive
         self.currentStatus = status
         self.currentSessionId = sessionId
-        print("Clawdachi: Firing onStatusChanged callback")
         onStatusChanged?(isActive, status, sessionId)
     }
 }
