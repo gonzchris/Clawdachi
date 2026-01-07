@@ -13,7 +13,7 @@ class ClaudeIntegrationSetup {
     // MARK: - Constants
 
     private static let setupVersionKey = "clawdachi.claude.setupVersion"
-    private static let currentSetupVersion = 2  // Increment to force re-setup on updates
+    private static let currentSetupVersion = 3  // Increment to force re-setup on updates
 
     private static let hookScriptName = "claude-status.sh"
     private static let clawdachiDir = ".clawdachi"
@@ -132,9 +132,11 @@ class ClaudeIntegrationSetup {
 
         // Hook configurations: (Claude hook event, our script argument)
         let hookConfigs: [(event: String, action: String)] = [
+            ("SessionStart", "session_start"),
             ("UserPromptSubmit", "thinking"),
             ("PreToolUse", "tool_start"),
             ("PostToolUse", "tool_end"),
+            ("Notification", "notification"),  // Heartbeat during long operations
             ("Stop", "stop"),
             ("PermissionRequest", "permission_request"),
             ("SessionEnd", "session_end")

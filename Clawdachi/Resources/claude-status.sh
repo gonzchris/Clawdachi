@@ -82,6 +82,15 @@ case "$EVENT_TYPE" in
       STATUS="thinking"
     fi
     ;;
+  "notification")
+    # Notification hook fires during long operations - use as heartbeat
+    # to keep session alive (prevents staleness timeout)
+    if [ -f "$PLAN_MODE_FILE" ]; then
+      STATUS="planning"
+    else
+      STATUS="thinking"
+    fi
+    ;;
   "error")
     STATUS="error"
     ;;
