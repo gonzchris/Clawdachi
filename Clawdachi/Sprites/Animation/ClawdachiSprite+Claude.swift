@@ -423,6 +423,9 @@ extension ClawdachiSprite {
 
         // Start occasional arm tilts (thinking pose)
         startThinkingArmTilts()
+
+        // Start periodic head tilts (curiosity)
+        startThinkingHeadTilts()
     }
 
     /// Stop the thinking animation and return to normal
@@ -437,6 +440,7 @@ extension ClawdachiSprite {
         removeAction(forKey: AnimationKey.thinkingBlink.rawValue)
         removeAction(forKey: AnimationKey.thinkingBlinkSequence.rawValue)
         removeAction(forKey: AnimationKey.thinkingArmTilt.rawValue)
+        removeAction(forKey: AnimationKey.thinkingHeadTilt.rawValue)
 
         // Also cancel any blink animations on eye nodes to prevent texture conflicts
         leftEyeNode.removeAction(forKey: AnimationKey.blink.rawValue)
@@ -451,10 +455,12 @@ extension ClawdachiSprite {
         // Dismiss the main thought cloud
         dismissMainCloud()
 
-        // Reset body scale
+        // Reset body scale and position (from head tilt)
         let resetScale = SKAction.scaleY(to: 1.0, duration: 0.2)
+        let resetPosition = SKAction.moveTo(x: 0, duration: 0.2)
         resetScale.timingMode = .easeOut
-        run(resetScale)
+        resetPosition.timingMode = .easeOut
+        run(SKAction.group([resetScale, resetPosition]))
 
         // Force reset eyes to open (done after action removal to ensure no race)
         leftEyeNode.texture = eyeOpenTexture
@@ -690,6 +696,35 @@ extension ClawdachiSprite {
             hold,
             SKAction.rotate(toAngle: 0, duration: 0.3)
         ]))
+    }
+
+    // MARK: - Thinking Head Tilts
+
+    private func startThinkingHeadTilts() {
+        // Head tilt loop: tilt → pause → reset → wait
+        let tiltRight = SKAction.moveBy(x: 1.5, y: 0, duration: 0.3)
+        let pause = SKAction.wait(forDuration: 1.5)
+        let reset = SKAction.moveBy(x: -1.5, y: 0, duration: 0.25)
+        let wait = SKAction.wait(forDuration: TimeInterval.random(in: 4.0...6.0))
+
+        tiltRight.timingMode = .easeOut
+        reset.timingMode = .easeInEaseOut
+
+        // Alternate between tilting left and right
+        let tiltLeft = SKAction.moveBy(x: -1.5, y: 0, duration: 0.3)
+        let resetLeft = SKAction.moveBy(x: 1.5, y: 0, duration: 0.25)
+        tiltLeft.timingMode = .easeOut
+        resetLeft.timingMode = .easeInEaseOut
+
+        let tiltRightSequence = SKAction.sequence([tiltRight, pause, reset, wait])
+        let tiltLeftSequence = SKAction.sequence([tiltLeft, pause, resetLeft, wait])
+
+        let alternatingTilt = SKAction.repeatForever(SKAction.sequence([
+            tiltRightSequence,
+            tiltLeftSequence
+        ]))
+
+        run(alternatingTilt, withKey: AnimationKey.thinkingHeadTilt.rawValue)
     }
 
     // MARK: - Completion Lightbulb

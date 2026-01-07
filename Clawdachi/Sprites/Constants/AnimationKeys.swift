@@ -161,6 +161,9 @@ enum AnimationKey: String {
     /// Arm tilt animation scheduler during thinking
     case thinkingArmTilt
 
+    /// Head tilt animation during thinking (curiosity)
+    case thinkingHeadTilt
+
     // MARK: - Claude Planning Animations
 
     /// Head tilt during planning
