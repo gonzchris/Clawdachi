@@ -77,20 +77,20 @@ class ClawdachiScene: SKScene {
     private func setupClaudeMonitor() {
         claudeMonitor = ClaudeSessionMonitor()
 
-        // Load saved preference
-        if let savedId = UserDefaults.standard.string(forKey: "clawdachi.monitoring.instanceId") {
-            claudeMonitor.selectedSessionId = savedId
-            claudeMonitor.autoSelectByTTY = false  // Manual selection overrides TTY
+        // Load saved selection mode preference
+        if let mode = loadSelectionMode() {
+            claudeMonitor.selectionMode = mode
         }
+        // Default is .anyActive in ClaudeSessionMonitor
 
         claudeMonitor.onStatusChanged = { [weak self] isActive, status, sessionId in
             self?.handleClaudeStatusChanged(isActive: isActive, status: status, sessionId: sessionId)
         }
 
-        // Set up terminal focus monitor to auto-select session by focused tab
+        // Set up terminal focus monitor (used when in followFocusedTab mode)
         terminalFocusMonitor = TerminalFocusMonitor()
         terminalFocusMonitor.onFocusedTTYChanged = { [weak self] tty in
-            self?.claudeMonitor.selectSessionByTTY(tty)
+            self?.claudeMonitor.updateFocusedTTY(tty)
         }
     }
 
@@ -481,26 +481,34 @@ class ClawdachiScene: SKScene {
 
     private func buildInstanceSubmenu(_ menu: NSMenu) {
         let sessions = claudeMonitor.activeSessions
-        let selectedId = claudeMonitor.selectedSessionId
-        let isAutoMode = selectedId == nil
+        let currentMode = claudeMonitor.selectionMode
 
-        // Auto option (always present) - now uses focused terminal tab
-        let autoTitle = "Auto (Focused Tab)"
-        let autoItem = NSMenuItem(
-            title: autoTitle,
-            action: #selector(selectAutoInstance),
+        // "Any Active" option (recommended default)
+        let anyActiveItem = NSMenuItem(
+            title: "Any Active (Recommended)",
+            action: #selector(selectAnyActiveMode),
             keyEquivalent: ""
         )
-        autoItem.target = self
-        autoItem.state = isAutoMode ? .on : .off
-        menu.addItem(autoItem)
+        anyActiveItem.target = self
+        anyActiveItem.state = (currentMode == .anyActive) ? .on : .off
+        menu.addItem(anyActiveItem)
+
+        // "Follow Focused Tab" option (original TTY-based behavior)
+        let followFocusedItem = NSMenuItem(
+            title: "Follow Focused Tab",
+            action: #selector(selectFollowFocusedMode),
+            keyEquivalent: ""
+        )
+        followFocusedItem.target = self
+        followFocusedItem.state = (currentMode == .followFocusedTab) ? .on : .off
+        menu.addItem(followFocusedItem)
 
         // Separator if there are sessions
         if !sessions.isEmpty {
             menu.addItem(NSMenuItem.separator())
         }
 
-        // Individual sessions
+        // Individual sessions (for manual selection)
         // Track display names for duplicate detection
         var displayNameCounts: [String: Int] = [:]
         for session in sessions {
@@ -523,12 +531,18 @@ class ClawdachiScene: SKScene {
 
             let item = NSMenuItem(
                 title: title,
-                action: #selector(selectInstance(_:)),
+                action: #selector(selectSpecificInstance(_:)),
                 keyEquivalent: ""
             )
             item.target = self
             item.representedObject = session.id
-            item.state = (selectedId == session.id) ? .on : .off
+
+            // Check mark for specific mode with matching ID
+            if case .specific(let selectedId) = currentMode, selectedId == session.id {
+                item.state = .on
+            } else {
+                item.state = .off
+            }
             menu.addItem(item)
         }
     }
@@ -548,25 +562,60 @@ class ClawdachiScene: SKScene {
         }
     }
 
-    @objc private func selectAutoInstance() {
-        claudeMonitor.selectedSessionId = nil
-        claudeMonitor.autoSelectByTTY = true  // Re-enable TTY-based selection
-        saveMonitorPreference(nil)
+    @objc private func selectAnyActiveMode() {
+        claudeMonitor.selectionMode = .anyActive
+        saveSelectionMode(.anyActive)
     }
 
-    @objc private func selectInstance(_ sender: NSMenuItem) {
+    @objc private func selectFollowFocusedMode() {
+        claudeMonitor.selectionMode = .followFocusedTab
+        saveSelectionMode(.followFocusedTab)
+    }
+
+    @objc private func selectSpecificInstance(_ sender: NSMenuItem) {
         guard let sessionId = sender.representedObject as? String else { return }
-        claudeMonitor.selectedSessionId = sessionId
-        claudeMonitor.autoSelectByTTY = false  // Disable TTY auto-selection when manually selecting
-        saveMonitorPreference(sessionId)
+        claudeMonitor.selectionMode = .specific(sessionId)
+        saveSelectionMode(.specific(sessionId))
     }
 
-    private func saveMonitorPreference(_ sessionId: String?) {
+    private func saveSelectionMode(_ mode: SessionSelectionMode) {
         let defaults = UserDefaults.standard
-        if let sessionId = sessionId {
-            defaults.set(sessionId, forKey: "clawdachi.monitoring.instanceId")
-        } else {
+        switch mode {
+        case .anyActive:
+            defaults.set("anyActive", forKey: "clawdachi.monitoring.mode")
             defaults.removeObject(forKey: "clawdachi.monitoring.instanceId")
+        case .followFocusedTab:
+            defaults.set("followFocusedTab", forKey: "clawdachi.monitoring.mode")
+            defaults.removeObject(forKey: "clawdachi.monitoring.instanceId")
+        case .specific(let id):
+            defaults.set("specific", forKey: "clawdachi.monitoring.mode")
+            defaults.set(id, forKey: "clawdachi.monitoring.instanceId")
+        }
+    }
+
+    private func loadSelectionMode() -> SessionSelectionMode? {
+        let defaults = UserDefaults.standard
+        let mode = defaults.string(forKey: "clawdachi.monitoring.mode")
+
+        switch mode {
+        case "anyActive":
+            return .anyActive
+        case "followFocusedTab":
+            return .followFocusedTab
+        case "specific":
+            if let id = defaults.string(forKey: "clawdachi.monitoring.instanceId") {
+                return .specific(id)
+            }
+            return .anyActive
+        default:
+            // Migration: check for old instanceId format (manual selection)
+            if let oldId = defaults.string(forKey: "clawdachi.monitoring.instanceId") {
+                // Migrate to new format
+                defaults.set("specific", forKey: "clawdachi.monitoring.mode")
+                return .specific(oldId)
+            }
+            // No saved preference - use default (anyActive)
+            return nil
         }
     }
 

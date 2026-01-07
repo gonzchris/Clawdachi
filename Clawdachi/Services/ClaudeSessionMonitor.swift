@@ -26,6 +26,32 @@ struct SessionInfo: Equatable {
             : id
         return String(idWithoutPrefix.prefix(8))
     }
+
+    /// Priority for "any active" mode selection (higher = more important)
+    var activityPriority: Int {
+        switch status {
+        case "thinking", "planning":
+            return 4  // Highest - actively working
+        case "tools":
+            return 3  // Running tools
+        case "waiting":
+            return 2  // Waiting for input
+        case "idle":
+            return 1  // Lowest - not doing anything
+        default:
+            return 0  // Unknown status
+        }
+    }
+}
+
+/// How to select which session to monitor
+enum SessionSelectionMode: Equatable {
+    /// Monitor whichever session is most actively working (recommended default)
+    case anyActive
+    /// Follow the focused terminal tab (original behavior)
+    case followFocusedTab
+    /// Monitor a specific session by ID
+    case specific(String)
 }
 
 /// Monitors Claude Code session status by watching session files
@@ -42,40 +68,29 @@ class ClaudeSessionMonitor {
     /// All currently active sessions (non-stale)
     private(set) var activeSessions: [SessionInfo] = []
 
-    /// User-selected session ID to monitor (nil = auto/most recent)
-    var selectedSessionId: String? {
+    /// Current selection mode for which session to monitor
+    var selectionMode: SessionSelectionMode = .anyActive {
         didSet {
-            // Re-check status immediately when selection changes
+            // Re-check status immediately when mode changes
             checkSessionStatus()
         }
     }
 
-    /// Whether to auto-select session based on focused terminal TTY
-    var autoSelectByTTY: Bool = true
-
     /// The TTY of the currently focused terminal (nil if not a terminal or unknown)
     private(set) var focusedTTY: String?
 
-    /// Update selected session based on focused terminal TTY
-    /// - Parameter tty: The TTY device of the focused terminal (e.g., "/dev/ttys003")
-    func selectSessionByTTY(_ tty: String?) {
-        guard autoSelectByTTY else { return }
+    /// For hysteresis in anyActive mode - prevents flickering between equal-priority sessions
+    private var lastMonitoredSessionId: String?
+    private var lastMonitoredTime: Date?
+    private let stickinessInterval: TimeInterval = 5.0
 
+    /// Update focused TTY (used when in followFocusedTab mode)
+    /// - Parameter tty: The TTY device of the focused terminal (e.g., "/dev/ttys003")
+    func updateFocusedTTY(_ tty: String?) {
         focusedTTY = tty
 
-        // Find session with matching TTY
-        if let tty = tty, let matchingSession = activeSessions.first(where: { $0.tty == tty }) {
-            // Only update if different from current selection
-            if selectedSessionId != matchingSession.id {
-                selectedSessionId = matchingSession.id
-            }
-        } else {
-            // No matching session for this TTY - clear selection so we show idle
-            // (rather than defaulting to another terminal's session)
-            if selectedSessionId != nil {
-                selectedSessionId = nil
-            }
-            // Re-check status to update UI immediately
+        // Only trigger re-check if we're in followFocusedTab mode
+        if case .followFocusedTab = selectionMode {
             checkSessionStatus()
         }
     }
@@ -284,19 +299,50 @@ class ClaudeSessionMonitor {
             // Sort by timestamp (most recent first)
             sessions.sort { $0.timestamp > $1.timestamp }
 
-            // Determine which session to monitor
+            // Determine which session to monitor based on selection mode
             let monitoredSession: SessionInfo?
-            if let selectedId = selectedSessionId {
+
+            switch selectionMode {
+            case .specific(let sessionId):
                 // User selected a specific session
-                monitoredSession = sessions.first { $0.id == selectedId }
-                // If selected session is gone, fall back to nil (will trigger callback)
-            } else if let tty = focusedTTY {
+                monitoredSession = sessions.first { $0.id == sessionId }
+
+            case .followFocusedTab:
                 // TTY-based selection: only show session for focused terminal
-                monitoredSession = sessions.first { $0.tty == tty }
-            } else {
-                // No TTY info (terminal not focused) - show idle state
-                // Don't pick up stale sessions when user isn't focused on a terminal
-                monitoredSession = nil
+                if let tty = focusedTTY {
+                    monitoredSession = sessions.first { $0.tty == tty }
+                } else {
+                    monitoredSession = nil
+                }
+
+            case .anyActive:
+                // Priority-based selection: pick the most active session
+                // Sort by: 1) activity priority (desc), 2) timestamp (desc for recency)
+                let sortedByPriority = sessions.sorted { lhs, rhs in
+                    if lhs.activityPriority != rhs.activityPriority {
+                        return lhs.activityPriority > rhs.activityPriority
+                    }
+                    return lhs.timestamp > rhs.timestamp
+                }
+
+                guard let topSession = sortedByPriority.first else {
+                    monitoredSession = nil
+                    break
+                }
+
+                // Hysteresis: stick with current session if it's still equally or more active
+                // This prevents flickering between sessions of equal priority
+                if let lastId = lastMonitoredSessionId,
+                   let currentSession = sessions.first(where: { $0.id == lastId }),
+                   currentSession.activityPriority >= topSession.activityPriority,
+                   let lastTime = lastMonitoredTime,
+                   Date().timeIntervalSince(lastTime) < stickinessInterval {
+                    monitoredSession = currentSession
+                } else {
+                    monitoredSession = topSession
+                    lastMonitoredSessionId = topSession.id
+                    lastMonitoredTime = Date()
+                }
             }
 
             let hasActiveSession = monitoredSession != nil
@@ -350,10 +396,12 @@ class ClaudeSessionMonitor {
             activeSessions = allSessions
             onSessionListChanged?(allSessions)
 
-            // If selected session no longer exists, clear selection (auto mode)
-            if let selectedId = selectedSessionId,
+            // If specific session no longer exists, fall back to anyActive mode
+            if case .specific(let selectedId) = selectionMode,
                !allSessions.contains(where: { $0.id == selectedId }) {
-                selectedSessionId = nil
+                selectionMode = .anyActive
+                // Note: This will trigger another checkSessionStatus() via didSet
+                return
             }
         }
 
