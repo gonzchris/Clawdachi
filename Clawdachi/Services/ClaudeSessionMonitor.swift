@@ -213,6 +213,9 @@ class ClaudeSessionMonitor {
                         let age = now - cachedSession.timestamp
                         if age <= AnimationTimings.sessionStalenessThreshold {
                             sessions.append(cachedSession)
+                        } else {
+                            // Stale active session - mark for cleanup
+                            sessionsToDelete.append(file)
                         }
                     }
                     continue
@@ -237,12 +240,15 @@ class ClaudeSessionMonitor {
                         let age = now - session.timestamp
                         if age <= AnimationTimings.sessionStalenessThreshold {
                             sessions.append(session)
+                        } else {
+                            // Stale active session - mark for cleanup
+                            sessionsToDelete.append(file)
                         }
                     }
                 }
             }
 
-            // Clean up session files for closed terminals
+            // Clean up stale session files (closed terminals + expired active sessions)
             for file in sessionsToDelete {
                 try? fileManager.removeItem(at: file)
                 let filename = file.lastPathComponent
