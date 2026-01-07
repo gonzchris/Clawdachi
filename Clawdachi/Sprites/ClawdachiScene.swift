@@ -124,6 +124,7 @@ class ClawdachiScene: SKScene {
             clawdachi.stopDancing()  // Stop dancing while waiting
             clawdachi.dismissPartyCelebration()
             clawdachi.showQuestionMark()
+            SoundManager.shared.playQuestionSound()
 
             // Show waiting message
             showChatBubble(randomWaitingMessage(), duration: 4.0)
@@ -139,6 +140,7 @@ class ClawdachiScene: SKScene {
             // Persists until user clicks sprite or new CLI status
             if wasClaudeActive {
                 clawdachi.showPartyCelebration()
+                SoundManager.shared.playCompleteSound()
                 showChatBubble(randomCompletionMessage(), duration: 4.0)
                 wasClaudeActive = false
             }

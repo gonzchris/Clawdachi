@@ -52,28 +52,11 @@ class MusicPlaybackMonitor {
     }
 
     private func checkPlaybackState() {
-        // Run both AppleScript checks in parallel for faster response
-        let group = DispatchGroup()
-        var spotifyPlaying = false
-        var appleMusicPlaying = false
-
-        group.enter()
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            spotifyPlaying = self?.isSpotifyPlaying() ?? false
-            group.leave()
-        }
-
-        group.enter()
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            appleMusicPlaying = self?.isAppleMusicPlaying() ?? false
-            group.leave()
-        }
-
-        // Wait for both checks to complete, then update on main thread
-        group.notify(queue: .main) { [weak self] in
-            let playing = spotifyPlaying || appleMusicPlaying
-            self?.updatePlaybackState(playing)
-        }
+        // NSAppleScript must run on main thread - these checks are fast (~20ms each)
+        let spotifyPlaying = isSpotifyPlaying()
+        let appleMusicPlaying = isAppleMusicPlaying()
+        let playing = spotifyPlaying || appleMusicPlaying
+        updatePlaybackState(playing)
     }
 
     // MARK: - AppleScript Queries
