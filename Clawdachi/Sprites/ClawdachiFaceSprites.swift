@@ -1017,4 +1017,339 @@ class ClawdachiFaceSprites {
         ]
         return PixelArtGenerator.textureFromPixels(pixels, width: 4, height: 4)
     }
+
+    // MARK: - Cloud Textures (Thinking Animation)
+
+    /// Cloud colors used for all clouds
+    private static let cloudOutline = NSColor(red: 50/255, green: 55/255, blue: 70/255, alpha: 1.0)
+    private static let cloudHighlight = NSColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 1.0)
+    private static let cloudMain = NSColor(red: 240/255, green: 242/255, blue: 248/255, alpha: 1.0)
+    private static let cloudShadow = NSColor(red: 180/255, green: 185/255, blue: 200/255, alpha: 1.0)
+
+    /// Large main thought cloud (15x10) - fluffy with bumps
+    static func generateMainCloudTexture() -> SKTexture {
+        let pixelSize: CGFloat = 2.0
+        let width = 15
+        let height = 10
+
+        // 1=outline, 2=highlight, 3=main, 4=shadow
+        let pattern: [[Int]] = [
+            [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],  // top bump
+            [0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 1, 0, 0, 0, 0],
+            [0, 0, 1, 1, 1, 2, 2, 3, 2, 2, 1, 1, 1, 0, 0],  // side bumps
+            [0, 1, 2, 2, 2, 2, 3, 3, 3, 2, 2, 2, 2, 1, 0],
+            [1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 1],
+            [1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 1],
+            [1, 3, 3, 3, 4, 3, 3, 3, 3, 3, 4, 3, 4, 4, 1],
+            [1, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1],
+            [0, 1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1, 0],
+            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],  // bottom
+        ]
+
+        return renderCloudPattern(pattern, width: width, height: height, pixelSize: pixelSize)
+    }
+
+    /// Mini cloud variation 1 - bumpy puff (7x5)
+    static func generateMiniCloud1() -> SKTexture {
+        let pixelSize: CGFloat = 2.0
+        let width = 7
+        let height = 5
+
+        // 1=outline, 2=highlight, 3=main, 4=shadow
+        let pattern: [[Int]] = [
+            [0, 1, 1, 1, 1, 1, 0],
+            [1, 2, 2, 2, 2, 2, 1],
+            [1, 2, 3, 3, 3, 4, 1],
+            [1, 3, 4, 4, 4, 4, 1],
+            [0, 1, 1, 1, 1, 1, 0],
+        ]
+
+        return renderCloudPattern(pattern, width: width, height: height, pixelSize: pixelSize)
+    }
+
+    /// Mini cloud variation 2 - two bumps (9x5)
+    static func generateMiniCloud2() -> SKTexture {
+        let pixelSize: CGFloat = 2.0
+        let width = 9
+        let height = 5
+
+        let pattern: [[Int]] = [
+            [0, 1, 1, 1, 0, 1, 1, 1, 0],  // two bumps on top
+            [1, 2, 2, 2, 1, 2, 2, 2, 1],
+            [1, 2, 3, 3, 3, 3, 3, 4, 1],
+            [1, 3, 4, 4, 4, 4, 4, 4, 1],
+            [0, 1, 1, 1, 1, 1, 1, 1, 0],
+        ]
+
+        return renderCloudPattern(pattern, width: width, height: height, pixelSize: pixelSize)
+    }
+
+    /// Mini cloud variation 3 - small bumpy puff (6x4)
+    static func generateMiniCloud3() -> SKTexture {
+        let pixelSize: CGFloat = 2.0
+        let width = 6
+        let height = 4
+
+        let pattern: [[Int]] = [
+            [0, 1, 1, 1, 1, 0],
+            [1, 2, 2, 2, 2, 1],
+            [1, 3, 3, 3, 4, 1],
+            [0, 1, 1, 1, 1, 0],
+        ]
+
+        return renderCloudPattern(pattern, width: width, height: height, pixelSize: pixelSize)
+    }
+
+    /// Helper to render cloud patterns
+    private static func renderCloudPattern(_ pattern: [[Int]], width: Int, height: Int, pixelSize: CGFloat) -> SKTexture {
+        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
+
+        let image = NSImage(size: size, flipped: true) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
+
+            for row in 0..<height {
+                for col in 0..<width {
+                    let value = pattern[row][col]
+                    guard value > 0 else { continue }
+
+                    let color: NSColor
+                    switch value {
+                    case 1: color = cloudOutline
+                    case 2: color = cloudHighlight
+                    case 3: color = cloudMain
+                    case 4: color = cloudShadow
+                    default: continue
+                    }
+
+                    color.setFill()
+                    let pixelRect = CGRect(
+                        x: CGFloat(col) * pixelSize,
+                        y: CGFloat(row) * pixelSize,
+                        width: pixelSize,
+                        height: pixelSize
+                    )
+                    pixelRect.fill()
+                }
+            }
+
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create mini cloud image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .nearest
+        return texture
+    }
+
+    /// Generates a small trailing circle for thought bubble
+    /// Size: 4x4 pixels
+    static func generateThoughtCircleSmall() -> SKTexture {
+        let pixelSize: CGFloat = 2.5
+        let width = 4
+        let height = 4
+        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
+
+        let outline = NSColor(red: 60/255, green: 60/255, blue: 70/255, alpha: 1.0)
+        let fill = NSColor.white
+
+        let pattern: [[Int]] = [
+            [0, 1, 1, 0],
+            [1, 2, 2, 1],
+            [1, 2, 2, 1],
+            [0, 1, 1, 0],
+        ]
+
+        let image = NSImage(size: size, flipped: true) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
+
+            for row in 0..<height {
+                for col in 0..<width {
+                    let value = pattern[row][col]
+                    guard value > 0 else { continue }
+
+                    let color = value == 1 ? outline : fill
+                    color.setFill()
+                    let pixelRect = CGRect(
+                        x: CGFloat(col) * pixelSize,
+                        y: CGFloat(row) * pixelSize,
+                        width: pixelSize,
+                        height: pixelSize
+                    )
+                    pixelRect.fill()
+                }
+            }
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create thought circle image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .nearest
+        return texture
+    }
+
+    /// Generates a tiny trailing circle for thought bubble
+    /// Size: 3x3 pixels
+    static func generateThoughtCircleTiny() -> SKTexture {
+        let pixelSize: CGFloat = 2.5
+        let width = 3
+        let height = 3
+        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
+
+        let outline = NSColor(red: 60/255, green: 60/255, blue: 70/255, alpha: 1.0)
+        let fill = NSColor.white
+
+        let pattern: [[Int]] = [
+            [0, 1, 0],
+            [1, 2, 1],
+            [0, 1, 0],
+        ]
+
+        let image = NSImage(size: size, flipped: true) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
+
+            for row in 0..<height {
+                for col in 0..<width {
+                    let value = pattern[row][col]
+                    guard value > 0 else { continue }
+
+                    let color = value == 1 ? outline : fill
+                    color.setFill()
+                    let pixelRect = CGRect(
+                        x: CGFloat(col) * pixelSize,
+                        y: CGFloat(row) * pixelSize,
+                        width: pixelSize,
+                        height: pixelSize
+                    )
+                    pixelRect.fill()
+                }
+            }
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create thought circle image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .nearest
+        return texture
+    }
+
+    // MARK: - Lightning Bolt Textures (Thinking Animation)
+
+    /// Generates a small lightning bolt (3x4 pixels)
+    static func generateLightningBoltSmall() -> SKTexture {
+        let pixels: [[PixelColor]] = [
+            [sparkWhite, sparkYellow, P.clear],
+            [P.clear, sparkYellow, sparkYellowDark],
+            [sparkYellowBright, sparkYellow, P.clear],
+            [P.clear, sparkYellowDark, P.clear],
+        ]
+        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 4)
+    }
+
+    /// Generates a medium lightning bolt (4x5 pixels)
+    static func generateLightningBoltMedium() -> SKTexture {
+        let pixels: [[PixelColor]] = [
+            [P.clear, sparkWhite, sparkYellow, P.clear],
+            [P.clear, sparkYellowBright, sparkYellow, sparkYellowDark],
+            [sparkWhite, sparkYellow, sparkYellowDark, P.clear],
+            [P.clear, sparkYellow, sparkYellowDark, P.clear],
+            [P.clear, P.clear, sparkYellowDark, P.clear],
+        ]
+        return PixelArtGenerator.textureFromPixels(pixels, width: 4, height: 5)
+    }
+
+    /// Generates a large lightning bolt (5x6 pixels)
+    static func generateLightningBoltLarge() -> SKTexture {
+        let pixels: [[PixelColor]] = [
+            [P.clear, P.clear, sparkWhite, sparkYellowBright, P.clear],
+            [P.clear, sparkWhite, sparkYellow, sparkYellow, sparkYellowDark],
+            [sparkYellowBright, sparkYellow, sparkYellow, sparkYellowDark, P.clear],
+            [P.clear, sparkYellow, sparkYellowDark, P.clear, P.clear],
+            [P.clear, sparkYellowBright, sparkYellow, sparkYellowDark, P.clear],
+            [P.clear, P.clear, sparkYellowDark, P.clear, P.clear],
+        ]
+        return PixelArtGenerator.textureFromPixels(pixels, width: 5, height: 6)
+    }
+
+    // MARK: - Sound Wave Textures (Voice Input)
+
+    /// Blue/cyan color palette for sound wave arcs
+    private static let waveBlue = PixelColor(r: 100, g: 180, b: 255)
+    private static let waveCyan = PixelColor(r: 150, g: 220, b: 255)
+    private static let waveWhite = PixelColor(r: 255, g: 255, b: 255)
+
+    /// Generates a sound wave arc texture for voice input listening
+    /// - Parameter intensity: 0 = small, 1 = medium, 2 = large arc
+    static func generateSoundWaveTexture(intensity: Int) -> SKTexture {
+        // Different arc sizes based on intensity
+        switch intensity {
+        case 0:
+            // Small arc - 6x3 pixels
+            let pixels: [[PixelColor]] = [
+                [P.clear, waveBlue, waveCyan, waveCyan, waveBlue, P.clear],
+                [waveBlue, P.clear, P.clear, P.clear, P.clear, waveBlue],
+                [P.clear, P.clear, P.clear, P.clear, P.clear, P.clear],
+            ]
+            return PixelArtGenerator.textureFromPixels(pixels, width: 6, height: 3)
+
+        case 1:
+            // Medium arc - 8x4 pixels
+            let pixels: [[PixelColor]] = [
+                [P.clear, P.clear, waveCyan, waveWhite, waveWhite, waveCyan, P.clear, P.clear],
+                [P.clear, waveCyan, P.clear, P.clear, P.clear, P.clear, waveCyan, P.clear],
+                [waveBlue, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, waveBlue],
+                [P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear],
+            ]
+            return PixelArtGenerator.textureFromPixels(pixels, width: 8, height: 4)
+
+        default:
+            // Large arc - 10x5 pixels
+            let pixels: [[PixelColor]] = [
+                [P.clear, P.clear, P.clear, waveWhite, waveWhite, waveWhite, waveWhite, P.clear, P.clear, P.clear],
+                [P.clear, P.clear, waveCyan, P.clear, P.clear, P.clear, P.clear, waveCyan, P.clear, P.clear],
+                [P.clear, waveCyan, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, waveCyan, P.clear],
+                [waveBlue, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, waveBlue],
+                [P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear, P.clear],
+            ]
+            return PixelArtGenerator.textureFromPixels(pixels, width: 10, height: 5)
+        }
+    }
+
+    // MARK: - Gear Texture (Thinking indicator)
+
+    /// Generates a pixel-art gear/cog for thinking animation
+    /// Size: 9x9 pixels
+    static func generateGearTexture() -> SKTexture {
+        typealias P = PixelColor
+        let gearMain = PixelColor(r: 0x88, g: 0x99, b: 0xAA)    // Blue-gray gear body
+        let gearDark = PixelColor(r: 0x55, g: 0x66, b: 0x77)    // Darker edge
+        let gearLight = PixelColor(r: 0xAA, g: 0xBB, b: 0xCC)   // Highlight
+        let center = PixelColor(r: 0x33, g: 0x44, b: 0x55)      // Dark center hole
+
+        // 9x9 gear with 8 teeth
+        let pixels: [[PixelColor]] = [
+            [P.clear,   P.clear,   gearDark,  gearMain,  gearMain,  gearMain,  gearDark,  P.clear,   P.clear],
+            [P.clear,   gearDark,  gearLight, gearMain,  gearMain,  gearMain,  gearLight, gearDark,  P.clear],
+            [gearDark,  gearLight, gearMain,  gearMain,  gearMain,  gearMain,  gearMain,  gearLight, gearDark],
+            [gearMain,  gearMain,  gearMain,  gearDark,  center,    gearDark,  gearMain,  gearMain,  gearMain],
+            [gearMain,  gearMain,  gearMain,  center,    center,    center,    gearMain,  gearMain,  gearMain],
+            [gearMain,  gearMain,  gearMain,  gearDark,  center,    gearDark,  gearMain,  gearMain,  gearMain],
+            [gearDark,  gearLight, gearMain,  gearMain,  gearMain,  gearMain,  gearMain,  gearLight, gearDark],
+            [P.clear,   gearDark,  gearLight, gearMain,  gearMain,  gearMain,  gearLight, gearDark,  P.clear],
+            [P.clear,   P.clear,   gearDark,  gearMain,  gearMain,  gearMain,  gearDark,  P.clear,   P.clear],
+        ]
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 9, height: 9)
+    }
 }
