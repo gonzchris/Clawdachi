@@ -149,8 +149,11 @@ enum AnimationKey: String {
     /// Head bob during thinking
     case thinkingBob
 
-    /// Thinking particle spawner
+    /// Thinking particle spawner (mini-clouds)
     case thinkingParticleSpawner
+
+    /// Thinking orb spawner (floating dots)
+    case thinkingOrbSpawner
 
     /// Blink animation scheduler during thinking
     case thinkingBlink

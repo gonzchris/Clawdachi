@@ -34,6 +34,11 @@ extension ClawdachiSprite {
         ]
     }()
 
+    /// Cached texture for thinking orbs (tiny orange dots)
+    private static var thinkingOrbTexture: SKTexture = {
+        ClawdachiFaceSprites.generateThinkingOrbTiny()
+    }()
+
     /// Focused eye textures for thinking: > <
     private static var focusedLeftEyeTexture: SKTexture = {
         ClawdachiFaceSprites.generateEyeTexture(state: .squint)  // >
@@ -95,6 +100,7 @@ extension ClawdachiSprite {
         removeAction(forKey: AnimationKey.thinkingTilt.rawValue)
         removeAction(forKey: AnimationKey.thinkingBob.rawValue)
         removeAction(forKey: AnimationKey.thinkingParticleSpawner.rawValue)
+        removeAction(forKey: AnimationKey.thinkingOrbSpawner.rawValue)
         removeAction(forKey: AnimationKey.thinkingBlink.rawValue)
         removeAction(forKey: AnimationKey.thinkingBlinkSequence.rawValue)
         removeAction(forKey: AnimationKey.thinkingArmTilt.rawValue)
@@ -134,6 +140,7 @@ extension ClawdachiSprite {
             dismissQuestionMark()
             dismissPartyCelebration()
             dismissMainCloud()
+            removeFloatingOrbs()
 
             // Short delay to let visuals fade, then proceed
             run(SKAction.sequence([
@@ -146,6 +153,7 @@ extension ClawdachiSprite {
             dismissQuestionMark()
             dismissPartyCelebration()
             dismissMainCloud()
+            removeFloatingOrbs()
             completion?()
         }
     }
@@ -427,6 +435,15 @@ extension ClawdachiSprite {
 
         // Start occasional arm tilts (thinking pose)
         startThinkingArmTilts()
+
+        // Start floating orbs after cloud has risen into place (0.6s delay)
+        run(SKAction.sequence([
+            SKAction.wait(forDuration: 0.6),
+            SKAction.run { [weak self] in
+                guard let self = self, self.isClaudeThinking else { return }
+                self.startFloatingOrbs()
+            }
+        ]))
     }
 
     /// Stop the thinking animation and return to normal
@@ -438,6 +455,7 @@ extension ClawdachiSprite {
         removeAction(forKey: AnimationKey.thinkingTilt.rawValue)
         removeAction(forKey: AnimationKey.thinkingBob.rawValue)
         removeAction(forKey: AnimationKey.thinkingParticleSpawner.rawValue)
+        removeAction(forKey: AnimationKey.thinkingOrbSpawner.rawValue)
         removeAction(forKey: AnimationKey.thinkingBlink.rawValue)
         removeAction(forKey: AnimationKey.thinkingBlinkSequence.rawValue)
         removeAction(forKey: AnimationKey.thinkingArmTilt.rawValue)
@@ -452,8 +470,9 @@ extension ClawdachiSprite {
         leftArmNode.zRotation = 0
         rightArmNode.zRotation = 0
 
-        // Dismiss the main thought cloud
+        // Dismiss the main thought cloud and floating orbs
         dismissMainCloud()
+        removeFloatingOrbs()
 
         // Reset body scale
         let resetScale = SKAction.scaleY(to: 1.0, duration: 0.2)
@@ -547,6 +566,89 @@ extension ClawdachiSprite {
         cloud.run(sequence)
     }
 
+    // MARK: - Floating Orbs
+
+    private static let thinkingOrbName = "thinkingOrb"
+    private static let maxThinkingOrbs = 8
+
+    /// Start spawning floating orbs around the thought cloud
+    private func startFloatingOrbs() {
+        let spawnAction = SKAction.run { [weak self] in
+            guard let self = self, self.isClaudeThinking else { return }
+            self.spawnThinkingOrb()
+        }
+        // Spawn orbs every 0.6-1.0 seconds (medium density)
+        let wait = SKAction.wait(forDuration: TimeInterval.random(in: 0.6...1.0))
+        let loop = SKAction.repeatForever(SKAction.sequence([spawnAction, wait]))
+        run(loop, withKey: AnimationKey.thinkingOrbSpawner.rawValue)
+
+        // Spawn first orb immediately
+        spawnThinkingOrb()
+    }
+
+    private func spawnThinkingOrb() {
+        // Limit to 8 orbs at a time
+        let existingOrbs = children.filter { $0.name == Self.thinkingOrbName }
+        guard existingOrbs.count < Self.maxThinkingOrbs else { return }
+
+        let orb = SKSpriteNode(texture: Self.thinkingOrbTexture)
+        orb.name = Self.thinkingOrbName
+        orb.size = CGSize(width: 2, height: 2)  // Tiny 2x2 orbs
+
+        // Start position - center of main cloud (cloud is at y: 16)
+        let startX = CGFloat.random(in: -2...2)
+        orb.position = CGPoint(x: startX, y: 16)
+        orb.alpha = 0
+        orb.zPosition = SpriteZPositions.effects
+        addChild(orb)
+
+        // Random float parameters
+        let floatDuration = TimeInterval.random(in: 1.8...2.2)
+        let floatDistance = CGFloat.random(in: 18...22)
+
+        // Fade in
+        let fadeIn = SKAction.fadeAlpha(to: 0.8, duration: 0.15)
+
+        // Float upward
+        let floatUp = SKAction.moveBy(x: 0, y: floatDistance, duration: floatDuration)
+        floatUp.timingMode = .easeOut
+
+        // Sway left or right while floating
+        let swayDirection: CGFloat = Bool.random() ? 1 : -1
+        let swayDistance: CGFloat = CGFloat.random(in: 2...4) * swayDirection
+        let swayDuration: TimeInterval = 0.5
+        let swayOut = SKAction.moveBy(x: swayDistance, y: 0, duration: swayDuration)
+        let swayBack = SKAction.moveBy(x: -swayDistance, y: 0, duration: swayDuration)
+        swayOut.timingMode = .easeInEaseOut
+        swayBack.timingMode = .easeInEaseOut
+        let swayCycle = SKAction.sequence([swayOut, swayBack])
+        let swayLoop = SKAction.repeat(swayCycle, count: Int(floatDuration / (swayDuration * 2)) + 1)
+
+        // Fade out near end
+        let waitBeforeFade = SKAction.wait(forDuration: floatDuration - 0.4)
+        let fadeOut = SKAction.fadeOut(withDuration: 0.4)
+        let fadeSequence = SKAction.sequence([waitBeforeFade, fadeOut])
+
+        // Run float, sway, and fade together
+        let movement = SKAction.group([floatUp, swayLoop, fadeSequence])
+        let sequence = SKAction.sequence([
+            fadeIn,
+            movement,
+            SKAction.removeFromParent()
+        ])
+        orb.run(sequence)
+    }
+
+    /// Remove all floating orbs
+    private func removeFloatingOrbs() {
+        children.filter { $0.name == Self.thinkingOrbName }.forEach { orb in
+            orb.removeAllActions()
+            let fadeOut = SKAction.fadeOut(withDuration: 0.2)
+            let remove = SKAction.removeFromParent()
+            orb.run(SKAction.sequence([fadeOut, remove]))
+        }
+    }
+
     // MARK: - Main Cloud
 
     /// Show the main thought cloud above the sprite's head
@@ -557,21 +659,21 @@ extension ClawdachiSprite {
         let cloud = SKSpriteNode(texture: Self.mainCloudTexture)
         cloud.name = Self.mainCloudName
         cloud.size = CGSize(width: 15, height: 11)
-        cloud.position = CGPoint(x: 0, y: 16)
+        cloud.position = CGPoint(x: 0, y: 10)  // Start lower
         cloud.alpha = 0
         cloud.zPosition = SpriteZPositions.effects + 1
-        cloud.setScale(0.3)
+        cloud.setScale(0.5)
         addChild(cloud)
 
-        // Pop in animation
-        let popIn = SKAction.group([
-            SKAction.fadeIn(withDuration: 0.15),
-            SKAction.scale(to: 1.2, duration: 0.15)
-        ])
-        let settle = SKAction.scale(to: 1.0, duration: 0.1)
-        settle.timingMode = .easeOut
+        // Gentle float up while fading in
+        let floatUp = SKAction.moveTo(y: 16, duration: 0.4)
+        floatUp.timingMode = .easeOut
+        let fadeIn = SKAction.fadeIn(withDuration: 0.3)
+        let scaleUp = SKAction.scale(to: 1.0, duration: 0.4)
+        scaleUp.timingMode = .easeOut
+        let riseIn = SKAction.group([floatUp, fadeIn, scaleUp])
 
-        // Gentle floating bob while visible (synced with body bob)
+        // Gentle floating bob while visible
         let bobUp = SKAction.moveBy(x: 0, y: 1.0, duration: 0.6)
         let bobDown = SKAction.moveBy(x: 0, y: -1.0, duration: 0.6)
         bobUp.timingMode = .easeInEaseOut
@@ -585,7 +687,7 @@ extension ClawdachiSprite {
         glowDown.timingMode = .easeInEaseOut
         let glowLoop = SKAction.repeatForever(SKAction.sequence([glowUp, glowDown]))
 
-        cloud.run(SKAction.sequence([popIn, settle, SKAction.group([floatLoop, glowLoop])]))
+        cloud.run(SKAction.sequence([riseIn, SKAction.group([floatLoop, glowLoop])]))
 
         // Add thinking dots inside cloud
         addThinkingDots(to: cloud)
