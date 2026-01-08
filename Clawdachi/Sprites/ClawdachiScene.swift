@@ -135,22 +135,11 @@ class ClawdachiScene: SKScene {
                 sessionsPlayedCompleteSound.insert(id)
                 clawdachi.showPartyCelebration()
                 SoundManager.shared.playCompleteSound()
-                showChatBubble(randomCompletionMessage(), duration: 4.0)
             }
         } else if currentStatus == "thinking" || currentStatus == "tools" || currentStatus == "planning" {
             // Started working - reset sound tracking for fresh cycle
             sessionsPlayedQuestionSound.remove(id)
             sessionsPlayedCompleteSound.remove(id)
-
-            // Show message if transitioning from non-working to working
-            let wasNotWorking = previousStatus == nil || previousStatus == "idle" || previousStatus == "none"
-            if wasNotWorking {
-                if currentStatus == "planning" {
-                    showChatBubble(randomPlanningMessage(), duration: 3.0)
-                } else {
-                    showChatBubble(randomThinkingMessage(), duration: 3.0)
-                }
-            }
         }
     }
 
@@ -837,7 +826,6 @@ class ClawdachiScene: SKScene {
         guard !isSleeping else { return }
         clawdachi.stopDancing()
         clawdachi.startClaudeThinking()
-        showChatBubble(randomThinkingMessage(), duration: 3.0)
 
         // Auto-stop after duration
         DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
@@ -849,7 +837,6 @@ class ClawdachiScene: SKScene {
         guard !isSleeping else { return }
         clawdachi.stopDancing()
         clawdachi.startClaudePlanning()
-        showChatBubble(randomPlanningMessage(), duration: 3.0)
 
         // Auto-stop after duration
         DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
@@ -873,7 +860,6 @@ class ClawdachiScene: SKScene {
         clawdachi.stopClaudePlanning()
         clawdachi.dismissQuestionMark()
         clawdachi.showPartyCelebration()
-        showChatBubble(randomCompletionMessage(), duration: 4.0)
     }
 
     func debugClearClaudeStates() {
