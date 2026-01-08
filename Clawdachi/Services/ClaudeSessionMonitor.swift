@@ -121,9 +121,13 @@ class ClaudeSessionMonitor: PollingService {
     /// Serial queue for thread-safe cache access
     private let cacheQueue = DispatchQueue(label: "com.clawdachi.sessioncache")
 
+    /// Timestamp when the monitor was initialized (used to detect pre-existing stale sessions)
+    private let monitorStartTime: TimeInterval
+
     // MARK: - Initialization
 
     init() {
+        monitorStartTime = Date().timeIntervalSince1970
         sessionsPath = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".clawdachi/sessions")
         startPolling()
@@ -299,11 +303,18 @@ class ClaudeSessionMonitor: PollingService {
             return .valid(session)
         }
 
-        // Active sessions must not be stale
-        if age <= AnimationTimings.sessionStalenessThreshold {
+        // For active sessions (thinking, tools, planning, waiting), require the timestamp
+        // to be AFTER the monitor started. This prevents showing stale "thinking" states
+        // from sessions that existed before Clawdachi launched.
+        // Allow a small grace period (2 seconds) for race conditions.
+        let sessionUpdatedAfterStart = session.timestamp >= (monitorStartTime - 2.0)
+
+        // Active sessions must not be stale AND must have been updated after monitor started
+        if age <= AnimationTimings.sessionStalenessThreshold && sessionUpdatedAfterStart {
             return .valid(session)
         }
 
+        // Session is stale - either too old or existed before monitor started without updates
         return .stale
     }
 

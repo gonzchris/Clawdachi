@@ -49,15 +49,21 @@ fi
 SESSION_FILE="$SESSIONS_DIR/${SESSION_ID}.json"
 TEMP_FILE="$SESSIONS_DIR/.${SESSION_ID}.tmp"
 PLAN_MODE_FILE="$PLAN_MODE_DIR/${SESSION_ID}.planmode"
+STARTUP_FILE="$SESSIONS_DIR/.${SESSION_ID}.startup"
 
 # Current timestamp
 TIMESTAMP=$(python3 -c "import time; print(time.time())")
+
+# Startup grace period (seconds) - ignore auto-exploration during this window
+STARTUP_GRACE_PERIOD=5
 
 # Determine status based on event
 case "$EVENT_TYPE" in
   "session_start")
     # Clear any stale plan mode state on new session
     rm -f "$PLAN_MODE_FILE"
+    # Record startup timestamp for grace period filtering
+    echo "$TIMESTAMP" > "$STARTUP_FILE"
     # Clean up any old session files from the same TTY (handles crashed/killed sessions)
     if [ -n "$TTY" ]; then
       for f in "$SESSIONS_DIR"/*.json; do
@@ -65,9 +71,10 @@ case "$EVENT_TYPE" in
         OLD_TTY=$(python3 -c "import sys, json; print(json.load(open('$f')).get('tty', ''))" 2>/dev/null || echo "")
         if [ "$OLD_TTY" = "$TTY" ] && [ "$(basename "$f" .json)" != "$SESSION_ID" ]; then
           rm -f "$f"
-          # Also clean up any associated plan mode file
+          # Also clean up any associated plan mode and startup files
           OLD_ID=$(basename "$f" .json)
           rm -f "$PLAN_MODE_DIR/${OLD_ID}.planmode"
+          rm -f "$SESSIONS_DIR/.${OLD_ID}.startup"
         fi
       done
     fi
@@ -75,6 +82,19 @@ case "$EVENT_TYPE" in
     STATUS="idle"
     ;;
   "thinking"|"prompt_submit")
+    # If no session file exists yet, session_start was missed - don't create a thinking state
+    if [ ! -f "$SESSION_FILE" ]; then
+      exit 0
+    fi
+    # Check if we're in startup grace period (auto-exploration) - stay idle
+    if [ -f "$STARTUP_FILE" ]; then
+      STARTUP_TIME=$(cat "$STARTUP_FILE")
+      TIME_SINCE_START=$(python3 -c "print($TIMESTAMP - $STARTUP_TIME)")
+      if python3 -c "exit(0 if $TIME_SINCE_START < $STARTUP_GRACE_PERIOD else 1)"; then
+        # Within grace period - don't transition to thinking, stay idle
+        exit 0
+      fi
+    fi
     # Check if still in plan mode
     if [ -f "$PLAN_MODE_FILE" ]; then
       STATUS="planning"
@@ -83,6 +103,15 @@ case "$EVENT_TYPE" in
     fi
     ;;
   "tool_start")
+    # Check if we're in startup grace period (auto-exploration) - stay idle
+    if [ -f "$STARTUP_FILE" ]; then
+      STARTUP_TIME=$(cat "$STARTUP_FILE")
+      TIME_SINCE_START=$(python3 -c "print($TIMESTAMP - $STARTUP_TIME)")
+      if python3 -c "exit(0 if $TIME_SINCE_START < $STARTUP_GRACE_PERIOD else 1)"; then
+        # Within grace period - don't transition to tools, stay idle
+        exit 0
+      fi
+    fi
     # Check for plan mode tools
     if [ "$TOOL_NAME" = "EnterPlanMode" ]; then
       # Enter plan mode - create marker file
@@ -107,6 +136,15 @@ case "$EVENT_TYPE" in
     STATUS="waiting"
     ;;
   "tool_end")
+    # Check if we're in startup grace period (auto-exploration) - stay idle
+    if [ -f "$STARTUP_FILE" ]; then
+      STARTUP_TIME=$(cat "$STARTUP_FILE")
+      TIME_SINCE_START=$(python3 -c "print($TIMESTAMP - $STARTUP_TIME)")
+      if python3 -c "exit(0 if $TIME_SINCE_START < $STARTUP_GRACE_PERIOD else 1)"; then
+        # Within grace period - don't transition to thinking, stay idle
+        exit 0
+      fi
+    fi
     # Check if still in plan mode
     if [ -f "$PLAN_MODE_FILE" ]; then
       STATUS="planning"
@@ -117,12 +155,14 @@ case "$EVENT_TYPE" in
   "notification")
     # Notification hook fires during long operations - use as heartbeat
     # Only update timestamp if already in working state, don't change idle to thinking
-    if [ -f "$SESSION_FILE" ]; then
-      CURRENT_STATUS=$(python3 -c "import sys, json; print(json.load(open('$SESSION_FILE')).get('status', 'idle'))" 2>/dev/null || echo "idle")
-      if [ "$CURRENT_STATUS" = "idle" ] || [ "$CURRENT_STATUS" = "waiting" ]; then
-        # Don't change status, just exit (no update needed for idle/waiting)
-        exit 0
-      fi
+    # IMPORTANT: If no session file exists, don't create one - wait for session_start
+    if [ ! -f "$SESSION_FILE" ]; then
+      exit 0
+    fi
+    CURRENT_STATUS=$(python3 -c "import sys, json; print(json.load(open('$SESSION_FILE')).get('status', 'idle'))" 2>/dev/null || echo "idle")
+    if [ "$CURRENT_STATUS" = "idle" ] || [ "$CURRENT_STATUS" = "waiting" ]; then
+      # Don't change status, just exit (no update needed for idle/waiting)
+      exit 0
     fi
     if [ -f "$PLAN_MODE_FILE" ]; then
       STATUS="planning"
@@ -137,12 +177,14 @@ case "$EVENT_TYPE" in
     # Claude stopped responding - session is now idle (waiting for user input)
     # Keep session file so sprite knows terminal is still open
     rm -f "$PLAN_MODE_FILE"
+    rm -f "$STARTUP_FILE"  # Startup exploration is complete
     STATUS="idle"
     ;;
   "session_end")
     # Session truly ended (terminal closed) - delete session and plan mode files
     rm -f "$SESSION_FILE"
     rm -f "$PLAN_MODE_FILE"
+    rm -f "$STARTUP_FILE"
     exit 0
     ;;
   *)
