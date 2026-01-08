@@ -685,6 +685,7 @@ class ClawdachiScene: SKScene {
             claudeStatusHandler.clearTracking()
             isSleeping = true
             clawdachi.startSleeping()
+            showChatBubble(ClawdachiMessages.sleepMessage, duration: 3.0)
         }
     }
 
@@ -822,6 +823,7 @@ class ClawdachiScene: SKScene {
         claudeStatusHandler.clearTracking()
         isSleeping = true
         clawdachi.startSleeping()
+        showChatBubble(ClawdachiMessages.sleepMessage, duration: 3.0)
     }
 
     func debugWakeUp() {

@@ -45,6 +45,10 @@ enum ClawdachiMessages {
         "> ok"
     ]
 
+    // MARK: - Sleep Messages
+
+    static let sleepMessage = "> zzz so sleepy"
+
     // MARK: - Time-of-Day Greetings
 
     static let greetingMorning = "> good morning"
