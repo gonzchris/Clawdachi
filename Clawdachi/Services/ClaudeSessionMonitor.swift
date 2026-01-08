@@ -277,18 +277,29 @@ class ClaudeSessionMonitor: PollingService {
     }
 
     private func validateSession(_ session: SessionInfo, file: URL) -> SessionValidationResult {
+        let age = Date().timeIntervalSince1970 - session.timestamp
+
         // Check if terminal is still open
-        guard isTerminalOpen(tty: session.tty) else {
+        let terminalOpen = isTerminalOpen(tty: session.tty)
+        let hasTTY = session.tty != nil && !session.tty!.isEmpty
+
+        // If we have TTY info and the terminal is closed, session is stale
+        if hasTTY && !terminalOpen {
             return .stale
         }
 
-        // Idle sessions are always valid if terminal is open
+        // Sessions without TTY info can't be verified - use age-based cleanup
+        // Clean up after 1 hour to handle crashed/killed sessions
+        if !hasTTY && age > 3600 {
+            return .stale
+        }
+
+        // Idle sessions are valid if terminal is open or recently updated
         if session.status == "idle" {
             return .valid(session)
         }
 
         // Active sessions must not be stale
-        let age = Date().timeIntervalSince1970 - session.timestamp
         if age <= AnimationTimings.sessionStalenessThreshold {
             return .valid(session)
         }
