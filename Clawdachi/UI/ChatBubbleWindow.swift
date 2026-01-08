@@ -29,9 +29,10 @@ class ChatBubbleWindow: NSWindow {
         relativeTo spriteWindow: NSWindow,
         duration: TimeInterval? = C.defaultAutoDismiss,
         verticalOffset: CGFloat? = nil,
+        horizontalOffset: CGFloat? = nil,
         completion: (() -> Void)? = nil
     ) {
-        ChatBubbleManager.shared.showMessage(message, relativeTo: spriteWindow, duration: duration, verticalOffset: verticalOffset)
+        ChatBubbleManager.shared.showMessage(message, relativeTo: spriteWindow, duration: duration, verticalOffset: verticalOffset, horizontalOffset: horizontalOffset)
     }
 
     /// Dismiss all chat bubbles

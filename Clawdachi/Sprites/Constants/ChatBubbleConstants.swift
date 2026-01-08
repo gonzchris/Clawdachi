@@ -98,9 +98,14 @@ enum ChatBubbleConstants {
     /// Text appears above head, below question mark
     static let verticalOffsetFromSpriteCenter: CGFloat = 52
 
-    /// Vertical offset for celebration messages (above party hat)
-    static let celebrationVerticalOffset: CGFloat = 105
-
-    /// Horizontal offset (positive = right of sprite center)
+    /// Default horizontal offset (positive = right of sprite center)
     static let horizontalOffset: CGFloat = 0
+
+    /// Vertical offset for celebration messages (centered with party hat)
+    /// Party hat is at y=12 in sprite coords = 72 points above sprite center
+    /// Bubble height ~46, so offset = 72 - 23 = 49 to center vertically, +2 for fine tuning
+    static let celebrationVerticalOffset: CGFloat = 52
+
+    /// Horizontal offset for celebration messages (to the right of party hat)
+    static let celebrationHorizontalOffset: CGFloat = 65
 }

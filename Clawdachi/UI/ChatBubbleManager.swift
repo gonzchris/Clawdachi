@@ -40,6 +40,9 @@ class ChatBubbleManager {
     /// Current vertical offset override (nil = use default)
     private var currentVerticalOffset: CGFloat?
 
+    /// Current horizontal offset override (nil = use default)
+    private var currentHorizontalOffset: CGFloat?
+
     // MARK: - Public API
 
     /// Show a new chat message
@@ -48,9 +51,11 @@ class ChatBubbleManager {
     ///   - spriteWindow: The sprite window to position relative to
     ///   - duration: Auto-dismiss duration (nil = no auto-dismiss)
     ///   - verticalOffset: Custom vertical offset (nil = use default)
-    func showMessage(_ message: String, relativeTo spriteWindow: NSWindow, duration: TimeInterval? = C.defaultAutoDismiss, verticalOffset: CGFloat? = nil) {
+    ///   - horizontalOffset: Custom horizontal offset (nil = use default, positive = right)
+    func showMessage(_ message: String, relativeTo spriteWindow: NSWindow, duration: TimeInterval? = C.defaultAutoDismiss, verticalOffset: CGFloat? = nil, horizontalOffset: CGFloat? = nil) {
         self.spriteWindow = spriteWindow
         self.currentVerticalOffset = verticalOffset
+        self.currentHorizontalOffset = horizontalOffset
 
         // Remove oldest if at max capacity
         if bubbles.count >= maxBubbles {
@@ -132,14 +137,15 @@ class ChatBubbleManager {
     /// Standard height for stacking calculations (bubble without tail)
     private let standardBubbleHeight: CGFloat = 46
 
-    /// Calculate X position for bubbles (centered above sprite)
+    /// Calculate X position for bubbles (centered above sprite, with optional offset)
     /// - Parameter bubble: The bubble window to position
     private func calculateBubbleX(for bubble: ChatBubbleWindow) -> CGFloat {
         guard let parent = spriteWindow else { return 0 }
         let spriteWindowCenter = parent.frame.origin.x + parent.frame.width / 2
-        // Center the bubble horizontally above the sprite
+        let horizontalOffset = currentHorizontalOffset ?? C.horizontalOffset
+        // Center the bubble horizontally, then apply offset
         let bubbleWidth = bubble.frame.width
-        return spriteWindowCenter + C.horizontalOffset - bubbleWidth / 2
+        return spriteWindowCenter + horizontalOffset - bubbleWidth / 2
     }
 
     /// Calculate Y position for a given stack index

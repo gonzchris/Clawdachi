@@ -46,6 +46,11 @@ class ClawdachiScene: SKScene {
             name: NSApplication.didResignActiveNotification,
             object: nil
         )
+
+        // Show time-of-day greeting after a brief delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.showChatBubble(ClawdachiMessages.greetingForCurrentTime(), duration: 4.0)
+        }
     }
 
     private func setupMusicMonitor() {
@@ -92,7 +97,7 @@ class ClawdachiScene: SKScene {
         }
         claudeStatusHandler.onShowCompletion = { [weak self] in
             self?.clawdachi.showPartyCelebration()
-            self?.showChatBubble(ClawdachiMessages.randomCompletionMessage(), duration: 4.0, verticalOffset: ChatBubbleConstants.celebrationVerticalOffset)
+            self?.showChatBubble(ClawdachiMessages.randomCompletionMessage(), duration: 4.0, verticalOffset: ChatBubbleConstants.celebrationVerticalOffset, horizontalOffset: ChatBubbleConstants.celebrationHorizontalOffset)
         }
 
         claudeMonitor.onStatusChanged = { [weak self] isActive, status, sessionId in
@@ -694,9 +699,10 @@ class ClawdachiScene: SKScene {
     ///   - message: Text to display in the bubble
     ///   - duration: Auto-dismiss duration (default 5s, nil = manual only)
     ///   - verticalOffset: Custom vertical offset (nil = use default)
-    func showChatBubble(_ message: String, duration: TimeInterval? = 5.0, verticalOffset: CGFloat? = nil) {
+    ///   - horizontalOffset: Custom horizontal offset (nil = use default, positive = right)
+    func showChatBubble(_ message: String, duration: TimeInterval? = 5.0, verticalOffset: CGFloat? = nil, horizontalOffset: CGFloat? = nil) {
         guard let window = view?.window else { return }
-        ChatBubbleWindow.show(message: message, relativeTo: window, duration: duration, verticalOffset: verticalOffset)
+        ChatBubbleWindow.show(message: message, relativeTo: window, duration: duration, verticalOffset: verticalOffset, horizontalOffset: horizontalOffset)
 
         // Trigger speaking animation on the sprite
         clawdachi.startSpeaking(duration: min(duration ?? 2.0, 2.5))
@@ -786,7 +792,7 @@ class ClawdachiScene: SKScene {
         clawdachi.stopClaudePlanning()
         clawdachi.dismissQuestionMark()
         clawdachi.showPartyCelebration()
-        showChatBubble(ClawdachiMessages.randomCompletionMessage(), duration: 4.0, verticalOffset: ChatBubbleConstants.celebrationVerticalOffset)
+        showChatBubble(ClawdachiMessages.randomCompletionMessage(), duration: 4.0, verticalOffset: ChatBubbleConstants.celebrationVerticalOffset, horizontalOffset: ChatBubbleConstants.celebrationHorizontalOffset)
     }
 
     func debugClearClaudeStates() {

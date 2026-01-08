@@ -105,6 +105,19 @@ class DebugMenuController {
         chatSubmenu.addItem(createItem("Single Bubble", action: #selector(testSingleBubble)))
         chatSubmenu.addItem(createItem("Multiple Bubbles", action: #selector(testMultipleBubbles)))
         chatSubmenu.addItem(createItem("Dismiss All", action: #selector(dismissBubbles)))
+        chatSubmenu.addItem(NSMenuItem.separator())
+
+        // Greetings submenu
+        let greetingsItem = NSMenuItem(title: "Greetings", action: nil, keyEquivalent: "")
+        let greetingsSubmenu = NSMenu(title: "Greetings")
+        greetingsSubmenu.addItem(createItem("Current Time", action: #selector(testGreetingCurrent)))
+        greetingsSubmenu.addItem(NSMenuItem.separator())
+        greetingsSubmenu.addItem(createItem("Morning", action: #selector(testGreetingMorning)))
+        greetingsSubmenu.addItem(createItem("Afternoon", action: #selector(testGreetingAfternoon)))
+        greetingsSubmenu.addItem(createItem("Evening", action: #selector(testGreetingEvening)))
+        greetingsSubmenu.addItem(createItem("Late Night", action: #selector(testGreetingLateNight)))
+        greetingsItem.submenu = greetingsSubmenu
+        chatSubmenu.addItem(greetingsItem)
 
         chatItem.submenu = chatSubmenu
         debugMenu.addItem(chatItem)
@@ -211,5 +224,27 @@ class DebugMenuController {
 
     @objc private func dismissBubbles() {
         scene?.dismissChatBubble()
+    }
+
+    // MARK: - Greeting Actions
+
+    @objc private func testGreetingCurrent() {
+        scene?.showChatBubble(ClawdachiMessages.greetingForCurrentTime(), duration: 4.0)
+    }
+
+    @objc private func testGreetingMorning() {
+        scene?.showChatBubble(ClawdachiMessages.greetingMorning, duration: 4.0)
+    }
+
+    @objc private func testGreetingAfternoon() {
+        scene?.showChatBubble(ClawdachiMessages.greetingAfternoon, duration: 4.0)
+    }
+
+    @objc private func testGreetingEvening() {
+        scene?.showChatBubble(ClawdachiMessages.greetingEvening, duration: 4.0)
+    }
+
+    @objc private func testGreetingLateNight() {
+        scene?.showChatBubble(ClawdachiMessages.greetingLateNight, duration: 4.0)
     }
 }

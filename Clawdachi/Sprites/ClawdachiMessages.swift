@@ -39,12 +39,28 @@ enum ClawdachiMessages {
 
     static let completionMessages = [
         "> done",
-        "> that's done",
         "> finished",
         "> shipped",
         "> yep",
         "> ok"
     ]
+
+    // MARK: - Time-of-Day Greetings
+
+    static let greetingMorning = "> good morning"
+    static let greetingAfternoon = "> good afternoon"
+    static let greetingEvening = "> good evening"
+    static let greetingLateNight = "> late night session?"
+
+    static func greetingForCurrentTime() -> String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 0..<4:   return greetingLateNight
+        case 4..<12:  return greetingMorning
+        case 12..<18: return greetingAfternoon
+        default:      return greetingEvening  // 18-23
+        }
+    }
 
     // MARK: - Random Message Getters
 
