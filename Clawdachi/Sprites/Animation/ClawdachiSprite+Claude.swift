@@ -139,8 +139,7 @@ extension ClawdachiSprite {
             dismissLightbulb()
             dismissQuestionMark()
             dismissPartyCelebration()
-            dismissMainCloud()
-            removeFloatingOrbs()
+            removeThinkingSymbols()
 
             // Short delay to let visuals fade, then proceed
             run(SKAction.sequence([
@@ -152,8 +151,7 @@ extension ClawdachiSprite {
             dismissLightbulb()
             dismissQuestionMark()
             dismissPartyCelebration()
-            dismissMainCloud()
-            removeFloatingOrbs()
+            removeThinkingSymbols()
             completion?()
         }
     }
@@ -427,8 +425,8 @@ extension ClawdachiSprite {
         let bobCycle = SKAction.repeatForever(SKAction.sequence([bobUp, bobDown]))
         run(bobCycle, withKey: AnimationKey.thinkingBob.rawValue)
 
-        // Show main thought cloud above head
-        showMainCloud()
+        // Start floating math symbols from head
+        startThinkingSymbols()
 
         // Start occasional blinks
         startThinkingBlinks()
@@ -461,9 +459,8 @@ extension ClawdachiSprite {
         leftArmNode.zRotation = 0
         rightArmNode.zRotation = 0
 
-        // Dismiss the main thought cloud and floating orbs
-        dismissMainCloud()
-        removeFloatingOrbs()
+        // Remove floating math symbols
+        removeThinkingSymbols()
 
         // Reset body scale
         let resetScale = SKAction.scaleY(to: 1.0, duration: 0.2)
@@ -479,6 +476,185 @@ extension ClawdachiSprite {
 
         // Resume idle animations
         resumeIdleAnimations()
+    }
+
+    // MARK: - Floating Math Symbols
+
+    private static let thinkingSymbolName = "thinkingSymbol"
+    private static let maxThinkingSymbols = 6
+    private static let mathSymbols = ["+", "−", "×", "=", "%", "?", "!", "*", "#", "&", "<", ">", "~"]
+
+    // Orange color variations for symbols
+    private static let symbolColors: [NSColor] = [
+        NSColor(red: 255/255, green: 153/255, blue: 51/255, alpha: 1.0),   // Primary orange #FF9933
+        NSColor(red: 255/255, green: 187/255, blue: 119/255, alpha: 1.0), // Highlight orange #FFBB77
+        NSColor(red: 230/255, green: 140/255, blue: 50/255, alpha: 1.0),  // Mid orange
+    ]
+
+    /// Start spawning floating math symbols from sprite's head
+    private func startThinkingSymbols() {
+        let spawnAction = SKAction.run { [weak self] in
+            guard let self = self, self.isClaudeThinking else { return }
+
+            // Occasionally spawn a burst of 2-3 symbols
+            let isBurst = Int.random(in: 0...4) == 0  // 20% chance
+            let count = isBurst ? Int.random(in: 2...3) : 1
+
+            for i in 0..<count {
+                // Slight delay between burst symbols
+                let delay = Double(i) * 0.08
+                self.run(SKAction.sequence([
+                    SKAction.wait(forDuration: delay),
+                    SKAction.run { self.spawnMathSymbol() }
+                ]))
+            }
+        }
+        // Spawn symbols frequently
+        let wait = SKAction.wait(forDuration: 0.5)
+        let loop = SKAction.repeatForever(SKAction.sequence([spawnAction, wait]))
+        run(loop, withKey: AnimationKey.thinkingParticleSpawner.rawValue)
+
+        // Start eye glance behavior
+        startThinkingEyeGlance()
+
+        // Spawn first symbol immediately
+        spawnMathSymbol()
+    }
+
+    /// Eyes occasionally glance upward toward floating symbols
+    private func startThinkingEyeGlance() {
+        let glanceAction = SKAction.run { [weak self] in
+            guard let self = self, self.isClaudeThinking else { return }
+            self.performThinkingGlanceUp()
+        }
+        let wait = SKAction.wait(forDuration: TimeInterval.random(in: 3.0...5.0))
+        let loop = SKAction.repeatForever(SKAction.sequence([wait, glanceAction]))
+        run(loop, withKey: AnimationKey.thinkingTilt.rawValue)
+    }
+
+    /// Briefly glance eyes upward
+    private func performThinkingGlanceUp() {
+        // Move eyes up briefly
+        let glanceOffset = CGPoint(x: 0, y: 1.0)
+        let originalLeft = leftEyeNode.position
+        let originalRight = rightEyeNode.position
+
+        let moveUp = SKAction.moveBy(x: glanceOffset.x, y: glanceOffset.y, duration: 0.15)
+        let hold = SKAction.wait(forDuration: TimeInterval.random(in: 0.4...0.8))
+        let moveBack = SKAction.move(to: originalLeft, duration: 0.2)
+        moveUp.timingMode = .easeOut
+        moveBack.timingMode = .easeInEaseOut
+
+        leftEyeNode.run(SKAction.sequence([moveUp, hold, moveBack]))
+
+        let moveBackRight = SKAction.move(to: originalRight, duration: 0.2)
+        moveBackRight.timingMode = .easeInEaseOut
+        rightEyeNode.run(SKAction.sequence([moveUp, hold, moveBackRight]))
+    }
+
+    private func spawnMathSymbol() {
+        // Limit active symbols
+        let existingSymbols = children.filter { $0.name == Self.thinkingSymbolName }
+        guard existingSymbols.count < Self.maxThinkingSymbols else { return }
+
+        // Pick a random symbol
+        let symbol = Self.mathSymbols.randomElement()!
+
+        // Create container for symbol + shadow
+        let container = SKNode()
+        container.name = Self.thinkingSymbolName
+
+        // Pick a random orange shade
+        let mainColor = Self.symbolColors.randomElement()!
+
+        // Create shadow label (slightly offset, darker)
+        let shadow = SKLabelNode(text: symbol)
+        shadow.fontName = "Menlo-Bold"
+        shadow.fontSize = 12  // Render larger for crispness
+        shadow.fontColor = NSColor(red: 150/255, green: 80/255, blue: 0/255, alpha: 0.5)  // Dark orange shadow
+        shadow.verticalAlignmentMode = .center
+        shadow.horizontalAlignmentMode = .center
+        shadow.position = CGPoint(x: 0.5, y: -0.5)  // Offset for shadow effect
+        shadow.setScale(0.35)  // Scale down
+        container.addChild(shadow)
+
+        // Create main label with random orange shade
+        let label = SKLabelNode(text: symbol)
+        label.fontName = "Menlo-Bold"
+        label.fontSize = 12  // Render larger for crispness
+        label.fontColor = mainColor
+        label.verticalAlignmentMode = .center
+        label.horizontalAlignmentMode = .center
+        label.setScale(0.35)  // Scale down
+        container.addChild(label)
+
+        // Start position - behind the top of sprite's head
+        let startX = CGFloat.random(in: -3...3)
+        container.position = CGPoint(x: startX, y: 6)  // Start lower, behind head
+        container.alpha = 0
+        container.zPosition = SpriteZPositions.body - 1  // Behind the sprite
+        container.setScale(0.6)
+        addChild(container)
+
+        // Emerge from behind head quickly
+        let emergeHeight: CGFloat = 6  // Rise up to clear the head
+        let emergeDuration: TimeInterval = 0.15  // Fast emergence
+
+        // Fountain parameters
+        let fountainHeight = CGFloat.random(in: 8...12)
+        let riseDuration = TimeInterval.random(in: 0.7...0.9)
+        let fallDuration = TimeInterval.random(in: 0.5...0.7)
+        let driftX = CGFloat.random(in: -4...4)
+
+        // Quick emerge from behind head
+        let emerge = SKAction.moveBy(x: 0, y: emergeHeight, duration: emergeDuration)
+        emerge.timingMode = .easeOut
+        let fadeIn = SKAction.fadeAlpha(to: 1.0, duration: emergeDuration)
+        let scaleUp = SKAction.scale(to: 1.0, duration: emergeDuration)
+        let appearAndEmerge = SKAction.group([emerge, fadeIn, scaleUp])
+
+        // Bring to front once emerged
+        let bringToFront = SKAction.run { container.zPosition = SpriteZPositions.effects }
+
+        // Rise up (fountain upward arc)
+        let riseUp = SKAction.moveBy(x: driftX * 0.5, y: fountainHeight, duration: riseDuration)
+        riseUp.timingMode = .easeOut
+
+        // Fall down (gentle drift)
+        let fallDown = SKAction.moveBy(x: driftX * 0.5, y: -fountainHeight * 0.5, duration: fallDuration)
+        fallDown.timingMode = .easeInEaseOut
+
+        // Gentle rotation throughout
+        let totalDuration = riseDuration + fallDuration
+        let rotateAmount = CGFloat.random(in: -0.8...0.8)
+        let rotate = SKAction.rotate(byAngle: rotateAmount, duration: totalDuration)
+
+        // Fade out during fall
+        let waitForRise = SKAction.wait(forDuration: riseDuration * 0.6)
+        let fadeOut = SKAction.fadeOut(withDuration: fallDuration + riseDuration * 0.4)
+        let fadeSequence = SKAction.sequence([waitForRise, fadeOut])
+
+        // Combine rise and fall
+        let fountain = SKAction.sequence([riseUp, fallDown])
+        let movement = SKAction.group([fountain, rotate, fadeSequence])
+
+        let sequence = SKAction.sequence([
+            appearAndEmerge,
+            bringToFront,
+            movement,
+            SKAction.removeFromParent()
+        ])
+        container.run(sequence)
+    }
+
+    /// Remove all floating symbols
+    private func removeThinkingSymbols() {
+        children.filter { $0.name == Self.thinkingSymbolName }.forEach { symbol in
+            symbol.removeAllActions()
+            let fadeOut = SKAction.fadeOut(withDuration: 0.2)
+            let remove = SKAction.removeFromParent()
+            symbol.run(SKAction.sequence([fadeOut, remove]))
+        }
     }
 
     // MARK: - Floating Clouds
@@ -671,17 +847,22 @@ extension ClawdachiSprite {
         bobDown.timingMode = .easeInEaseOut
         let floatLoop = SKAction.repeatForever(SKAction.sequence([bobUp, bobDown]))
 
-        // Pulsing glow effect
-        let glowUp = SKAction.colorize(with: NSColor(white: 1.0, alpha: 1.0), colorBlendFactor: 0.15, duration: 0.8)
-        let glowDown = SKAction.colorize(withColorBlendFactor: 0.0, duration: 0.8)
-        glowUp.timingMode = .easeInEaseOut
-        glowDown.timingMode = .easeInEaseOut
-        let glowLoop = SKAction.repeatForever(SKAction.sequence([glowUp, glowDown]))
+        // Puffing scale animation - cloud gently grows and shrinks
+        let puffUp = SKAction.scale(to: 1.15, duration: 1.0)
+        let puffDown = SKAction.scale(to: 1.0, duration: 1.0)
+        puffUp.timingMode = .easeInEaseOut
+        puffDown.timingMode = .easeInEaseOut
+        let puffLoop = SKAction.repeatForever(SKAction.sequence([puffUp, puffDown]))
 
-        cloud.run(SKAction.sequence([riseIn, SKAction.group([floatLoop, glowLoop])]))
+        // Subtle wobble rotation
+        let wobbleAngle: CGFloat = 0.08  // ~4.5 degrees
+        let wobbleLeft = SKAction.rotate(toAngle: -wobbleAngle, duration: 0.7)
+        let wobbleRight = SKAction.rotate(toAngle: wobbleAngle, duration: 0.7)
+        wobbleLeft.timingMode = .easeInEaseOut
+        wobbleRight.timingMode = .easeInEaseOut
+        let wobbleLoop = SKAction.repeatForever(SKAction.sequence([wobbleLeft, wobbleRight]))
 
-        // Add thinking dots inside cloud
-        addThinkingDots(to: cloud)
+        cloud.run(SKAction.sequence([riseIn, SKAction.group([floatLoop, puffLoop, wobbleLoop])]))
     }
 
     /// Add three animated thinking dots inside the cloud
@@ -693,12 +874,10 @@ extension ClawdachiSprite {
         // Match cloud outline color (dark blue-gray)
         let dotColor = NSColor(red: 50/255, green: 55/255, blue: 70/255, alpha: 1.0)
 
-        // Timing for rotating appearance
-        let fadeInDuration: TimeInterval = 0.15
-        let visibleDuration: TimeInterval = 0.3
-        let fadeOutDuration: TimeInterval = 0.15
-        let dotCycle = fadeInDuration + visibleDuration + fadeOutDuration  // Time each dot is active
-        let totalCycle = dotCycle * 3  // Full cycle through all dots
+        // Ripple timing
+        let pulseDuration: TimeInterval = 0.25
+        let rippleDelay: TimeInterval = 0.15  // Delay before outer dots pulse
+        let pauseBetweenRipples: TimeInterval = 0.6
 
         for i in 0..<3 {
             let dot = SKShapeNode(rectOf: CGSize(width: dotSize, height: dotSize))
@@ -706,21 +885,35 @@ extension ClawdachiSprite {
             dot.strokeColor = .clear
             dot.position = CGPoint(x: CGFloat(i - 1) * spacing, y: dotY)
             dot.zPosition = 1
-            dot.alpha = 0  // Start invisible
+            dot.alpha = 0.4  // Start dim
             cloud.addChild(dot)
 
-            // Rotating appearance - each dot fades in, stays, fades out
-            let fadeIn = SKAction.fadeIn(withDuration: fadeInDuration)
-            let stay = SKAction.wait(forDuration: visibleDuration)
-            let fadeOut = SKAction.fadeOut(withDuration: fadeOutDuration)
-            let waitForOthers = SKAction.wait(forDuration: totalCycle - dotCycle)
+            // Pulse animation - brighten and scale up, then back down
+            let pulseUp = SKAction.group([
+                SKAction.fadeAlpha(to: 1.0, duration: pulseDuration / 2),
+                SKAction.scale(to: 1.3, duration: pulseDuration / 2)
+            ])
+            let pulseDown = SKAction.group([
+                SKAction.fadeAlpha(to: 0.4, duration: pulseDuration / 2),
+                SKAction.scale(to: 1.0, duration: pulseDuration / 2)
+            ])
+            pulseUp.timingMode = .easeOut
+            pulseDown.timingMode = .easeIn
+            let pulse = SKAction.sequence([pulseUp, pulseDown])
 
-            let appear = SKAction.sequence([fadeIn, stay, fadeOut, waitForOthers])
-            let loop = SKAction.repeatForever(appear)
+            // Center dot (i=1) pulses first, outer dots (i=0,2) pulse after delay
+            let isCenter = (i == 1)
+            let startDelay = isCenter ? 0 : rippleDelay
+            let waitAfterPulse = isCenter ? (rippleDelay + pulseDuration + pauseBetweenRipples) : (pulseDuration + pauseBetweenRipples - rippleDelay)
 
-            // Stagger each dot's start
-            let delay = SKAction.wait(forDuration: Double(i) * dotCycle)
-            dot.run(SKAction.sequence([delay, loop]))
+            let rippleCycle = SKAction.sequence([
+                SKAction.wait(forDuration: startDelay),
+                pulse,
+                SKAction.wait(forDuration: waitAfterPulse)
+            ])
+            let loop = SKAction.repeatForever(rippleCycle)
+
+            dot.run(loop)
         }
     }
 
