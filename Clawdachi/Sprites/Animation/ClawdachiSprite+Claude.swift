@@ -687,15 +687,18 @@ extension ClawdachiSprite {
     /// Add three animated thinking dots inside the cloud
     private func addThinkingDots(to cloud: SKSpriteNode) {
         let dotSize: CGFloat = 0.9
-        let spacing: CGFloat = 2.5
-        let dotY: CGFloat = -0.5  // Slightly below center for wave room
+        let spacing: CGFloat = 1.8
+        let dotY: CGFloat = 0  // Center of cloud
 
         // Match cloud outline color (dark blue-gray)
         let dotColor = NSColor(red: 50/255, green: 55/255, blue: 70/255, alpha: 1.0)
 
-        // Wave timing - total cycle duration and phase offset between dots
-        let cycleDuration: TimeInterval = 1.2
-        let phaseOffset: TimeInterval = cycleDuration / 3.0  // Even spacing through cycle
+        // Timing for rotating appearance
+        let fadeInDuration: TimeInterval = 0.15
+        let visibleDuration: TimeInterval = 0.3
+        let fadeOutDuration: TimeInterval = 0.15
+        let dotCycle = fadeInDuration + visibleDuration + fadeOutDuration  // Time each dot is active
+        let totalCycle = dotCycle * 3  // Full cycle through all dots
 
         for i in 0..<3 {
             let dot = SKShapeNode(rectOf: CGSize(width: dotSize, height: dotSize))
@@ -703,20 +706,20 @@ extension ClawdachiSprite {
             dot.strokeColor = .clear
             dot.position = CGPoint(x: CGFloat(i - 1) * spacing, y: dotY)
             dot.zPosition = 1
+            dot.alpha = 0  // Start invisible
             cloud.addChild(dot)
 
-            // Smooth wave animation - continuous sinusoidal motion
-            let halfCycle = cycleDuration / 2.0
-            let moveUp = SKAction.moveBy(x: 0, y: 2.0, duration: halfCycle)
-            let moveDown = SKAction.moveBy(x: 0, y: -2.0, duration: halfCycle)
-            moveUp.timingMode = .easeInEaseOut
-            moveDown.timingMode = .easeInEaseOut
+            // Rotating appearance - each dot fades in, stays, fades out
+            let fadeIn = SKAction.fadeIn(withDuration: fadeInDuration)
+            let stay = SKAction.wait(forDuration: visibleDuration)
+            let fadeOut = SKAction.fadeOut(withDuration: fadeOutDuration)
+            let waitForOthers = SKAction.wait(forDuration: totalCycle - dotCycle)
 
-            let wave = SKAction.sequence([moveUp, moveDown])
-            let loop = SKAction.repeatForever(wave)
+            let appear = SKAction.sequence([fadeIn, stay, fadeOut, waitForOthers])
+            let loop = SKAction.repeatForever(appear)
 
-            // Stagger each dot's start for wave effect
-            let delay = SKAction.wait(forDuration: Double(i) * phaseOffset)
+            // Stagger each dot's start
+            let delay = SKAction.wait(forDuration: Double(i) * dotCycle)
             dot.run(SKAction.sequence([delay, loop]))
         }
     }
