@@ -24,6 +24,9 @@ It's a small piece of joy that makes your desktop feel a little more alive.
   - Cigarette shrinks with each puff
   - Subtle tip smoke wisps
 - **Eye tracking:** Eyes follow your mouse cursor
+  - Dead zone: 15 points (eyes stay centered when mouse is close)
+  - Smooth delta-time interpolation
+  - Integrates with breathing bob animation
 - **Looking around:** Eyes wander curiously when idle
 
 ### Music-Reactive Dancing
@@ -40,7 +43,9 @@ It's a small piece of joy that makes your desktop feel a little more alive.
 - **Thinking animation:** When Claude Code is working:
   - Focused eyes: `> <` expression with occasional blinks
   - Gentle head bob
-  - Orange dots float upward and pop at the top
+  - Floating math symbols (`+`, `−`, `×`, `=`, `%`, `?`, `!`, `*`, `#`, `&`, `<`, `>`, `~`) rise in fountain arcs
+  - Eyes occasionally glance upward toward symbols
+  - Arms tilt in pondering pose (3-5s interval)
   - Chat bubble: "hmm, let me think...", "on it!", "brb coding...", etc.
 - **Planning animation:** When Claude is in plan mode (designing implementation):
   - Focused eyes: `> <` with occasional blinks
@@ -63,7 +68,7 @@ It's a small piece of joy that makes your desktop feel a little more alive.
 
 ### Chat Bubbles
 - **RPG-style message system:** Stacking speech bubbles beside sprite
-- **Positioning:** Appears at mouth level, to the right of sprite
+- **Positioning:** Appears above sprite head, centered horizontally
 - **Pixel-art styling:** White fill, black outline, gray drop shadow
 - **Triangular tail:** Points LEFT toward sprite from left edge of bubble
 - **Always on top:** Window level above sprite for visibility
@@ -77,7 +82,7 @@ It's a small piece of joy that makes your desktop feel a little more alive.
   - Hollow O shape for open mouth
 - **Animations:** Pop-in with overshoot, fade-out on dismiss
 - **Dismissal:** Click any bubble to dismiss, or auto-dismiss after 5 seconds
-- **Font:** Silkscreen pixel font (12pt) for clean retro look
+- **Font:** Silkscreen pixel font (13pt) for clean retro look
 
 ### Interactions
 - **Click:** Triggers random reactions (wave, bounce, pixel heart)
@@ -88,6 +93,11 @@ It's a small piece of joy that makes your desktop feel a little more alive.
   - Sleep Mode / Wake Up
   - Test Chat Bubble
   - Quit
+
+### Sound Notifications
+- **Question sound:** Plays when Claude is waiting for user input
+- **Complete sound:** Plays when Claude session ends
+- **Managed by:** SoundManager.swift
 
 ### Other
 - **Sleep mode:** Closes eyes, spawns floating Z's
@@ -138,46 +148,65 @@ All floating effects feature consistent styling:
 ```
 Clawdachi/
 ├── App/
-│   └── AppDelegate.swift           # Window setup, keyboard shortcuts
-├── ClawdachiApp.swift              # App entry point
+│   └── AppDelegate.swift              # Window setup, keyboard shortcuts
+├── ClawdachiApp.swift                 # App entry point
 ├── Recording/
-│   ├── AnimationRecorder.swift     # GIF frame capture
-│   └── GIFExporter.swift           # GIF file creation
+│   ├── AnimationRecorder.swift        # GIF frame capture
+│   └── GIFExporter.swift              # GIF file creation
 ├── Resources/
-│   ├── claude-status.sh            # Hook script (tracks thinking, planning, waiting)
-│   └── Fonts/                      # Custom pixel fonts (Silkscreen, etc.)
+│   ├── claude-status.sh               # Hook script (tracks thinking, planning, waiting)
+│   ├── Fonts/
+│   │   ├── Silkscreen-Regular.ttf     # Primary pixel font
+│   │   ├── Silkscreen-Bold.ttf        # Bold variant
+│   │   ├── PressStart2P-Regular.ttf   # Alternative pixel font
+│   │   └── VT323-Regular.ttf          # Retro terminal font
+│   └── Sounds/
+│       ├── Complete_Notification.wav  # Session completion sound
+│       └── Question_Notification.wav  # Waiting for input sound
 ├── Services/
-│   ├── ClaudeIntegrationSetup.swift # Auto-setup hooks on first launch
-│   ├── ClaudeSessionMonitor.swift   # Claude Code status via file polling
-│   └── MusicPlaybackMonitor.swift   # Spotify/Apple Music detection via AppleScript
+│   ├── AppleScriptExecutor.swift      # AppleScript command execution utility
+│   ├── ClaudeIntegrationSetup.swift   # Auto-setup hooks on first launch
+│   ├── ClaudeLauncher.swift           # Claude Code process launching
+│   ├── ClaudeSessionMonitor.swift     # Claude Code status via file polling
+│   ├── ClaudeStatusHandler.swift      # Claude status change processing
+│   ├── MusicPlaybackMonitor.swift     # Spotify/Apple Music detection via AppleScript
+│   ├── PollingService.swift           # Shared polling infrastructure
+│   ├── SoundManager.swift             # Sound notification playback
+│   └── TerminalFocusMonitor.swift     # Terminal/app focus tracking
 ├── UI/
-│   ├── ChatBubbleManager.swift     # Manages stacking bubble queue (max 4)
-│   ├── ChatBubbleWindow.swift      # Individual bubble NSWindow
-│   ├── ChatBubbleView.swift        # Custom NSView for bubble rendering
-│   ├── ChatBubbleTextures.swift    # Pixel-art bubble image generation
-│   └── PixelFontLoader.swift       # Custom font loading and caching
+│   ├── ChatBubbleManager.swift        # Manages stacking bubble queue (max 4)
+│   ├── ChatBubbleWindow.swift         # Individual bubble NSWindow
+│   ├── ChatBubbleView.swift           # Custom NSView for bubble rendering
+│   ├── ChatBubbleTextures.swift       # Pixel-art bubble image generation
+│   ├── DebugMenuController.swift      # Debug menu controls
+│   └── PixelFontLoader.swift          # Custom font loading and caching
 └── Sprites/
     ├── Animation/
-    │   ├── ClawdachiSprite+Claude.swift     # Claude Code thinking/planning animations
-    │   ├── ClawdachiSprite+Dancing.swift    # Music-reactive dance animations
-    │   ├── ClawdachiSprite+Drag.swift       # Drag interaction
-    │   ├── ClawdachiSprite+Idle.swift       # Breathing, blinking, whistling
-    │   ├── ClawdachiSprite+Interaction.swift # Click reactions
-    │   ├── ClawdachiSprite+Sleep.swift      # Sleep mode
-    │   ├── ClawdachiSprite+Smoking.swift    # Smoking idle animation
-    │   └── ClawdachiSprite+Speaking.swift   # Speaking mouth animation
+    │   ├── AnimationHelpers.swift             # Animation utility functions
+    │   ├── ClawdachiSprite+Claude.swift       # Claude Code thinking/planning animations
+    │   ├── ClawdachiSprite+Dancing.swift      # Music-reactive dance animations
+    │   ├── ClawdachiSprite+Drag.swift         # Drag interaction
+    │   ├── ClawdachiSprite+EyeTracking.swift  # Mouse tracking for eyes
+    │   ├── ClawdachiSprite+Idle.swift         # Breathing, blinking, whistling
+    │   ├── ClawdachiSprite+Interaction.swift  # Click reactions
+    │   ├── ClawdachiSprite+Sleep.swift        # Sleep mode
+    │   ├── ClawdachiSprite+Smoking.swift      # Smoking idle animation
+    │   └── ClawdachiSprite+Speaking.swift     # Speaking mouth animation
     ├── Constants/
-    │   ├── AnimationTimings.swift    # All timing values
-    │   ├── ChatBubbleConstants.swift # Chat bubble sizing, colors, timing
-    │   └── SpritePositions.swift     # Position and z-order constants
+    │   ├── AnimationKeys.swift        # Animation action key constants
+    │   ├── AnimationTimings.swift     # All timing values
+    │   ├── ChatBubbleConstants.swift  # Chat bubble sizing, colors, timing
+    │   └── SpritePositions.swift      # Position and z-order constants
     ├── Effects/
-    │   └── ParticleSpawner.swift   # Music notes, hearts, sweat drops, Z's
-    ├── ClawdachiBodySprites.swift  # Body texture generation
-    ├── ClawdachiFaceSprites.swift  # Face/effect texture generation
-    ├── ClawdachiPalette.swift      # Color definitions
-    ├── ClawdachiScene.swift        # SKScene, input handling, context menu
-    ├── ClawdachiSprite.swift       # Main sprite node, setup
-    └── PixelArtGenerator.swift     # Pixel array → SKTexture utility
+    │   └── ParticleSpawner.swift      # Music notes, hearts, sweat drops, Z's
+    ├── ClawdachiBodySprites.swift     # Body texture generation
+    ├── ClawdachiFaceSprites.swift     # Face/effect texture generation
+    ├── ClawdachiMessages.swift        # Chat bubble message definitions
+    ├── ClawdachiPalette.swift         # Color definitions
+    ├── ClawdachiScene.swift           # SKScene, input handling, context menu
+    ├── ClawdachiSprite.swift          # Main sprite node, setup
+    ├── PixelArtGenerator.swift        # Pixel array → SKTexture utility
+    └── SpriteState.swift              # State machine (SpriteStateManager)
 ```
 
 ---
@@ -194,7 +223,8 @@ All idle animations run continuously and independently:
 ### Animation Timings (see AnimationTimings.swift, ChatBubbleConstants.swift)
 - Breathing cycle: 3.0s
 - Blink interval: 2.5-6.0s
-- Whistle/Smoke cycle: Alternating every 20s (whistle at 20s, smoke at 40s, repeat)
+- Whistle interval: 120-180s (random)
+- Smoking interval: 120-180s (random)
 - Smoking duration: 18s
 - Smoking puff interval: 3.0s
 - Look around interval: 5-12s
@@ -205,7 +235,7 @@ All idle animations run continuously and independently:
 - Claude thinking blink: 4-7s
 - Claude planning spark spawn: 0.15-0.35s
 - Claude planning spark lifetime: ~0.25s
-- Chat bubble pop-in: 0.15s (with 1.1x overshoot)
+- Chat bubble pop-in: 0.15s + 0.075s settle (with 1.1x overshoot)
 - Chat bubble fade-out: 0.2s
 - Chat bubble auto-dismiss: 5.0s
 - Chat bubble stack slide: 0.25s
@@ -217,7 +247,7 @@ Reusable spawner for floating effects with object pooling:
 - Hearts (click reaction)
 - Sleep Z's (sleep mode)
 - Sweat drops (dragging)
-- Thinking dots (Claude working) - orange gradient
+- Math symbols (Claude thinking) - orange gradient fountain
 - Lightbulb sparks (Claude planning) - yellow/white
 - Smoke particles (smoking animation)
 
@@ -235,7 +265,7 @@ Separate floating NSWindow system (not SpriteKit) for text rendering:
 - **Tail position:** Points LEFT from left edge of bubble toward sprite
 - **Z-order:** Window level above sprite's floating level
 - **Caching:** NSCache for bubble images (12 entries), font caching, window pooling
-- **Positioning:** At mouth level, right of sprite center (horizontal offset 42px)
+- **Positioning:** Above sprite head, centered horizontally
 
 API:
 ```swift
@@ -288,4 +318,3 @@ ChatBubbleWindow.dismiss(animated: true)
 - Companion pets
 - Chat bubble typing animation (character by character)
 - Different bubble styles/colors
-- Sound effects for interactions
