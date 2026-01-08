@@ -1018,12 +1018,12 @@ class ClawdachiFaceSprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 4, height: 4)
     }
 
-    // MARK: - Thinking Orb Textures (Orange floating dots)
+    // MARK: - Thinking Orb Textures (White floating dots)
 
-    /// Orange color palette for thinking orbs (matches sprite palette)
-    private static let orbHighlight = PixelColor(r: 255, g: 187, b: 119)  // #FFBB77
-    private static let orbMain = PixelColor(r: 255, g: 153, b: 51)        // #FF9933
-    private static let orbShadow = PixelColor(r: 204, g: 102, b: 0)       // #CC6600
+    /// White color palette for thinking orbs
+    private static let orbHighlight = PixelColor(r: 255, g: 255, b: 255)  // #FFFFFF
+    private static let orbMain = PixelColor(r: 240, g: 242, b: 248)       // #F0F2F8
+    private static let orbShadow = PixelColor(r: 200, g: 205, b: 215)     // #C8CDD7
 
     /// Generates a tiny thinking orb (2x2 pixels)
     static func generateThinkingOrbTiny() -> SKTexture {

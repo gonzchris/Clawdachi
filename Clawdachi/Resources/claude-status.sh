@@ -58,6 +58,19 @@ case "$EVENT_TYPE" in
   "session_start")
     # Clear any stale plan mode state on new session
     rm -f "$PLAN_MODE_FILE"
+    # Clean up any old session files from the same TTY (handles crashed/killed sessions)
+    if [ -n "$TTY" ]; then
+      for f in "$SESSIONS_DIR"/*.json; do
+        [ -f "$f" ] || continue
+        OLD_TTY=$(python3 -c "import sys, json; print(json.load(open('$f')).get('tty', ''))" 2>/dev/null || echo "")
+        if [ "$OLD_TTY" = "$TTY" ] && [ "$(basename "$f" .json)" != "$SESSION_ID" ]; then
+          rm -f "$f"
+          # Also clean up any associated plan mode file
+          OLD_ID=$(basename "$f" .json)
+          rm -f "$PLAN_MODE_DIR/${OLD_ID}.planmode"
+        fi
+      done
+    fi
     # Session starts idle - waiting for user's first prompt
     STATUS="idle"
     ;;

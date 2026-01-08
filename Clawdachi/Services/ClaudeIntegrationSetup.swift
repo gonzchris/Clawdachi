@@ -13,7 +13,7 @@ class ClaudeIntegrationSetup {
     // MARK: - Constants
 
     private static let setupVersionKey = "clawdachi.claude.setupVersion"
-    private static let currentSetupVersion = 3  // Increment to force re-setup on updates
+    private static let currentSetupVersion = 4  // Increment to force re-setup on updates
 
     private static let hookScriptName = "claude-status.sh"
     private static let clawdachiDir = ".clawdachi"
