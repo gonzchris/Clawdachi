@@ -61,7 +61,7 @@ extension ClawdachiSprite {
     // MARK: - Body Sway (side to side lean)
 
     private func startBodySway() {
-        let swayAngle: CGFloat = 0.06  // Subtle rotation
+        let swayAngle = DanceConstants.swayAngle
         let swayDuration = AnimationTimings.danceSwayDuration
 
         let leanLeft = SKAction.rotate(toAngle: swayAngle, duration: swayDuration / 2)
@@ -76,7 +76,7 @@ extension ClawdachiSprite {
     // MARK: - Arm Wave (alternating up/down like "raise the roof")
 
     private func startArmWave() {
-        let waveAngle: CGFloat = 0.5  // More pronounced than idle
+        let waveAngle = DanceConstants.armWaveAngle
         let waveDuration = AnimationTimings.danceSwayDuration / 2
 
         // Left arm - starts up
@@ -99,7 +99,7 @@ extension ClawdachiSprite {
     // MARK: - Leg Tap (alternating little kicks)
 
     private func startLegTap() {
-        let tapAngle: CGFloat = 0.2
+        let tapAngle = DanceConstants.legTapAngle
         let tapDuration = AnimationTimings.danceSwayDuration / 2
 
         // Left legs tap
@@ -149,7 +149,7 @@ extension ClawdachiSprite {
         note.position = CGPoint(x: fromLeft ? -8 : 8, y: 10)
         note.alpha = 0
         note.zPosition = SpriteZPositions.effects
-        note.setScale(0.6)
+        note.setScale(DanceConstants.noteInitialScale)
         addChild(note)
 
         let popIn = SKAction.group([
@@ -158,12 +158,12 @@ extension ClawdachiSprite {
         ])
 
         let floatX: CGFloat = fromLeft ? -3 : 3
-        let float = SKAction.moveBy(x: floatX, y: 12, duration: 0.8)
+        let float = SKAction.moveBy(x: floatX, y: DanceConstants.noteFloatHeight, duration: 0.8)
         float.timingMode = .easeOut
 
         let wobble = SKAction.sequence([
-            SKAction.rotate(byAngle: 0.3, duration: 0.4),
-            SKAction.rotate(byAngle: -0.3, duration: 0.4)
+            SKAction.rotate(byAngle: DanceConstants.noteRotationAngle, duration: 0.4),
+            SKAction.rotate(byAngle: -DanceConstants.noteRotationAngle, duration: 0.4)
         ])
 
         let fadeOut = SKAction.sequence([

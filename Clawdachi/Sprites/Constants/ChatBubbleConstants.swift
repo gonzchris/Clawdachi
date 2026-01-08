@@ -93,11 +93,14 @@ enum ChatBubbleConstants {
 
     // MARK: - Positioning
 
-    /// Vertical offset from sprite center (in screen points)
+    /// Default vertical offset from sprite center (in screen points)
     /// Sprite is at (24, 24) in scene coords * 6x scale = (144, 144) in window
-    /// Bubble appears at mouth level
-    static let verticalOffsetFromSpriteCenter: CGFloat = -30
+    /// Text appears above head, below question mark
+    static let verticalOffsetFromSpriteCenter: CGFloat = 52
+
+    /// Vertical offset for celebration messages (above party hat)
+    static let celebrationVerticalOffset: CGFloat = 105
 
     /// Horizontal offset (positive = right of sprite center)
-    static let horizontalOffset: CGFloat = 42
+    static let horizontalOffset: CGFloat = 0
 }

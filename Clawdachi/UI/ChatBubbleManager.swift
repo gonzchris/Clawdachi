@@ -37,6 +37,9 @@ class ChatBubbleManager {
     /// Reference to sprite window for positioning
     private weak var spriteWindow: NSWindow?
 
+    /// Current vertical offset override (nil = use default)
+    private var currentVerticalOffset: CGFloat?
+
     // MARK: - Public API
 
     /// Show a new chat message
@@ -44,8 +47,10 @@ class ChatBubbleManager {
     ///   - message: Text to display
     ///   - spriteWindow: The sprite window to position relative to
     ///   - duration: Auto-dismiss duration (nil = no auto-dismiss)
-    func showMessage(_ message: String, relativeTo spriteWindow: NSWindow, duration: TimeInterval? = C.defaultAutoDismiss) {
+    ///   - verticalOffset: Custom vertical offset (nil = use default)
+    func showMessage(_ message: String, relativeTo spriteWindow: NSWindow, duration: TimeInterval? = C.defaultAutoDismiss, verticalOffset: CGFloat? = nil) {
         self.spriteWindow = spriteWindow
+        self.currentVerticalOffset = verticalOffset
 
         // Remove oldest if at max capacity
         if bubbles.count >= maxBubbles {
@@ -127,21 +132,21 @@ class ChatBubbleManager {
     /// Standard height for stacking calculations (bubble without tail)
     private let standardBubbleHeight: CGFloat = 46
 
-    /// Calculate X position for bubbles (tail points left toward sprite)
-    /// - Parameter hasTail: Whether the bubble has a tail (affects alignment)
-    private func calculateBubbleX(hasTail: Bool) -> CGFloat {
+    /// Calculate X position for bubbles (centered above sprite)
+    /// - Parameter bubble: The bubble window to position
+    private func calculateBubbleX(for bubble: ChatBubbleWindow) -> CGFloat {
         guard let parent = spriteWindow else { return 0 }
         let spriteWindowCenter = parent.frame.origin.x + parent.frame.width / 2
-        // Position so tail tip is near sprite, bubble body extends to the right
-        // Bubbles without tail need extra offset to align body left edge
-        let tailOffset = hasTail ? 0 : C.tailWidth
-        return spriteWindowCenter + C.horizontalOffset + tailOffset
+        // Center the bubble horizontally above the sprite
+        let bubbleWidth = bubble.frame.width
+        return spriteWindowCenter + C.horizontalOffset - bubbleWidth / 2
     }
 
     /// Calculate Y position for a given stack index
     private func calculateBubbleY(stackIndex: Int) -> CGFloat {
         guard let parent = spriteWindow else { return 0 }
-        let baseY = parent.frame.origin.y + 144 + C.verticalOffsetFromSpriteCenter
+        let verticalOffset = currentVerticalOffset ?? C.verticalOffsetFromSpriteCenter
+        let baseY = parent.frame.origin.y + 144 + verticalOffset
 
         if stackIndex == 0 {
             // Bottom bubble sits at base
@@ -156,7 +161,7 @@ class ChatBubbleManager {
 
     /// Position a bubble at the given stack index (0 = bottom/newest)
     private func positionBubble(_ bubble: ChatBubbleWindow, at stackIndex: Int) {
-        let bubbleX = calculateBubbleX(hasTail: bubble.hasTail)
+        let bubbleX = calculateBubbleX(for: bubble)
         let bubbleY = calculateBubbleY(stackIndex: stackIndex)
         bubble.setFrameOrigin(CGPoint(x: bubbleX, y: bubbleY))
     }
@@ -191,7 +196,7 @@ class ChatBubbleManager {
 
     /// Animate a bubble to a new stack position
     private func animateBubbleToPosition(_ bubble: ChatBubbleWindow, stackIndex: Int) {
-        let bubbleX = calculateBubbleX(hasTail: bubble.hasTail)
+        let bubbleX = calculateBubbleX(for: bubble)
         let targetY = calculateBubbleY(stackIndex: stackIndex)
         let targetOrigin = CGPoint(x: bubbleX, y: targetY)
 

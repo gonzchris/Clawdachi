@@ -413,26 +413,22 @@ class ClawdachiFaceSprites {
 
     // MARK: - Lightbulb Texture
 
+    /// Lightbulb color palette
+    private enum LightbulbColors {
+        static let outline = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)        // #222222
+        static let glow = NSColor(red: 255/255, green: 255/255, blue: 220/255, alpha: 1.0)       // #FFFFDC
+        static let highlight = NSColor(red: 255/255, green: 250/255, blue: 180/255, alpha: 1.0)  // #FFFAB4
+        static let main = NSColor(red: 255/255, green: 230/255, blue: 100/255, alpha: 1.0)       // #FFE664
+        static let shadow = NSColor(red: 220/255, green: 180/255, blue: 50/255, alpha: 1.0)      // #DCB432
+        static let filament = NSColor(red: 255/255, green: 200/255, blue: 50/255, alpha: 1.0)    // #FFC832
+        static let base = NSColor(red: 140/255, green: 140/255, blue: 140/255, alpha: 1.0)       // #8C8C8C
+        static let baseDark = NSColor(red: 100/255, green: 100/255, blue: 100/255, alpha: 1.0)   // #646464
+    }
+
     /// Generates a pixel-art lightbulb texture with yellow glow, filament, and screw base
     /// Size: 7x10 pixels - detailed bulb shape for "eureka" moment
     static func generateLightbulbTexture() -> SKTexture {
-        let pixelSize: CGFloat = 4
-        let width = 7
-        let height = 10
-        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
-
-        // Lightbulb colors
-        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)       // #222222
-        let glowColor = NSColor(red: 255/255, green: 255/255, blue: 220/255, alpha: 1.0)      // #FFFFDC bright glow
-        let highlightColor = NSColor(red: 255/255, green: 250/255, blue: 180/255, alpha: 1.0) // #FFFAB4
-        let mainColor = NSColor(red: 255/255, green: 230/255, blue: 100/255, alpha: 1.0)      // #FFE664 yellow
-        let shadowColor = NSColor(red: 220/255, green: 180/255, blue: 50/255, alpha: 1.0)     // #DCB432 golden
-        let filamentColor = NSColor(red: 255/255, green: 200/255, blue: 50/255, alpha: 1.0)   // #FFC832 bright filament
-        let baseColor = NSColor(red: 140/255, green: 140/255, blue: 140/255, alpha: 1.0)      // #8C8C8C gray base
-        let baseDarkColor = NSColor(red: 100/255, green: 100/255, blue: 100/255, alpha: 1.0)  // #646464 dark base
-
-        // Lightbulb pattern (1=outline, 2=glow, 3=highlight, 4=main, 5=shadow, 6=filament, 7=base, 8=baseDark)
-        // Detailed bulb with visible filament and screw base
+        // 1=outline, 2=glow, 3=highlight, 4=main, 5=shadow, 6=filament, 7=base, 8=baseDark
         let pattern: [[Int]] = [
             [0, 0, 1, 1, 1, 0, 0],  // top curve
             [0, 1, 2, 2, 3, 1, 0],  // upper bulb glow
@@ -446,67 +442,31 @@ class ClawdachiFaceSprites {
             [0, 0, 0, 1, 0, 0, 0],  // contact point
         ]
 
-        let image = NSImage(size: size, flipped: true) { rect in
-            NSColor.clear.setFill()
-            rect.fill()
-
-            for row in 0..<height {
-                for col in 0..<width {
-                    let value = pattern[row][col]
-                    guard value > 0 else { continue }
-
-                    let color: NSColor
-                    switch value {
-                    case 1: color = outlineColor
-                    case 2: color = glowColor
-                    case 3: color = highlightColor
-                    case 4: color = mainColor
-                    case 5: color = shadowColor
-                    case 6: color = filamentColor
-                    case 7: color = baseColor
-                    case 8: color = baseDarkColor
-                    default: continue
-                    }
-
-                    color.setFill()
-                    let pixelRect = CGRect(
-                        x: CGFloat(col) * pixelSize,
-                        y: CGFloat(row) * pixelSize,
-                        width: pixelSize,
-                        height: pixelSize
-                    )
-                    pixelRect.fill()
-                }
-            }
-
-            return true
-        }
-
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            fatalError("Failed to create lightbulb image")
-        }
-
-        let texture = SKTexture(cgImage: cgImage)
-        texture.filteringMode = .nearest
-        return texture
+        return renderPixelPattern(pattern, colorMap: [
+            1: LightbulbColors.outline,
+            2: LightbulbColors.glow,
+            3: LightbulbColors.highlight,
+            4: LightbulbColors.main,
+            5: LightbulbColors.shadow,
+            6: LightbulbColors.filament,
+            7: LightbulbColors.base,
+            8: LightbulbColors.baseDark
+        ], pixelSize: 4)
     }
 
     // MARK: - Question Mark Texture
 
+    /// Question mark color palette
+    private enum QuestionMarkColors {
+        static let outline = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)   // #222222
+        static let white = NSColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 1.0)  // #FFFFFF
+        static let gray = NSColor(red: 200/255, green: 200/255, blue: 200/255, alpha: 1.0)   // #C8C8C8
+    }
+
     /// Generates a pixel-art question mark texture for "waiting for input" state
     /// Size: 5x8 pixels - white with dark outline
     static func generateQuestionMarkTexture() -> SKTexture {
-        let pixelSize: CGFloat = 4
-        let width = 5
-        let height = 8
-        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
-
-        // Question mark colors - white with dark outline
-        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)       // #222222
-        let whiteColor = NSColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 1.0)     // #FFFFFF
-        let grayColor = NSColor(red: 200/255, green: 200/255, blue: 200/255, alpha: 1.0)      // #C8C8C8 light shadow
-
-        // Question mark pattern (1=outline, 2=white, 3=gray shadow)
+        // 1=outline, 2=white, 3=gray shadow
         let pattern: [[Int]] = [
             [0, 1, 1, 1, 0],  // top curve
             [1, 2, 2, 2, 1],  // upper bulb
@@ -518,44 +478,11 @@ class ClawdachiFaceSprites {
             [0, 1, 2, 1, 0],  // dot
         ]
 
-        let image = NSImage(size: size, flipped: true) { rect in
-            NSColor.clear.setFill()
-            rect.fill()
-
-            for row in 0..<height {
-                for col in 0..<width {
-                    let value = pattern[row][col]
-                    guard value > 0 else { continue }
-
-                    let color: NSColor
-                    switch value {
-                    case 1: color = outlineColor
-                    case 2: color = whiteColor
-                    case 3: color = grayColor
-                    default: continue
-                    }
-
-                    color.setFill()
-                    let pixelRect = CGRect(
-                        x: CGFloat(col) * pixelSize,
-                        y: CGFloat(row) * pixelSize,
-                        width: pixelSize,
-                        height: pixelSize
-                    )
-                    pixelRect.fill()
-                }
-            }
-
-            return true
-        }
-
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            fatalError("Failed to create question mark image")
-        }
-
-        let texture = SKTexture(cgImage: cgImage)
-        texture.filteringMode = .nearest
-        return texture
+        return renderPixelPattern(pattern, colorMap: [
+            1: QuestionMarkColors.outline,
+            2: QuestionMarkColors.white,
+            3: QuestionMarkColors.gray
+        ], pixelSize: 4)
     }
 
     // MARK: - Thinking Dot Textures
@@ -687,21 +614,18 @@ class ClawdachiFaceSprites {
         return texture
     }
 
+    /// Smoke particle color palette
+    private enum SmokeColors {
+        static let outline = NSColor(red: 80/255, green: 80/255, blue: 80/255, alpha: 0.6)    // Dark gray
+        static let light = NSColor(red: 220/255, green: 220/255, blue: 220/255, alpha: 0.8)   // Light gray
+        static let mid = NSColor(red: 180/255, green: 180/255, blue: 180/255, alpha: 0.7)     // Medium gray
+        static let dark = NSColor(red: 140/255, green: 140/255, blue: 140/255, alpha: 0.5)    // Darker gray
+    }
+
     /// Generates a smoke particle texture - wispy cloud shape
     /// Size: 6x6 pixels - irregular cloud with gradient
     static func generateSmokeParticleTexture() -> SKTexture {
-        let pixelSize: CGFloat = 3
-        let width = 6
-        let height = 6
-        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
-
-        // Smoke colors - light gray gradient
-        let outlineColor = NSColor(red: 80/255, green: 80/255, blue: 80/255, alpha: 0.6)      // Dark gray outline
-        let lightSmoke = NSColor(red: 220/255, green: 220/255, blue: 220/255, alpha: 0.8)    // Light gray
-        let midSmoke = NSColor(red: 180/255, green: 180/255, blue: 180/255, alpha: 0.7)      // Medium gray
-        let darkSmoke = NSColor(red: 140/255, green: 140/255, blue: 140/255, alpha: 0.5)     // Darker gray
-
-        // Wispy cloud pattern (1=outline, 2=light, 3=mid, 4=dark)
+        // 1=outline, 2=light, 3=mid, 4=dark
         let pattern: [[Int]] = [
             [0, 0, 1, 1, 0, 0],
             [0, 1, 2, 2, 1, 0],
@@ -711,66 +635,30 @@ class ClawdachiFaceSprites {
             [0, 0, 1, 1, 0, 0],
         ]
 
-        let image = NSImage(size: size, flipped: true) { rect in
-            NSColor.clear.setFill()
-            rect.fill()
-
-            for row in 0..<height {
-                for col in 0..<width {
-                    let value = pattern[row][col]
-                    guard value > 0 else { continue }
-
-                    let color: NSColor
-                    switch value {
-                    case 1: color = outlineColor
-                    case 2: color = lightSmoke
-                    case 3: color = midSmoke
-                    case 4: color = darkSmoke
-                    default: continue
-                    }
-
-                    color.setFill()
-                    let pixelRect = CGRect(
-                        x: CGFloat(col) * pixelSize,
-                        y: CGFloat(row) * pixelSize,
-                        width: pixelSize,
-                        height: pixelSize
-                    )
-                    pixelRect.fill()
-                }
-            }
-
-            return true
-        }
-
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            fatalError("Failed to create smoke image")
-        }
-
-        let texture = SKTexture(cgImage: cgImage)
-        texture.filteringMode = .nearest
-        return texture
+        return renderPixelPattern(pattern, colorMap: [
+            1: SmokeColors.outline,
+            2: SmokeColors.light,
+            3: SmokeColors.mid,
+            4: SmokeColors.dark
+        ], pixelSize: 3)
     }
 
     // MARK: - Party Celebration Textures
 
+    /// Party hat color palette
+    private enum PartyHatColors {
+        static let outline = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)       // #222222
+        static let purple = NSColor(red: 150/255, green: 80/255, blue: 180/255, alpha: 1.0)     // Purple
+        static let purpleShadow = NSColor(red: 110/255, green: 50/255, blue: 140/255, alpha: 1.0)
+        static let gold = NSColor(red: 255/255, green: 215/255, blue: 80/255, alpha: 1.0)       // Gold
+        static let goldShadow = NSColor(red: 220/255, green: 170/255, blue: 40/255, alpha: 1.0)
+        static let pompom = NSColor(red: 255/255, green: 230/255, blue: 100/255, alpha: 1.0)    // Yellow pompom
+    }
+
     /// Generates a pixel-art party hat texture - striped triangular hat
     /// Size: 7x9 pixels - festive party hat with stripes
     static func generatePartyHatTexture() -> SKTexture {
-        let pixelSize: CGFloat = 4
-        let width = 7
-        let height = 9
-        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
-
-        // Party hat colors - festive purple and gold stripes
-        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)        // #222222
-        let purpleMain = NSColor(red: 150/255, green: 80/255, blue: 180/255, alpha: 1.0)       // Purple
-        let purpleShadow = NSColor(red: 110/255, green: 50/255, blue: 140/255, alpha: 1.0)     // Dark purple
-        let goldMain = NSColor(red: 255/255, green: 215/255, blue: 80/255, alpha: 1.0)         // Gold
-        let goldShadow = NSColor(red: 220/255, green: 170/255, blue: 40/255, alpha: 1.0)       // Dark gold
-        let pompomColor = NSColor(red: 255/255, green: 230/255, blue: 100/255, alpha: 1.0)     // Bright yellow pompom
-
-        // Party hat pattern (1=outline, 2=purple, 3=purpleShadow, 4=gold, 5=goldShadow, 6=pompom)
+        // 1=outline, 2=purple, 3=purpleShadow, 4=gold, 5=goldShadow, 6=pompom
         let pattern: [[Int]] = [
             [0, 0, 0, 6, 0, 0, 0],  // pompom top
             [0, 0, 0, 1, 0, 0, 0],  // tip
@@ -783,175 +671,62 @@ class ClawdachiFaceSprites {
             [1, 1, 1, 1, 1, 1, 1],  // brim outline
         ]
 
-        let image = NSImage(size: size, flipped: true) { rect in
-            NSColor.clear.setFill()
-            rect.fill()
+        return renderPixelPattern(pattern, colorMap: [
+            1: PartyHatColors.outline,
+            2: PartyHatColors.purple,
+            3: PartyHatColors.purpleShadow,
+            4: PartyHatColors.gold,
+            5: PartyHatColors.goldShadow,
+            6: PartyHatColors.pompom
+        ], pixelSize: 4)
+    }
 
-            for row in 0..<height {
-                for col in 0..<width {
-                    let value = pattern[row][col]
-                    guard value > 0 else { continue }
-
-                    let color: NSColor
-                    switch value {
-                    case 1: color = outlineColor
-                    case 2: color = purpleMain
-                    case 3: color = purpleShadow
-                    case 4: color = goldMain
-                    case 5: color = goldShadow
-                    case 6: color = pompomColor
-                    default: continue
-                    }
-
-                    color.setFill()
-                    let pixelRect = CGRect(
-                        x: CGFloat(col) * pixelSize,
-                        y: CGFloat(row) * pixelSize,
-                        width: pixelSize,
-                        height: pixelSize
-                    )
-                    pixelRect.fill()
-                }
-            }
-
-            return true
-        }
-
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            fatalError("Failed to create party hat image")
-        }
-
-        let texture = SKTexture(cgImage: cgImage)
-        texture.filteringMode = .nearest
-        return texture
+    /// Party blower color palette
+    private enum PartyBlowerColors {
+        static let outline = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)     // #222222
+        static let red = NSColor(red: 230/255, green: 70/255, blue: 70/255, alpha: 1.0)        // Red
+        static let redShadow = NSColor(red: 180/255, green: 40/255, blue: 40/255, alpha: 1.0)  // Dark red
+        static let yellow = NSColor(red: 255/255, green: 220/255, blue: 80/255, alpha: 1.0)    // Yellow
+        static let yellowShadow = NSColor(red: 220/255, green: 180/255, blue: 40/255, alpha: 1.0)
+        static let mouthpiece = NSColor(red: 200/255, green: 180/255, blue: 140/255, alpha: 1.0)
     }
 
     /// Generates a party blower texture in retracted state - coiled at mouth
     /// Size: 4x3 pixels - compact coiled blower
     static func generatePartyBlowerRetractedTexture() -> SKTexture {
-        let pixelSize: CGFloat = 4
-        let width = 4
-        let height = 3
-        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
-
-        // Party blower colors
-        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)       // #222222
-        let redMain = NSColor(red: 230/255, green: 70/255, blue: 70/255, alpha: 1.0)           // Red
-        let redShadow = NSColor(red: 180/255, green: 40/255, blue: 40/255, alpha: 1.0)         // Dark red
-        let mouthpiece = NSColor(red: 200/255, green: 180/255, blue: 140/255, alpha: 1.0)      // Tan mouthpiece
-
-        // Retracted blower pattern (1=outline, 2=red, 3=redShadow, 4=mouthpiece)
+        // 1=outline, 2=red, 3=redShadow, 4=mouthpiece
         let pattern: [[Int]] = [
             [0, 1, 2, 1],  // coil top
             [1, 2, 3, 1],  // coil body
             [4, 1, 1, 0],  // mouthpiece
         ]
 
-        let image = NSImage(size: size, flipped: true) { rect in
-            NSColor.clear.setFill()
-            rect.fill()
-
-            for row in 0..<height {
-                for col in 0..<width {
-                    let value = pattern[row][col]
-                    guard value > 0 else { continue }
-
-                    let color: NSColor
-                    switch value {
-                    case 1: color = outlineColor
-                    case 2: color = redMain
-                    case 3: color = redShadow
-                    case 4: color = mouthpiece
-                    default: continue
-                    }
-
-                    color.setFill()
-                    let pixelRect = CGRect(
-                        x: CGFloat(col) * pixelSize,
-                        y: CGFloat(row) * pixelSize,
-                        width: pixelSize,
-                        height: pixelSize
-                    )
-                    pixelRect.fill()
-                }
-            }
-
-            return true
-        }
-
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            fatalError("Failed to create party blower retracted image")
-        }
-
-        let texture = SKTexture(cgImage: cgImage)
-        texture.filteringMode = .nearest
-        return texture
+        return renderPixelPattern(pattern, colorMap: [
+            1: PartyBlowerColors.outline,
+            2: PartyBlowerColors.red,
+            3: PartyBlowerColors.redShadow,
+            4: PartyBlowerColors.mouthpiece
+        ], pixelSize: 4)
     }
 
     /// Generates a party blower texture in extended state - unrolled
     /// Size: 10x3 pixels - extended blower with stripes
     static func generatePartyBlowerExtendedTexture() -> SKTexture {
-        let pixelSize: CGFloat = 4
-        let width = 10
-        let height = 3
-        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
-
-        // Party blower colors
-        let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)       // #222222
-        let redMain = NSColor(red: 230/255, green: 70/255, blue: 70/255, alpha: 1.0)           // Red
-        let redShadow = NSColor(red: 180/255, green: 40/255, blue: 40/255, alpha: 1.0)         // Dark red
-        let yellowMain = NSColor(red: 255/255, green: 220/255, blue: 80/255, alpha: 1.0)       // Yellow
-        let yellowShadow = NSColor(red: 220/255, green: 180/255, blue: 40/255, alpha: 1.0)     // Dark yellow
-        let mouthpiece = NSColor(red: 200/255, green: 180/255, blue: 140/255, alpha: 1.0)      // Tan mouthpiece
-
-        // Extended blower pattern (1=outline, 2=red, 3=redShadow, 4=yellow, 5=yellowShadow, 6=mouthpiece)
+        // 1=outline, 2=red, 3=redShadow, 4=yellow, 5=yellowShadow, 6=mouthpiece
         let pattern: [[Int]] = [
             [0, 1, 2, 1, 4, 1, 2, 1, 4, 1],  // top with stripes
             [1, 2, 3, 4, 5, 2, 3, 4, 5, 1],  // body with stripes
             [6, 1, 1, 1, 1, 1, 1, 1, 1, 0],  // mouthpiece and bottom
         ]
 
-        let image = NSImage(size: size, flipped: true) { rect in
-            NSColor.clear.setFill()
-            rect.fill()
-
-            for row in 0..<height {
-                for col in 0..<width {
-                    let value = pattern[row][col]
-                    guard value > 0 else { continue }
-
-                    let color: NSColor
-                    switch value {
-                    case 1: color = outlineColor
-                    case 2: color = redMain
-                    case 3: color = redShadow
-                    case 4: color = yellowMain
-                    case 5: color = yellowShadow
-                    case 6: color = mouthpiece
-                    default: continue
-                    }
-
-                    color.setFill()
-                    let pixelRect = CGRect(
-                        x: CGFloat(col) * pixelSize,
-                        y: CGFloat(row) * pixelSize,
-                        width: pixelSize,
-                        height: pixelSize
-                    )
-                    pixelRect.fill()
-                }
-            }
-
-            return true
-        }
-
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            fatalError("Failed to create party blower extended image")
-        }
-
-        let texture = SKTexture(cgImage: cgImage)
-        texture.filteringMode = .nearest
-        return texture
+        return renderPixelPattern(pattern, colorMap: [
+            1: PartyBlowerColors.outline,
+            2: PartyBlowerColors.red,
+            3: PartyBlowerColors.redShadow,
+            4: PartyBlowerColors.yellow,
+            5: PartyBlowerColors.yellowShadow,
+            6: PartyBlowerColors.mouthpiece
+        ], pixelSize: 4)
     }
 
     // MARK: - Speaking Mouth Textures
@@ -1036,18 +811,23 @@ class ClawdachiFaceSprites {
 
     // MARK: - Cloud Textures (Thinking Animation)
 
-    /// Cloud colors used for all clouds
-    private static let cloudOutline = NSColor(red: 50/255, green: 55/255, blue: 70/255, alpha: 1.0)
-    private static let cloudHighlight = NSColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 1.0)
-    private static let cloudMain = NSColor(red: 240/255, green: 242/255, blue: 248/255, alpha: 1.0)
-    private static let cloudShadow = NSColor(red: 180/255, green: 185/255, blue: 200/255, alpha: 1.0)
+    /// Cloud color palette
+    private enum CloudColors {
+        static let outline = NSColor(red: 50/255, green: 55/255, blue: 70/255, alpha: 1.0)
+        static let highlight = NSColor(red: 255/255, green: 255/255, blue: 255/255, alpha: 1.0)
+        static let main = NSColor(red: 240/255, green: 242/255, blue: 248/255, alpha: 1.0)
+        static let shadow = NSColor(red: 180/255, green: 185/255, blue: 200/255, alpha: 1.0)
+
+        static let colorMap: [Int: NSColor] = [
+            1: outline,
+            2: highlight,
+            3: main,
+            4: shadow
+        ]
+    }
 
     /// Large main thought cloud (15x10) - fluffy with bumps
     static func generateMainCloudTexture() -> SKTexture {
-        let pixelSize: CGFloat = 2.0
-        let width = 15
-        let height = 10
-
         // 1=outline, 2=highlight, 3=main, 4=shadow
         let pattern: [[Int]] = [
             [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],  // top bump
@@ -1062,16 +842,11 @@ class ClawdachiFaceSprites {
             [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0],  // bottom
         ]
 
-        return renderCloudPattern(pattern, width: width, height: height, pixelSize: pixelSize)
+        return renderPixelPattern(pattern, colorMap: CloudColors.colorMap, pixelSize: 2.0)
     }
 
     /// Mini cloud variation 1 - bumpy puff (7x5)
     static func generateMiniCloud1() -> SKTexture {
-        let pixelSize: CGFloat = 2.0
-        let width = 7
-        let height = 5
-
-        // 1=outline, 2=highlight, 3=main, 4=shadow
         let pattern: [[Int]] = [
             [0, 1, 1, 1, 1, 1, 0],
             [1, 2, 2, 2, 2, 2, 1],
@@ -1080,15 +855,11 @@ class ClawdachiFaceSprites {
             [0, 1, 1, 1, 1, 1, 0],
         ]
 
-        return renderCloudPattern(pattern, width: width, height: height, pixelSize: pixelSize)
+        return renderPixelPattern(pattern, colorMap: CloudColors.colorMap, pixelSize: 2.0)
     }
 
     /// Mini cloud variation 2 - two bumps (9x5)
     static func generateMiniCloud2() -> SKTexture {
-        let pixelSize: CGFloat = 2.0
-        let width = 9
-        let height = 5
-
         let pattern: [[Int]] = [
             [0, 1, 1, 1, 0, 1, 1, 1, 0],  // two bumps on top
             [1, 2, 2, 2, 1, 2, 2, 2, 1],
@@ -1097,15 +868,11 @@ class ClawdachiFaceSprites {
             [0, 1, 1, 1, 1, 1, 1, 1, 0],
         ]
 
-        return renderCloudPattern(pattern, width: width, height: height, pixelSize: pixelSize)
+        return renderPixelPattern(pattern, colorMap: CloudColors.colorMap, pixelSize: 2.0)
     }
 
     /// Mini cloud variation 3 - small bumpy puff (6x4)
     static func generateMiniCloud3() -> SKTexture {
-        let pixelSize: CGFloat = 2.0
-        let width = 6
-        let height = 4
-
         let pattern: [[Int]] = [
             [0, 1, 1, 1, 1, 0],
             [1, 2, 2, 2, 2, 1],
@@ -1113,65 +880,23 @@ class ClawdachiFaceSprites {
             [0, 1, 1, 1, 1, 0],
         ]
 
-        return renderCloudPattern(pattern, width: width, height: height, pixelSize: pixelSize)
+        return renderPixelPattern(pattern, colorMap: CloudColors.colorMap, pixelSize: 2.0)
     }
 
-    /// Helper to render cloud patterns
-    private static func renderCloudPattern(_ pattern: [[Int]], width: Int, height: Int, pixelSize: CGFloat) -> SKTexture {
-        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
+    /// Thought circle color palette
+    private enum ThoughtCircleColors {
+        static let outline = NSColor(red: 60/255, green: 60/255, blue: 70/255, alpha: 1.0)
+        static let fill = NSColor.white
 
-        let image = NSImage(size: size, flipped: true) { rect in
-            NSColor.clear.setFill()
-            rect.fill()
-
-            for row in 0..<height {
-                for col in 0..<width {
-                    let value = pattern[row][col]
-                    guard value > 0 else { continue }
-
-                    let color: NSColor
-                    switch value {
-                    case 1: color = cloudOutline
-                    case 2: color = cloudHighlight
-                    case 3: color = cloudMain
-                    case 4: color = cloudShadow
-                    default: continue
-                    }
-
-                    color.setFill()
-                    let pixelRect = CGRect(
-                        x: CGFloat(col) * pixelSize,
-                        y: CGFloat(row) * pixelSize,
-                        width: pixelSize,
-                        height: pixelSize
-                    )
-                    pixelRect.fill()
-                }
-            }
-
-            return true
-        }
-
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            fatalError("Failed to create mini cloud image")
-        }
-
-        let texture = SKTexture(cgImage: cgImage)
-        texture.filteringMode = .nearest
-        return texture
+        static let colorMap: [Int: NSColor] = [
+            1: outline,
+            2: fill
+        ]
     }
 
     /// Generates a small trailing circle for thought bubble
     /// Size: 4x4 pixels
     static func generateThoughtCircleSmall() -> SKTexture {
-        let pixelSize: CGFloat = 2.5
-        let width = 4
-        let height = 4
-        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
-
-        let outline = NSColor(red: 60/255, green: 60/255, blue: 70/255, alpha: 1.0)
-        let fill = NSColor.white
-
         let pattern: [[Int]] = [
             [0, 1, 1, 0],
             [1, 2, 2, 1],
@@ -1179,85 +904,19 @@ class ClawdachiFaceSprites {
             [0, 1, 1, 0],
         ]
 
-        let image = NSImage(size: size, flipped: true) { rect in
-            NSColor.clear.setFill()
-            rect.fill()
-
-            for row in 0..<height {
-                for col in 0..<width {
-                    let value = pattern[row][col]
-                    guard value > 0 else { continue }
-
-                    let color = value == 1 ? outline : fill
-                    color.setFill()
-                    let pixelRect = CGRect(
-                        x: CGFloat(col) * pixelSize,
-                        y: CGFloat(row) * pixelSize,
-                        width: pixelSize,
-                        height: pixelSize
-                    )
-                    pixelRect.fill()
-                }
-            }
-            return true
-        }
-
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            fatalError("Failed to create thought circle image")
-        }
-
-        let texture = SKTexture(cgImage: cgImage)
-        texture.filteringMode = .nearest
-        return texture
+        return renderPixelPattern(pattern, colorMap: ThoughtCircleColors.colorMap, pixelSize: 2.5)
     }
 
     /// Generates a tiny trailing circle for thought bubble
     /// Size: 3x3 pixels
     static func generateThoughtCircleTiny() -> SKTexture {
-        let pixelSize: CGFloat = 2.5
-        let width = 3
-        let height = 3
-        let size = CGSize(width: CGFloat(width) * pixelSize, height: CGFloat(height) * pixelSize)
-
-        let outline = NSColor(red: 60/255, green: 60/255, blue: 70/255, alpha: 1.0)
-        let fill = NSColor.white
-
         let pattern: [[Int]] = [
             [0, 1, 0],
             [1, 2, 1],
             [0, 1, 0],
         ]
 
-        let image = NSImage(size: size, flipped: true) { rect in
-            NSColor.clear.setFill()
-            rect.fill()
-
-            for row in 0..<height {
-                for col in 0..<width {
-                    let value = pattern[row][col]
-                    guard value > 0 else { continue }
-
-                    let color = value == 1 ? outline : fill
-                    color.setFill()
-                    let pixelRect = CGRect(
-                        x: CGFloat(col) * pixelSize,
-                        y: CGFloat(row) * pixelSize,
-                        width: pixelSize,
-                        height: pixelSize
-                    )
-                    pixelRect.fill()
-                }
-            }
-            return true
-        }
-
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            fatalError("Failed to create thought circle image")
-        }
-
-        let texture = SKTexture(cgImage: cgImage)
-        texture.filteringMode = .nearest
-        return texture
+        return renderPixelPattern(pattern, colorMap: ThoughtCircleColors.colorMap, pixelSize: 2.5)
     }
 
     // MARK: - Lightning Bolt Textures (Thinking Animation)

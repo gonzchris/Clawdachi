@@ -10,8 +10,6 @@ import AppKit
 /// Custom view that renders outlined text for chat messages
 class ChatBubbleView: NSView {
 
-    private typealias C = ChatBubbleConstants
-
     // MARK: - Properties
 
     private var message: String = ""
@@ -23,10 +21,16 @@ class ChatBubbleView: NSView {
     private let renderScale: CGFloat = 2.0
 
     /// Font size at display scale
-    private let displayFontSize: CGFloat = 18
+    private let displayFontSize: CGFloat = 12
 
     /// Stroke width for black outline
-    private let strokeWidth: CGFloat = 4.0
+    private let strokeWidth: CGFloat = 2.5
+
+    /// Maximum text width
+    private let maxTextWidth: CGFloat = 200
+
+    /// Line spacing for multi-line text
+    private let lineSpacing: CGFloat = 2
 
     // View is flipped (0,0 at top-left) for easier text layout
     override var isFlipped: Bool { true }
@@ -55,11 +59,11 @@ class ChatBubbleView: NSView {
         let font = NSFont.monospacedSystemFont(ofSize: renderFontSize, weight: .bold)
 
         let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = C.lineSpacing * renderScale
+        paragraphStyle.lineSpacing = lineSpacing * renderScale
         paragraphStyle.alignment = .center
 
         // Calculate text size at render scale
-        let maxTextWidth = (C.maxWidth - C.paddingHorizontal * 2) * renderScale
+        let scaledMaxWidth = maxTextWidth * renderScale
         let sizeAttributes: [NSAttributedString.Key: Any] = [
             .font: font,
             .paragraphStyle: paragraphStyle
@@ -67,7 +71,7 @@ class ChatBubbleView: NSView {
 
         let sizeString = NSAttributedString(string: message, attributes: sizeAttributes)
         let textRect = sizeString.boundingRect(
-            with: CGSize(width: maxTextWidth, height: .greatestFiniteMagnitude),
+            with: CGSize(width: scaledMaxWidth, height: .greatestFiniteMagnitude),
             options: [.usesLineFragmentOrigin, .usesFontLeading]
         )
 

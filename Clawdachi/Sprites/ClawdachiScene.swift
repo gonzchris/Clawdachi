@@ -15,13 +15,7 @@ class ClawdachiScene: SKScene {
     private var musicMonitor: MusicPlaybackMonitor!
     private var claudeMonitor: ClaudeSessionMonitor!
     private var terminalFocusMonitor: TerminalFocusMonitor!
-
-    // Track last known status per session (to detect actual state transitions vs tab switches)
-    private var sessionLastStatus: [String: String] = [:]
-
-    // Track which sessions have played sounds this work cycle (reset when session starts working again)
-    private var sessionsPlayedQuestionSound: Set<String> = []
-    private var sessionsPlayedCompleteSound: Set<String> = []
+    private var claudeStatusHandler: ClaudeStatusHandler!
 
     // MARK: - Initialization
 
@@ -81,65 +75,35 @@ class ClawdachiScene: SKScene {
         if let mode = loadSelectionMode() {
             claudeMonitor.selectionMode = mode
         }
-        // Default is .anyActive in ClaudeSessionMonitor
+
+        // Set up Claude status handler
+        claudeStatusHandler = ClaudeStatusHandler()
+        claudeStatusHandler.onUpdateAnimations = { [weak self] status in
+            self?.updateAnimationsForStatus(status)
+        }
+        claudeStatusHandler.onShowThinkingMessage = { [weak self] in
+            self?.showChatBubble(ClawdachiMessages.randomThinkingMessage(), duration: 3.0)
+        }
+        claudeStatusHandler.onShowPlanningMessage = { [weak self] in
+            self?.showChatBubble(ClawdachiMessages.randomPlanningMessage(), duration: 3.0)
+        }
+        claudeStatusHandler.onShowWaitingMessage = { [weak self] in
+            self?.showChatBubble(ClawdachiMessages.randomWaitingMessage(), duration: 4.0)
+        }
+        claudeStatusHandler.onShowCompletion = { [weak self] in
+            self?.clawdachi.showPartyCelebration()
+            self?.showChatBubble(ClawdachiMessages.randomCompletionMessage(), duration: 4.0, verticalOffset: ChatBubbleConstants.celebrationVerticalOffset)
+        }
 
         claudeMonitor.onStatusChanged = { [weak self] isActive, status, sessionId in
-            self?.handleClaudeStatusChanged(isActive: isActive, status: status, sessionId: sessionId)
+            guard let self = self, !self.isSleeping else { return }
+            self.claudeStatusHandler.handleStatusChanged(isActive: isActive, status: status, sessionId: sessionId)
         }
 
         // Set up terminal focus monitor (used when in followFocusedTab mode)
         terminalFocusMonitor = TerminalFocusMonitor()
         terminalFocusMonitor.onFocusedTTYChanged = { [weak self] tty in
             self?.claudeMonitor.updateFocusedTTY(tty)
-        }
-    }
-
-    private func handleClaudeStatusChanged(isActive: Bool, status: String?, sessionId: String?) {
-        // Don't interrupt sleep
-        guard !isSleeping else { return }
-
-        // Always update animations to reflect current monitored session's state
-        updateAnimationsForStatus(status)
-
-        // For sound logic, we need a valid session ID
-        guard let id = sessionId else { return }
-
-        let currentStatus = status ?? "none"
-        let previousStatus = sessionLastStatus[id]
-
-        // Update stored status
-        sessionLastStatus[id] = currentStatus
-
-        // Check if this is an actual state transition (not just a tab switch)
-        let isRealTransition = previousStatus != currentStatus
-
-        guard isRealTransition else {
-            // Just switched tabs to view this session - no sounds
-            return
-        }
-
-        // Determine if previous status was "working"
-        let wasWorking = previousStatus == "thinking" || previousStatus == "tools" || previousStatus == "planning"
-
-        // Handle actual state transitions
-        if currentStatus == "waiting" && wasWorking {
-            // Transitioned from working to waiting - play question sound
-            if !sessionsPlayedQuestionSound.contains(id) {
-                sessionsPlayedQuestionSound.insert(id)
-                SoundManager.shared.playQuestionSound()
-                showChatBubble(randomWaitingMessage(), duration: 4.0)
-            }
-        } else if currentStatus == "idle" && wasWorking {
-            // Transitioned from working to idle - play complete sound
-            if !sessionsPlayedCompleteSound.contains(id) {
-                sessionsPlayedCompleteSound.insert(id)
-                clawdachi.showPartyCelebration()
-                SoundManager.shared.playCompleteSound()
-            }
-        } else if currentStatus == "thinking" || currentStatus == "tools" || currentStatus == "planning" {
-            // Started working - reset sound tracking for fresh cycle
-            sessionsPlayedQuestionSound.remove(id)
-            sessionsPlayedCompleteSound.remove(id)
         }
     }
 
@@ -152,15 +116,23 @@ class ClawdachiScene: SKScene {
             if !clawdachi.isClaudePlanning {
                 clawdachi.stopClaudeThinking()
                 clawdachi.startClaudePlanning()
+                showChatBubble(ClawdachiMessages.randomPlanningMessage(), duration: 3.0)
             }
         case "thinking", "tools":
             clawdachi.dismissLightbulb()
             clawdachi.dismissQuestionMark()
             clawdachi.dismissPartyCelebration()
+            let wasPlanning = clawdachi.isClaudePlanning
             if clawdachi.isClaudePlanning {
                 clawdachi.stopClaudePlanning()
             }
-            clawdachi.startClaudeThinking()
+            if !clawdachi.isClaudeThinking {
+                clawdachi.startClaudeThinking()
+                // Only show message if not transitioning from planning
+                if !wasPlanning {
+                    showChatBubble(ClawdachiMessages.randomThinkingMessage(), duration: 3.0)
+                }
+            }
         case "waiting":
             clawdachi.stopClaudeThinking()
             clawdachi.stopClaudePlanning()
@@ -178,51 +150,6 @@ class ClawdachiScene: SKScene {
             clawdachi.stopClaudePlanning()
             clawdachi.dismissQuestionMark()
         }
-    }
-
-    // MARK: - Claude Event Messages
-
-    private func randomThinkingMessage() -> String {
-        let messages = [
-            "on it!",
-            "one sec!",
-            "i got this!"
-        ]
-        return messages.randomElement() ?? "on it!"
-    }
-
-    private func randomPlanningMessage() -> String {
-        let messages = [
-            "got an idea!",
-            "let me plan this",
-            "mapping it out!"
-        ]
-        return messages.randomElement() ?? "got an idea!"
-    }
-
-    private func randomWaitingMessage() -> String {
-        let messages = [
-            "your turn!",
-            "whatcha think?",
-            "need your input!",
-            "over to you!",
-            "waiting on you~",
-            "yes? no? maybe?"
-        ]
-        return messages.randomElement() ?? "your turn!"
-    }
-
-    private func randomCompletionMessage() -> String {
-        let messages = [
-            "all done!",
-            "ta-da!",
-            "finished!",
-            "nailed it!",
-            "done and done!",
-            "woohoo!",
-            "mission complete!"
-        ]
-        return messages.randomElement() ?? "all done!"
     }
 
     private func setupCharacter() {
@@ -750,9 +677,7 @@ class ClawdachiScene: SKScene {
             clawdachi.stopDancing()
             clawdachi.stopClaudeThinking()
             // Clear tracking so we don't get spurious sounds on wake
-            sessionLastStatus.removeAll()
-            sessionsPlayedQuestionSound.removeAll()
-            sessionsPlayedCompleteSound.removeAll()
+            claudeStatusHandler.clearTracking()
             isSleeping = true
             clawdachi.startSleeping()
         }
@@ -768,9 +693,10 @@ class ClawdachiScene: SKScene {
     /// - Parameters:
     ///   - message: Text to display in the bubble
     ///   - duration: Auto-dismiss duration (default 5s, nil = manual only)
-    func showChatBubble(_ message: String, duration: TimeInterval? = 5.0) {
+    ///   - verticalOffset: Custom vertical offset (nil = use default)
+    func showChatBubble(_ message: String, duration: TimeInterval? = 5.0, verticalOffset: CGFloat? = nil) {
         guard let window = view?.window else { return }
-        ChatBubbleWindow.show(message: message, relativeTo: window, duration: duration)
+        ChatBubbleWindow.show(message: message, relativeTo: window, duration: duration, verticalOffset: verticalOffset)
 
         // Trigger speaking animation on the sprite
         clawdachi.startSpeaking(duration: min(duration ?? 2.0, 2.5))
@@ -850,7 +776,7 @@ class ClawdachiScene: SKScene {
         clawdachi.stopClaudeThinking()
         clawdachi.stopClaudePlanning()
         clawdachi.showQuestionMark()
-        showChatBubble(randomWaitingMessage(), duration: 4.0)
+        showChatBubble(ClawdachiMessages.randomWaitingMessage(), duration: 4.0)
     }
 
     func debugTriggerPartyCelebration() {
@@ -860,6 +786,7 @@ class ClawdachiScene: SKScene {
         clawdachi.stopClaudePlanning()
         clawdachi.dismissQuestionMark()
         clawdachi.showPartyCelebration()
+        showChatBubble(ClawdachiMessages.randomCompletionMessage(), duration: 4.0, verticalOffset: ChatBubbleConstants.celebrationVerticalOffset)
     }
 
     func debugClearClaudeStates() {
@@ -886,9 +813,7 @@ class ClawdachiScene: SKScene {
         clawdachi.stopClaudePlanning()
         clawdachi.dismissQuestionMark()
         clawdachi.dismissPartyCelebration()
-        sessionLastStatus.removeAll()
-        sessionsPlayedQuestionSound.removeAll()
-        sessionsPlayedCompleteSound.removeAll()
+        claudeStatusHandler.clearTracking()
         isSleeping = true
         clawdachi.startSleeping()
     }
