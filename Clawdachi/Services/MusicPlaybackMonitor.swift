@@ -8,7 +8,7 @@
 import Foundation
 
 /// Monitors music playback from Apple Music and Spotify
-class MusicPlaybackMonitor {
+class MusicPlaybackMonitor: PollingService {
 
     // MARK: - Properties
 
@@ -18,11 +18,10 @@ class MusicPlaybackMonitor {
     /// Callback when playback state changes
     var onPlaybackStateChanged: ((Bool) -> Void)?
 
-    /// Polling timer
-    private var pollTimer: Timer?
+    // MARK: - PollingService
 
-    /// Polling interval in seconds (3.5s balances responsiveness with resource usage)
-    private let pollInterval: TimeInterval = 3.5
+    var pollTimer: Timer?
+    let pollInterval: TimeInterval = 3.5
 
     // MARK: - Initialization
 
@@ -36,22 +35,7 @@ class MusicPlaybackMonitor {
 
     // MARK: - Polling
 
-    private func startPolling() {
-        // Check immediately
-        checkPlaybackState()
-
-        // Then poll periodically
-        pollTimer = Timer.scheduledTimer(withTimeInterval: pollInterval, repeats: true) { [weak self] _ in
-            self?.checkPlaybackState()
-        }
-    }
-
-    private func stopPolling() {
-        pollTimer?.invalidate()
-        pollTimer = nil
-    }
-
-    private func checkPlaybackState() {
+    func poll() {
         // NSAppleScript must run on main thread - these checks are fast (~20ms each)
         let spotifyPlaying = isSpotifyPlaying()
         let appleMusicPlaying = isAppleMusicPlaying()
@@ -79,7 +63,7 @@ class MusicPlaybackMonitor {
         end if
         return "stopped"
         """
-        return runAppleScript(script) == "playing"
+        return AppleScriptExecutor.run(script, logErrors: false) == "playing"
     }
 
     /// Check if Spotify is playing
@@ -90,13 +74,6 @@ class MusicPlaybackMonitor {
     /// Check if Apple Music is playing
     private func isAppleMusicPlaying() -> Bool {
         isAppPlaying(.appleMusic)
-    }
-
-    private func runAppleScript(_ source: String) -> String? {
-        var error: NSDictionary?
-        guard let script = NSAppleScript(source: source) else { return nil }
-        let result = script.executeAndReturnError(&error)
-        return result.stringValue
     }
 
     // MARK: - State Update

@@ -9,7 +9,7 @@ import Foundation
 import AppKit
 
 /// Monitors the focused terminal tab and reports its TTY device
-class TerminalFocusMonitor {
+class TerminalFocusMonitor: PollingService {
 
     // MARK: - Properties
 
@@ -18,12 +18,6 @@ class TerminalFocusMonitor {
 
     /// Callback when focused TTY changes
     var onFocusedTTYChanged: ((String?) -> Void)?
-
-    /// Polling timer
-    private var pollTimer: Timer?
-
-    /// Polling interval in seconds
-    private let pollInterval: TimeInterval = 1.5
 
     /// Last known focused app bundle ID
     private var lastFocusedApp: String?
@@ -34,6 +28,11 @@ class TerminalFocusMonitor {
         "com.googlecode.iterm2",
         "com.mitchellh.ghostty"
     ]
+
+    // MARK: - PollingService
+
+    var pollTimer: Timer?
+    let pollInterval: TimeInterval = 1.5
 
     // MARK: - Initialization
 
@@ -47,20 +46,8 @@ class TerminalFocusMonitor {
 
     // MARK: - Polling
 
-    private func startPolling() {
-        // Check immediately
+    func poll() {
         checkFocusedTerminal()
-
-        // Poll periodically
-        pollTimer = Timer(timeInterval: pollInterval, repeats: true) { [weak self] _ in
-            self?.checkFocusedTerminal()
-        }
-        RunLoop.main.add(pollTimer!, forMode: .common)
-    }
-
-    private func stopPolling() {
-        pollTimer?.invalidate()
-        pollTimer = nil
     }
 
     private func checkFocusedTerminal() {
@@ -115,7 +102,7 @@ class TerminalFocusMonitor {
         end tell
         return ""
         """
-        return runAppleScript(script)
+        return AppleScriptExecutor.run(script)
     }
 
     // MARK: - iTerm2
@@ -129,7 +116,7 @@ class TerminalFocusMonitor {
         end tell
         return ""
         """
-        return runAppleScript(script)
+        return AppleScriptExecutor.run(script)
     }
 
     // MARK: - Ghostty
@@ -139,26 +126,5 @@ class TerminalFocusMonitor {
         // Try using the focused window's process to find TTY
         // For now, return nil - can be enhanced later
         return nil
-    }
-
-    // MARK: - AppleScript Execution
-
-    private func runAppleScript(_ source: String) -> String? {
-        var error: NSDictionary?
-        guard let script = NSAppleScript(source: source) else { return nil }
-
-        let result = script.executeAndReturnError(&error)
-
-        if let error = error {
-            // Don't log routine errors (app not running, no windows, etc.)
-            if let errorNumber = error["NSAppleScriptErrorNumber"] as? Int,
-               errorNumber != -1728 { // -1728 = "Can't get" (expected when no windows)
-                print("Clawdachi: AppleScript error: \(error)")
-            }
-            return nil
-        }
-
-        guard let tty = result.stringValue, !tty.isEmpty else { return nil }
-        return tty
     }
 }

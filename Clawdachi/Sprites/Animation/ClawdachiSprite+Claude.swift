@@ -19,18 +19,18 @@ extension ClawdachiSprite {
     /// Cached textures for mini clouds (floating past main cloud)
     private static var miniCloudTextures: [(texture: SKTexture, size: CGSize)] = {
         [
-            (ClawdachiFaceSprites.generateMiniCloud1(), CGSize(width: 7, height: 5)),
-            (ClawdachiFaceSprites.generateMiniCloud2(), CGSize(width: 9, height: 5)),
-            (ClawdachiFaceSprites.generateMiniCloud3(), CGSize(width: 6, height: 4))
+            (ClawdachiFaceSprites.generateMiniCloud1(), ParticleConstants.miniCloud1Size),
+            (ClawdachiFaceSprites.generateMiniCloud2(), ParticleConstants.miniCloud2Size),
+            (ClawdachiFaceSprites.generateMiniCloud3(), ParticleConstants.miniCloud3Size)
         ]
     }()
 
     /// Cached textures for lightbulb sparks (small, medium, large yellow/white)
     private static var sparkTextures: [(texture: SKTexture, size: CGSize)] = {
         [
-            (ClawdachiFaceSprites.generateSparkSmall(), CGSize(width: 2, height: 2)),
-            (ClawdachiFaceSprites.generateSparkMedium(), CGSize(width: 3, height: 3)),
-            (ClawdachiFaceSprites.generateSparkLarge(), CGSize(width: 4, height: 4))
+            (ClawdachiFaceSprites.generateSparkSmall(), ParticleConstants.sparkSmallSize),
+            (ClawdachiFaceSprites.generateSparkMedium(), ParticleConstants.sparkMediumSize),
+            (ClawdachiFaceSprites.generateSparkLarge(), ParticleConstants.sparkLargeSize)
         ]
     }()
 
@@ -303,7 +303,7 @@ extension ClawdachiSprite {
             guard let self = self, self.isClaudePlanning else { return }
             self.spawnLightbulbSpark()
         }
-        let wait = SKAction.wait(forDuration: TimeInterval.random(in: 0.15...0.35))
+        let wait = SKAction.wait(forDuration: TimeInterval.random(in: AnimationTimings.planningSparkMinInterval...AnimationTimings.planningSparkMaxInterval))
         let loop = SKAction.repeatForever(SKAction.sequence([spawnAction, wait]))
         run(loop, withKey: AnimationKey.lightbulbSparkSpawner.rawValue)
     }
@@ -313,18 +313,18 @@ extension ClawdachiSprite {
         let sparkData = Self.sparkTextures.randomElement()!
 
         let spark = SKSpriteNode(texture: sparkData.texture)
-        spark.size = CGSize(width: sparkData.size.width * 0.6, height: sparkData.size.height * 0.6)
+        spark.size = CGSize(width: sparkData.size.width * ClaudePlanningConstants.sparkScaleFactor, height: sparkData.size.height * ClaudePlanningConstants.sparkScaleFactor)
 
-        // Position around the lightbulb (which is at y: 15)
+        // Position around the lightbulb
         let angle = CGFloat.random(in: 0...(2 * .pi))
-        let radius = CGFloat.random(in: 3...6)
+        let radius = CGFloat.random(in: ClaudePlanningConstants.sparkRadiusMin...ClaudePlanningConstants.sparkRadiusMax)
         let offsetX = cos(angle) * radius
-        let offsetY = sin(angle) * radius + 15  // 15 is lightbulb Y position
+        let offsetY = sin(angle) * radius + ClaudeThinkingConstants.lightbulbPosition.y
 
         spark.position = CGPoint(x: offsetX, y: offsetY)
         spark.alpha = 0
         spark.zPosition = SpriteZPositions.effects + 2
-        spark.setScale(0.3)
+        spark.setScale(ClaudePlanningConstants.sparkInitialScale)
         addChild(spark)
 
         // Quick flicker animation: pop in, hold briefly, fade out
@@ -354,11 +354,11 @@ extension ClawdachiSprite {
 
         let bulb = SKSpriteNode(texture: Self.lightbulbTexture)
         bulb.name = Self.lightbulbName
-        bulb.size = CGSize(width: 6.8, height: 9.6)  // 20% smaller
-        bulb.position = CGPoint(x: 0, y: 15)
+        bulb.size = ClaudeThinkingConstants.lightbulbSize
+        bulb.position = ClaudeThinkingConstants.lightbulbPosition
         bulb.alpha = 0
         bulb.zPosition = SpriteZPositions.effects + 1
-        bulb.setScale(0.3)
+        bulb.setScale(ClaudeThinkingConstants.lightbulbInitialScale)
         addChild(bulb)
 
         // Pop in animation
@@ -377,7 +377,7 @@ extension ClawdachiSprite {
         let floatLoop = SKAction.repeatForever(SKAction.sequence([bobUp, bobDown]))
 
         // Add subtle glow pulse while planning
-        let glowUp = SKAction.colorize(with: NSColor.yellow, colorBlendFactor: 0.3, duration: 0.8)
+        let glowUp = SKAction.colorize(with: NSColor.yellow, colorBlendFactor: ClaudePlanningConstants.glowColorBlend, duration: 0.8)
         let glowDown = SKAction.colorize(withColorBlendFactor: 0.0, duration: 0.8)
         glowUp.timingMode = .easeInEaseOut
         glowDown.timingMode = .easeInEaseOut
@@ -535,7 +535,7 @@ extension ClawdachiSprite {
     /// Briefly glance eyes upward
     private func performThinkingGlanceUp() {
         // Move eyes up briefly
-        let glanceOffset = CGPoint(x: 0, y: 1.0)
+        let glanceOffset = ClaudeThinkingConstants.glanceOffset
         let originalLeft = leftEyeNode.position
         let originalRight = rightEyeNode.position
 
@@ -575,7 +575,7 @@ extension ClawdachiSprite {
         shadow.verticalAlignmentMode = .center
         shadow.horizontalAlignmentMode = .center
         shadow.position = CGPoint(x: 0.5, y: -0.5)  // Offset for shadow effect
-        shadow.setScale(0.35)  // Scale down
+        shadow.setScale(ClaudeThinkingConstants.mathSymbolScale)
         container.addChild(shadow)
 
         // Create main label with random orange shade
@@ -585,7 +585,7 @@ extension ClawdachiSprite {
         label.fontColor = mainColor
         label.verticalAlignmentMode = .center
         label.horizontalAlignmentMode = .center
-        label.setScale(0.35)  // Scale down
+        label.setScale(ClaudeThinkingConstants.mathSymbolScale)
         container.addChild(label)
 
         // Start position - behind the top of sprite's head
@@ -593,7 +593,7 @@ extension ClawdachiSprite {
         container.position = CGPoint(x: startX, y: 6)  // Start lower, behind head
         container.alpha = 0
         container.zPosition = SpriteZPositions.body - 1  // Behind the sprite
-        container.setScale(0.6)
+        container.setScale(ClaudeThinkingConstants.symbolContainerScale)
         addChild(container)
 
         // Emerge from behind head quickly
@@ -601,10 +601,10 @@ extension ClawdachiSprite {
         let emergeDuration: TimeInterval = 0.15  // Fast emergence
 
         // Fountain parameters
-        let fountainHeight = CGFloat.random(in: 8...12)
+        let fountainHeight = CGFloat.random(in: ClaudeThinkingConstants.fountainHeightMin...ClaudeThinkingConstants.fountainHeightMax)
         let riseDuration = TimeInterval.random(in: 0.7...0.9)
         let fallDuration = TimeInterval.random(in: 0.5...0.7)
-        let driftX = CGFloat.random(in: -4...4)
+        let driftX = CGFloat.random(in: -ClaudeThinkingConstants.symbolDriftRange...ClaudeThinkingConstants.symbolDriftRange)
 
         // Quick emerge from behind head
         let emerge = SKAction.moveBy(x: 0, y: emergeHeight, duration: emergeDuration)
@@ -626,7 +626,7 @@ extension ClawdachiSprite {
 
         // Gentle rotation throughout
         let totalDuration = riseDuration + fallDuration
-        let rotateAmount = CGFloat.random(in: -0.8...0.8)
+        let rotateAmount = CGFloat.random(in: -ClaudeThinkingConstants.symbolRotationRange...ClaudeThinkingConstants.symbolRotationRange)
         let rotate = SKAction.rotate(byAngle: rotateAmount, duration: totalDuration)
 
         // Fade out during fall
@@ -687,7 +687,7 @@ extension ClawdachiSprite {
 
         let cloud = SKSpriteNode(texture: cloudData.texture)
         cloud.name = Self.thinkingCloudName
-        cloud.size = CGSize(width: cloudData.size.width * 1.2, height: cloudData.size.height * 1.2)
+        cloud.size = CGSize(width: cloudData.size.width * ClaudePlanningConstants.cloudScaleFactor, height: cloudData.size.height * ClaudePlanningConstants.cloudScaleFactor)
 
         // Start position - at head level, spread horizontally to float past main cloud
         let startX = CGFloat.random(in: -6...6)
@@ -760,7 +760,7 @@ extension ClawdachiSprite {
 
         let orb = SKSpriteNode(texture: Self.thinkingOrbTexture)
         orb.name = Self.thinkingOrbName
-        orb.size = CGSize(width: 2, height: 2)  // Tiny 2x2 orbs
+        orb.size = ClaudeThinkingConstants.orbSize
 
         // Start position - center of main cloud (cloud is at y: 16)
         let startX = CGFloat.random(in: -2...2)
@@ -771,7 +771,7 @@ extension ClawdachiSprite {
 
         // Random float parameters
         let floatDuration = TimeInterval.random(in: 1.8...2.2)
-        let floatDistance = CGFloat.random(in: 18...22)
+        let floatDistance = CGFloat.random(in: ClaudeThinkingConstants.orbFloatDistanceMin...ClaudeThinkingConstants.orbFloatDistanceMax)
 
         // Fade in
         let fadeIn = SKAction.fadeAlpha(to: 0.8, duration: 0.15)
@@ -782,7 +782,7 @@ extension ClawdachiSprite {
 
         // Sway left or right while floating
         let swayDirection: CGFloat = Bool.random() ? 1 : -1
-        let swayDistance: CGFloat = CGFloat.random(in: 2...4) * swayDirection
+        let swayDistance: CGFloat = CGFloat.random(in: ClaudeThinkingConstants.orbSwayMin...ClaudeThinkingConstants.orbSwayMax) * swayDirection
         let swayDuration: TimeInterval = 0.5
         let swayOut = SKAction.moveBy(x: swayDistance, y: 0, duration: swayDuration)
         let swayBack = SKAction.moveBy(x: -swayDistance, y: 0, duration: swayDuration)
@@ -825,11 +825,11 @@ extension ClawdachiSprite {
 
         let cloud = SKSpriteNode(texture: Self.mainCloudTexture)
         cloud.name = Self.mainCloudName
-        cloud.size = CGSize(width: 15, height: 11)
-        cloud.position = CGPoint(x: 0, y: 10)  // Start lower
+        cloud.size = ClaudeThinkingConstants.mainCloudSize
+        cloud.position = ClaudeThinkingConstants.cloudStartPosition
         cloud.alpha = 0
         cloud.zPosition = SpriteZPositions.effects + 1
-        cloud.setScale(0.5)
+        cloud.setScale(ClaudeThinkingConstants.cloudInitialScale)
         addChild(cloud)
 
         // Gentle float up while fading in
@@ -1005,11 +1005,11 @@ extension ClawdachiSprite {
 
         let bulb = SKSpriteNode(texture: Self.lightbulbTexture)
         bulb.name = Self.lightbulbName
-        bulb.size = CGSize(width: 6.8, height: 9.6)  // 20% smaller
-        bulb.position = CGPoint(x: 0, y: 15)
+        bulb.size = ClaudeThinkingConstants.lightbulbSize
+        bulb.position = ClaudeThinkingConstants.lightbulbPosition
         bulb.alpha = 0
         bulb.zPosition = SpriteZPositions.effects + 1
-        bulb.setScale(0.3)
+        bulb.setScale(ClaudeThinkingConstants.lightbulbInitialScale)
         addChild(bulb)
 
         // Pop in animation

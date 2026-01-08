@@ -55,7 +55,7 @@ enum SessionSelectionMode: Equatable {
 }
 
 /// Monitors Claude Code session status by watching session files
-class ClaudeSessionMonitor {
+class ClaudeSessionMonitor: PollingService {
 
     // MARK: - Properties
 
@@ -101,11 +101,10 @@ class ClaudeSessionMonitor {
     /// Callback when the list of active sessions changes
     var onSessionListChanged: (([SessionInfo]) -> Void)?
 
-    /// Polling timer
-    private var pollTimer: Timer?
+    // MARK: - PollingService
 
-    /// Polling interval in seconds (2.0s balances responsiveness with resource usage)
-    private let pollInterval: TimeInterval = 2.0
+    var pollTimer: Timer?
+    let pollInterval: TimeInterval = 2.0
 
     /// Sessions directory path
     private let sessionsPath: URL
@@ -134,23 +133,10 @@ class ClaudeSessionMonitor {
         stopPolling()
     }
 
-    // MARK: - Polling
+    // MARK: - PollingService Implementation
 
-    private func startPolling() {
-        // Check immediately
+    func poll() {
         checkSessionStatus()
-
-        // Then poll periodically - ensure timer runs on main run loop in common mode
-        // so it fires even during UI tracking (like dragging)
-        pollTimer = Timer(timeInterval: pollInterval, repeats: true) { [weak self] _ in
-            self?.checkSessionStatus()
-        }
-        RunLoop.main.add(pollTimer!, forMode: .common)
-    }
-
-    private func stopPolling() {
-        pollTimer?.invalidate()
-        pollTimer = nil
     }
 
     private func checkSessionStatus() {
@@ -173,6 +159,13 @@ class ClaudeSessionMonitor {
 
     // MARK: - Session File Reading
 
+    /// Result of validating a session
+    private enum SessionValidationResult {
+        case valid(SessionInfo)
+        case stale  // Should be deleted
+        case invalid  // Parsing failed
+    }
+
     private func readSessionFiles() -> (isActive: Bool, status: String?, sessionId: String?, allSessions: [SessionInfo]) {
         let fileManager = FileManager.default
 
@@ -182,175 +175,125 @@ class ClaudeSessionMonitor {
             return (false, nil, nil, [])
         }
 
-        // Check directory modification date to skip unnecessary file reads
-        let dirAttributes = try? fileManager.attributesOfItem(atPath: sessionsPath.path)
-        let dirModDate = dirAttributes?[.modificationDate] as? Date
-
-        // If directory hasn't changed and we have cached data, use cache
-        // (but still need to check timestamps for staleness)
-        let dirChanged = dirModDate != lastDirectoryModDate
-        if dirChanged {
-            lastDirectoryModDate = dirModDate
-        }
+        // Update directory modification tracking
+        updateDirectoryModDate()
 
         do {
-            let files = try fileManager.contentsOfDirectory(
-                at: sessionsPath,
-                includingPropertiesForKeys: [.contentModificationDateKey],
-                options: .skipsHiddenFiles
-            )
-
-            let jsonFiles = files.filter { $0.pathExtension == "json" }
+            let jsonFiles = try listSessionFiles()
 
             if jsonFiles.isEmpty {
                 clearCache()
                 return (false, nil, nil, [])
             }
 
-            // Track which files still exist (for cache cleanup)
-            var currentFiles = Set<String>()
-
-            // Collect all valid sessions
+            // Process all session files
             var sessions: [SessionInfo] = []
-            var sessionsToDelete: [URL] = []
-            let now = Date().timeIntervalSince1970
+            var filesToDelete: [URL] = []
+            var currentFilenames = Set<String>()
 
             for file in jsonFiles {
                 let filename = file.lastPathComponent
-                currentFiles.insert(filename)
+                currentFilenames.insert(filename)
 
-                // Check file modification date
-                let fileAttributes = try? file.resourceValues(forKeys: [.contentModificationDateKey])
-                let fileModDate = fileAttributes?.contentModificationDate
-
-                // Use cached session if file hasn't changed
-                if let cachedModDate = fileModDates[filename],
-                   let currentModDate = fileModDate,
-                   cachedModDate == currentModDate,
-                   let cachedSession = cachedSessions[filename] {
-                    // First check if terminal is still open (applies to ALL sessions)
-                    if !isTerminalOpen(tty: cachedSession.tty) {
-                        // Terminal closed - mark for cleanup regardless of status
-                        sessionsToDelete.append(file)
-                        continue
-                    }
-
-                    // For idle sessions, terminal check is sufficient
-                    if cachedSession.status == "idle" {
-                        sessions.append(cachedSession)
-                    } else {
-                        // For active sessions, also apply staleness threshold
-                        let age = now - cachedSession.timestamp
-                        if age <= AnimationTimings.sessionStalenessThreshold {
-                            sessions.append(cachedSession)
-                        } else {
-                            // Stale active session - mark for cleanup
-                            sessionsToDelete.append(file)
-                        }
-                    }
-                    continue
-                }
-
-                // File is new or modified - parse it
-                if let session = parseSessionFile(at: file) {
-                    // Update cache
-                    cachedSessions[filename] = session
-                    fileModDates[filename] = fileModDate
-
-                    // First check if terminal is still open (applies to ALL sessions)
-                    if !isTerminalOpen(tty: session.tty) {
-                        // Terminal closed - mark for cleanup regardless of status
-                        sessionsToDelete.append(file)
-                        continue
-                    }
-
-                    // For idle sessions, terminal check is sufficient
-                    if session.status == "idle" {
-                        sessions.append(session)
-                    } else {
-                        // For active sessions, also apply staleness threshold
-                        let age = now - session.timestamp
-                        if age <= AnimationTimings.sessionStalenessThreshold {
-                            sessions.append(session)
-                        } else {
-                            // Stale active session - mark for cleanup
-                            sessionsToDelete.append(file)
-                        }
-                    }
+                let result = processSessionFile(file)
+                switch result {
+                case .valid(let session):
+                    sessions.append(session)
+                case .stale:
+                    filesToDelete.append(file)
+                case .invalid:
+                    break  // Skip unparseable files
                 }
             }
 
-            // Clean up stale session files (closed terminals + expired active sessions)
-            for file in sessionsToDelete {
-                try? fileManager.removeItem(at: file)
-                let filename = file.lastPathComponent
-                cachedSessions.removeValue(forKey: filename)
-                fileModDates.removeValue(forKey: filename)
-                currentFiles.remove(filename)
-            }
-
-            // Clean up cache for deleted files
-            let deletedFiles = Set(cachedSessions.keys).subtracting(currentFiles)
-            for filename in deletedFiles {
-                cachedSessions.removeValue(forKey: filename)
-                fileModDates.removeValue(forKey: filename)
-            }
+            // Clean up stale files and orphaned cache entries
+            cleanupStaleFiles(filesToDelete)
+            cleanupOrphanedCache(currentFilenames: currentFilenames)
 
             // Sort by timestamp (most recent first)
             sessions.sort { $0.timestamp > $1.timestamp }
 
-            // Determine which session to monitor based on selection mode
-            let monitoredSession: SessionInfo?
+            // Select which session to monitor
+            let monitoredSession = selectMonitoredSession(from: sessions)
 
-            switch selectionMode {
-            case .specific(let sessionId):
-                // User selected a specific session
-                monitoredSession = sessions.first { $0.id == sessionId }
-
-            case .followFocusedTab:
-                // TTY-based selection: only show session for focused terminal
-                if let tty = focusedTTY {
-                    monitoredSession = sessions.first { $0.tty == tty }
-                } else {
-                    monitoredSession = nil
-                }
-
-            case .anyActive:
-                // Priority-based selection: pick the most active session
-                // Sort by: 1) activity priority (desc), 2) timestamp (desc for recency)
-                let sortedByPriority = sessions.sorted { lhs, rhs in
-                    if lhs.activityPriority != rhs.activityPriority {
-                        return lhs.activityPriority > rhs.activityPriority
-                    }
-                    return lhs.timestamp > rhs.timestamp
-                }
-
-                guard let topSession = sortedByPriority.first else {
-                    monitoredSession = nil
-                    break
-                }
-
-                // Hysteresis: stick with current session if it's still equally or more active
-                // This prevents flickering between sessions of equal priority
-                if let lastId = lastMonitoredSessionId,
-                   let currentSession = sessions.first(where: { $0.id == lastId }),
-                   currentSession.activityPriority >= topSession.activityPriority,
-                   let lastTime = lastMonitoredTime,
-                   Date().timeIntervalSince(lastTime) < stickinessInterval {
-                    monitoredSession = currentSession
-                } else {
-                    monitoredSession = topSession
-                    lastMonitoredSessionId = topSession.id
-                    lastMonitoredTime = Date()
-                }
-            }
-
-            let hasActiveSession = monitoredSession != nil
-            return (hasActiveSession, monitoredSession?.status, monitoredSession?.id, sessions)
+            return (monitoredSession != nil, monitoredSession?.status, monitoredSession?.id, sessions)
 
         } catch {
             return (false, nil, nil, [])
         }
+    }
+
+    // MARK: - File Operations
+
+    private func updateDirectoryModDate() {
+        let dirAttributes = try? FileManager.default.attributesOfItem(atPath: sessionsPath.path)
+        let dirModDate = dirAttributes?[.modificationDate] as? Date
+        if dirModDate != lastDirectoryModDate {
+            lastDirectoryModDate = dirModDate
+        }
+    }
+
+    private func listSessionFiles() throws -> [URL] {
+        let files = try FileManager.default.contentsOfDirectory(
+            at: sessionsPath,
+            includingPropertiesForKeys: [.contentModificationDateKey],
+            options: .skipsHiddenFiles
+        )
+        return files.filter { $0.pathExtension == "json" }
+    }
+
+    // MARK: - Session Processing
+
+    private func processSessionFile(_ file: URL) -> SessionValidationResult {
+        let filename = file.lastPathComponent
+        let fileAttributes = try? file.resourceValues(forKeys: [.contentModificationDateKey])
+        let fileModDate = fileAttributes?.contentModificationDate
+
+        // Try to use cached session if file hasn't changed
+        if let session = getCachedSession(filename: filename, currentModDate: fileModDate) {
+            return validateSession(session, file: file)
+        }
+
+        // Parse new or modified file
+        guard let session = parseSessionFile(at: file) else {
+            return .invalid
+        }
+
+        // Update cache
+        cachedSessions[filename] = session
+        fileModDates[filename] = fileModDate
+
+        return validateSession(session, file: file)
+    }
+
+    private func getCachedSession(filename: String, currentModDate: Date?) -> SessionInfo? {
+        guard let cachedModDate = fileModDates[filename],
+              let currentModDate = currentModDate,
+              cachedModDate == currentModDate,
+              let cachedSession = cachedSessions[filename] else {
+            return nil
+        }
+        return cachedSession
+    }
+
+    private func validateSession(_ session: SessionInfo, file: URL) -> SessionValidationResult {
+        // Check if terminal is still open
+        guard isTerminalOpen(tty: session.tty) else {
+            return .stale
+        }
+
+        // Idle sessions are always valid if terminal is open
+        if session.status == "idle" {
+            return .valid(session)
+        }
+
+        // Active sessions must not be stale
+        let age = Date().timeIntervalSince1970 - session.timestamp
+        if age <= AnimationTimings.sessionStalenessThreshold {
+            return .valid(session)
+        }
+
+        return .stale
     }
 
     /// Check if a terminal is still open by verifying the TTY device exists
@@ -375,6 +318,67 @@ class ClaudeSessionMonitor {
             )
         } catch {
             return nil
+        }
+    }
+
+    // MARK: - Session Selection
+
+    private func selectMonitoredSession(from sessions: [SessionInfo]) -> SessionInfo? {
+        switch selectionMode {
+        case .specific(let sessionId):
+            return sessions.first { $0.id == sessionId }
+
+        case .followFocusedTab:
+            guard let tty = focusedTTY else { return nil }
+            return sessions.first { $0.tty == tty }
+
+        case .anyActive:
+            return selectMostActiveSession(from: sessions)
+        }
+    }
+
+    private func selectMostActiveSession(from sessions: [SessionInfo]) -> SessionInfo? {
+        // Sort by activity priority (desc), then timestamp (desc)
+        let sortedByPriority = sessions.sorted { lhs, rhs in
+            if lhs.activityPriority != rhs.activityPriority {
+                return lhs.activityPriority > rhs.activityPriority
+            }
+            return lhs.timestamp > rhs.timestamp
+        }
+
+        guard let topSession = sortedByPriority.first else { return nil }
+
+        // Apply hysteresis to prevent flickering between equal-priority sessions
+        if let lastId = lastMonitoredSessionId,
+           let currentSession = sessions.first(where: { $0.id == lastId }),
+           currentSession.activityPriority >= topSession.activityPriority,
+           let lastTime = lastMonitoredTime,
+           Date().timeIntervalSince(lastTime) < stickinessInterval {
+            return currentSession
+        }
+
+        // Switch to new top session
+        lastMonitoredSessionId = topSession.id
+        lastMonitoredTime = Date()
+        return topSession
+    }
+
+    // MARK: - Cache Management
+
+    private func cleanupStaleFiles(_ files: [URL]) {
+        for file in files {
+            try? FileManager.default.removeItem(at: file)
+            let filename = file.lastPathComponent
+            cachedSessions.removeValue(forKey: filename)
+            fileModDates.removeValue(forKey: filename)
+        }
+    }
+
+    private func cleanupOrphanedCache(currentFilenames: Set<String>) {
+        let orphanedFiles = Set(cachedSessions.keys).subtracting(currentFilenames)
+        for filename in orphanedFiles {
+            cachedSessions.removeValue(forKey: filename)
+            fileModDates.removeValue(forKey: filename)
         }
     }
 
