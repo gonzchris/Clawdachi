@@ -435,15 +435,6 @@ extension ClawdachiSprite {
 
         // Start occasional arm tilts (thinking pose)
         startThinkingArmTilts()
-
-        // Start floating orbs after cloud has risen into place (0.6s delay)
-        run(SKAction.sequence([
-            SKAction.wait(forDuration: 0.6),
-            SKAction.run { [weak self] in
-                guard let self = self, self.isClaudeThinking else { return }
-                self.startFloatingOrbs()
-            }
-        ]))
     }
 
     /// Stop the thinking animation and return to normal
