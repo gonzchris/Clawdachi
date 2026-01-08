@@ -784,21 +784,22 @@ extension ClawdachiSprite {
     }
 
     private func performThinkingArmTilt() {
-        // Tilt both arms up like pondering
-        let tiltUp = SKAction.rotate(toAngle: 0.8, duration: 0.25)
+        // Tilt both arms down/outward like pondering
         let hold = SKAction.wait(forDuration: TimeInterval.random(in: 1.5...2.5))
-        let tiltDown = SKAction.rotate(toAngle: 0, duration: 0.3)
-        tiltUp.timingMode = .easeOut
-        tiltDown.timingMode = .easeInEaseOut
 
-        let sequence = SKAction.sequence([tiltUp, hold, tiltDown])
+        // Left arm tilts to negative angle (down/outward)
+        let leftTilt = SKAction.rotate(toAngle: -0.8, duration: 0.25)
+        let leftReturn = SKAction.rotate(toAngle: 0, duration: 0.3)
+        leftTilt.timingMode = .easeOut
+        leftReturn.timingMode = .easeInEaseOut
+        leftArmNode.run(SKAction.sequence([leftTilt, hold, leftReturn]))
 
-        leftArmNode.run(sequence)
-        rightArmNode.run(SKAction.sequence([
-            SKAction.rotate(toAngle: -0.8, duration: 0.25),
-            hold,
-            SKAction.rotate(toAngle: 0, duration: 0.3)
-        ]))
+        // Right arm tilts to positive angle (down/outward)
+        let rightTilt = SKAction.rotate(toAngle: 0.8, duration: 0.25)
+        let rightReturn = SKAction.rotate(toAngle: 0, duration: 0.3)
+        rightTilt.timingMode = .easeOut
+        rightReturn.timingMode = .easeInEaseOut
+        rightArmNode.run(SKAction.sequence([rightTilt, hold, rightReturn]))
     }
 
     // MARK: - Completion Lightbulb

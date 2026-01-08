@@ -15,24 +15,32 @@ extension ClawdachiSprite {
         guard !isDragging else { return }
         isDragging = true
 
-        // Eyes return to center during drag
-        targetEyeOffset = .zero
+        // Check if in a Claude state - skip arm wiggle to preserve Claude animations
+        let inClaudeState = isClaudeThinking || isClaudePlanning || isClaudeWaiting || isClaudeCelebrating
 
-        let armWiggleDuration: TimeInterval = 0.12
+        // Eyes return to center during drag (only if not in Claude state)
+        if !inClaudeState {
+            targetEyeOffset = .zero
+        }
 
-        let leftArmUp = SKAction.rotate(toAngle: 0.4, duration: armWiggleDuration)
-        let leftArmDown = SKAction.rotate(toAngle: -0.3, duration: armWiggleDuration)
-        leftArmUp.timingMode = .easeInEaseOut
-        leftArmDown.timingMode = .easeInEaseOut
-        let leftArmWiggle = SKAction.sequence([leftArmUp, leftArmDown])
-        leftArmNode.run(SKAction.repeatForever(leftArmWiggle), withKey: AnimationKey.dragWiggle.rawValue)
+        // Only wiggle arms if not in a Claude state
+        if !inClaudeState {
+            let armWiggleDuration: TimeInterval = 0.12
 
-        let rightArmUp = SKAction.rotate(toAngle: -0.4, duration: armWiggleDuration)
-        let rightArmDown = SKAction.rotate(toAngle: 0.3, duration: armWiggleDuration)
-        rightArmUp.timingMode = .easeInEaseOut
-        rightArmDown.timingMode = .easeInEaseOut
-        let rightArmWiggle = SKAction.sequence([rightArmDown, rightArmUp])
-        rightArmNode.run(SKAction.repeatForever(rightArmWiggle), withKey: AnimationKey.dragWiggle.rawValue)
+            let leftArmUp = SKAction.rotate(toAngle: 0.4, duration: armWiggleDuration)
+            let leftArmDown = SKAction.rotate(toAngle: -0.3, duration: armWiggleDuration)
+            leftArmUp.timingMode = .easeInEaseOut
+            leftArmDown.timingMode = .easeInEaseOut
+            let leftArmWiggle = SKAction.sequence([leftArmUp, leftArmDown])
+            leftArmNode.run(SKAction.repeatForever(leftArmWiggle), withKey: AnimationKey.dragWiggle.rawValue)
+
+            let rightArmUp = SKAction.rotate(toAngle: -0.4, duration: armWiggleDuration)
+            let rightArmDown = SKAction.rotate(toAngle: 0.3, duration: armWiggleDuration)
+            rightArmUp.timingMode = .easeInEaseOut
+            rightArmDown.timingMode = .easeInEaseOut
+            let rightArmWiggle = SKAction.sequence([rightArmDown, rightArmUp])
+            rightArmNode.run(SKAction.repeatForever(rightArmWiggle), withKey: AnimationKey.dragWiggle.rawValue)
+        }
 
         let legWiggleDuration: TimeInterval = 0.15
 
@@ -73,13 +81,18 @@ extension ClawdachiSprite {
             SKAction.run { [weak self] in self?.spawnSweatDrop() }
         ]), withKey: AnimationKey.sweatDropSchedule.rawValue)
 
-        // Start surprised "O" mouth animation
-        startDragMouthAnimation()
+        // Start surprised "O" mouth animation (skip during Claude states)
+        if !inClaudeState {
+            startDragMouthAnimation()
+        }
     }
 
     private func startDragMouthAnimation() {
         // Try to acquire mouth ownership
         guard acquireMouth(for: .dragging) else { return }
+
+        // Double-check not in Claude state
+        guard !isClaudeThinking, !isClaudePlanning, !isClaudeWaiting, !isClaudeCelebrating else { return }
 
         mouthNode.removeAction(forKey: AnimationKey.faceBreathing.rawValue)
         mouthNode.position = SpritePositions.mouth  // Center on face
@@ -157,10 +170,16 @@ extension ClawdachiSprite {
 
         removeAction(forKey: AnimationKey.sweatDropSchedule.rawValue)
 
-        // Release mouth ownership (handles cleanup)
-        mouthNode.removeAction(forKey: AnimationKey.dragMouthPop.rawValue)
-        releaseMouth(from: .dragging)
+        // Check if in a Claude state - skip arm reset to preserve Claude animations
+        let inClaudeState = isClaudeThinking || isClaudePlanning || isClaudeWaiting || isClaudeCelebrating
 
+        // Release mouth ownership (handles cleanup) - only if not in Claude state
+        if !inClaudeState {
+            mouthNode.removeAction(forKey: AnimationKey.dragMouthPop.rawValue)
+            releaseMouth(from: .dragging)
+        }
+
+        // Remove drag wiggle actions (safe even if not running)
         leftArmNode.removeAction(forKey: AnimationKey.dragWiggle.rawValue)
         rightArmNode.removeAction(forKey: AnimationKey.dragWiggle.rawValue)
         outerLeftLegNode.removeAction(forKey: AnimationKey.dragWiggle.rawValue)
@@ -172,8 +191,13 @@ extension ClawdachiSprite {
         let resetRotation = SKAction.rotate(toAngle: 0, duration: resetDuration)
         resetRotation.timingMode = .easeOut
 
-        leftArmNode.run(resetRotation)
-        rightArmNode.run(resetRotation)
+        // Only reset arms if not in a Claude state
+        if !inClaudeState {
+            leftArmNode.run(resetRotation)
+            rightArmNode.run(resetRotation)
+        }
+
+        // Always reset legs
         outerLeftLegNode.run(resetRotation)
         innerLeftLegNode.run(resetRotation)
         innerRightLegNode.run(resetRotation)
