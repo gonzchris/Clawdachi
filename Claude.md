@@ -61,6 +61,7 @@ It's a small piece of joy that makes your desktop feel a little more alive.
   - Purple/gold striped party hat wobbles gently
   - Party blower pops in, extends with flutter, retracts, disappears, repeats
   - Arms shoot up on each "toot"
+  - Chat bubble appears to the right of the party hat, vertically centered
   - Persists until clicked or new CLI activity
 - **File-based hooks:** Monitors `~/.clawdachi/sessions/` for status files
   - Plan mode tracked via `~/.clawdachi/planmode/` marker files
@@ -98,6 +99,13 @@ It's a small piece of joy that makes your desktop feel a little more alive.
 - **Question sound:** Plays when Claude is waiting for user input
 - **Complete sound:** Plays when Claude session ends
 - **Managed by:** SoundManager.swift
+
+### Time-of-Day Greetings
+- **Launch greeting:** Shows a greeting message when the app starts
+  - Morning (4am-12pm): `> good morning`
+  - Afternoon (12pm-6pm): `> good afternoon`
+  - Evening (6pm-12am): `> good evening`
+  - Late night (12am-4am): `> late night session?`
 
 ### Other
 - **Sleep mode:** Closes eyes, spawns floating Z's
@@ -265,7 +273,7 @@ Separate floating NSWindow system (not SpriteKit) for text rendering:
 - **Tail position:** Points LEFT from left edge of bubble toward sprite
 - **Z-order:** Window level above sprite's floating level
 - **Caching:** NSCache for bubble images (12 entries), font caching, window pooling
-- **Positioning:** Above sprite head, centered horizontally
+- **Positioning:** Above sprite head, centered horizontally (supports custom vertical/horizontal offsets)
 
 API:
 ```swift
@@ -312,7 +320,6 @@ ChatBubbleWindow.dismiss(animated: true)
 ## Future Ideas
 
 - More click reactions
-- Time-of-day awareness (sleepy at night)
 - Weather reactions
 - Multiple personality modes
 - Companion pets
