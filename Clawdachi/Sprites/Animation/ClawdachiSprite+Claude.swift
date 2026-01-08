@@ -686,12 +686,16 @@ extension ClawdachiSprite {
 
     /// Add three animated thinking dots inside the cloud
     private func addThinkingDots(to cloud: SKSpriteNode) {
-        let dotSize: CGFloat = 1.2
+        let dotSize: CGFloat = 0.9
         let spacing: CGFloat = 2.5
-        let dotY: CGFloat = 0  // Center of cloud
+        let dotY: CGFloat = -0.5  // Slightly below center for wave room
 
         // Match cloud outline color (dark blue-gray)
         let dotColor = NSColor(red: 50/255, green: 55/255, blue: 70/255, alpha: 1.0)
+
+        // Wave timing - total cycle duration and phase offset between dots
+        let cycleDuration: TimeInterval = 1.2
+        let phaseOffset: TimeInterval = cycleDuration / 3.0  // Even spacing through cycle
 
         for i in 0..<3 {
             let dot = SKShapeNode(rectOf: CGSize(width: dotSize, height: dotSize))
@@ -701,16 +705,18 @@ extension ClawdachiSprite {
             dot.zPosition = 1
             cloud.addChild(dot)
 
-            // Staggered bounce animation
-            let delay = SKAction.wait(forDuration: Double(i) * 0.2)
-            let moveUp = SKAction.moveBy(x: 0, y: 1.5, duration: 0.25)
-            let moveDown = SKAction.moveBy(x: 0, y: -1.5, duration: 0.25)
-            moveUp.timingMode = .easeOut
-            moveDown.timingMode = .easeIn
-            let pause = SKAction.wait(forDuration: 0.4)
-            let bounce = SKAction.sequence([moveUp, moveDown, pause])
-            let loop = SKAction.repeatForever(bounce)
+            // Smooth wave animation - continuous sinusoidal motion
+            let halfCycle = cycleDuration / 2.0
+            let moveUp = SKAction.moveBy(x: 0, y: 2.0, duration: halfCycle)
+            let moveDown = SKAction.moveBy(x: 0, y: -2.0, duration: halfCycle)
+            moveUp.timingMode = .easeInEaseOut
+            moveDown.timingMode = .easeInEaseOut
 
+            let wave = SKAction.sequence([moveUp, moveDown])
+            let loop = SKAction.repeatForever(wave)
+
+            // Stagger each dot's start for wave effect
+            let delay = SKAction.wait(forDuration: Double(i) * phaseOffset)
             dot.run(SKAction.sequence([delay, loop]))
         }
     }
