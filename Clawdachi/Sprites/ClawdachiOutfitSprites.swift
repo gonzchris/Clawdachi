@@ -287,6 +287,13 @@ class ClawdachiOutfitSprites {
     private static let hatBrownDark = PixelColor(r: 101, g: 67, b: 33)    // Shadow
     private static let hatBand = PixelColor(r: 60, g: 40, b: 20)          // Dark band
 
+    // MARK: - Top Hat Colors
+
+    private static let topHatBlack = PixelColor(r: 30, g: 30, b: 35)       // Main black
+    private static let topHatHighlight = PixelColor(r: 60, g: 60, b: 70)   // Highlight/shine
+    private static let topHatShadow = PixelColor(r: 15, g: 15, b: 20)      // Deep shadow
+    private static let topHatBand = PixelColor(r: 140, g: 20, b: 30)       // Red satin band
+
     // MARK: - Cowboy Hat
 
     /// Generates a cowboy hat texture (32x32) positioned on top of sprite head
@@ -430,6 +437,78 @@ class ClawdachiOutfitSprites {
         // Red accent on right cup
         pixels[17][26] = a
         pixels[16][26] = a
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
+    }
+
+    // MARK: - Top Hat
+
+    /// Generates a top hat texture (32x32) positioned on top of sprite head
+    static func generateTopHatTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
+
+        let b = topHatBlack
+        let h = topHatHighlight
+        let s = topHatShadow
+        let band = topHatBand
+
+        // === BRIM (rows 22-23) ===
+        // Row 22 - bottom of brim (shadow)
+        for col in 6...25 { pixels[22][col] = s }
+
+        // Row 23 - top of brim
+        for col in 6...25 { pixels[23][col] = b }
+        pixels[23][6] = s
+        pixels[23][7] = s
+        pixels[23][24] = h
+        pixels[23][25] = h
+
+        // === BAND (row 24) - red satin ===
+        for col in 10...21 { pixels[24][col] = band }
+        pixels[24][9] = s
+        pixels[24][22] = s
+
+        // === CROWN (rows 25-31) - tall cylinder ===
+        // Row 25 - base of crown
+        for col in 10...21 { pixels[25][col] = b }
+        pixels[25][9] = s
+        pixels[25][10] = s
+        pixels[25][21] = h
+        pixels[25][22] = s
+
+        // Rows 26-29 - main crown body
+        for row in 26...29 {
+            pixels[row][9] = s
+            pixels[row][10] = b
+            pixels[row][11] = b
+            pixels[row][12] = b
+            pixels[row][13] = b
+            pixels[row][14] = b
+            pixels[row][15] = b
+            pixels[row][16] = b
+            pixels[row][17] = b
+            pixels[row][18] = b
+            pixels[row][19] = b
+            pixels[row][20] = b
+            pixels[row][21] = h
+            pixels[row][22] = s
+        }
+        // Highlight stripe on right side
+        for row in 26...29 {
+            pixels[row][20] = h
+        }
+
+        // Row 30 - near top
+        for col in 10...21 { pixels[30][col] = b }
+        pixels[30][9] = s
+        pixels[30][10] = s
+        pixels[30][20] = h
+        pixels[30][21] = h
+
+        // Row 31 - flat top
+        for col in 11...20 { pixels[31][col] = h }
+        pixels[31][11] = b
+        pixels[31][12] = b
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
@@ -911,6 +990,8 @@ class ClawdachiOutfitSprites {
             return generateCowboyHatTexture()
         case "headphones":
             return generateHeadphonesTexture()
+        case "tophat":
+            return generateTopHatTexture()
         default:
             return nil
         }
