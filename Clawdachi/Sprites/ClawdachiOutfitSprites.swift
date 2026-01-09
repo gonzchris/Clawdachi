@@ -446,6 +446,14 @@ class ClawdachiOutfitSprites {
     private static let nerdLens = PixelColor(r: 200, g: 220, b: 240, a: 100) // Clear lens with slight tint
     private static let nerdShine = PixelColor(r: 255, g: 255, b: 255, a: 150) // Lens glare
 
+    // 3D glasses colors
+    private static let glasses3dFrame = PixelColor(r: 240, g: 240, b: 245)   // White cardboard frame
+    private static let glasses3dFrameDark = PixelColor(r: 200, g: 200, b: 205) // Frame shadow
+    private static let glasses3dRed = PixelColor(r: 220, g: 40, b: 40)       // Red lens
+    private static let glasses3dRedLight = PixelColor(r: 255, g: 100, b: 100) // Red lens highlight
+    private static let glasses3dCyan = PixelColor(r: 40, g: 200, b: 220)     // Cyan lens
+    private static let glasses3dCyanLight = PixelColor(r: 100, g: 230, b: 245) // Cyan lens highlight
+
     // MARK: - Sunglasses
 
     /// Generates sunglasses texture (32x32) positioned over eyes
@@ -637,6 +645,87 @@ class ClawdachiOutfitSprites {
         pixels[18][24] = f
         pixels[18][25] = fl
         pixels[17][23] = f
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
+    }
+
+    // MARK: - 3D Glasses
+
+    /// Generates 3D glasses texture (32x32) with red/cyan lenses
+    static func generate3DGlassesTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
+
+        let f = glasses3dFrame
+        let fd = glasses3dFrameDark
+        let r = glasses3dRed
+        let rl = glasses3dRedLight
+        let c = glasses3dCyan
+        let cl = glasses3dCyanLight
+
+        // Classic cardboard 3D glasses shape - wider rectangular lenses
+        // Eyes are around rows 16-18, left eye cols 11-13, right eye cols 18-20
+
+        // === LEFT LENS - RED (cols 8-14, rows 15-19) ===
+        // Top frame
+        for col in 8...14 { pixels[19][col] = f }
+        pixels[19][8] = fd
+
+        // Lens rows
+        for row in 16...18 {
+            pixels[row][8] = fd
+            pixels[row][9] = r
+            pixels[row][10] = r
+            pixels[row][11] = r
+            pixels[row][12] = r
+            pixels[row][13] = r
+            pixels[row][14] = f
+        }
+        // Red highlight
+        pixels[18][10] = rl
+        pixels[18][11] = rl
+
+        // Bottom frame
+        for col in 8...14 { pixels[15][col] = fd }
+
+        // === RIGHT LENS - CYAN (cols 17-23, rows 15-19) ===
+        // Top frame
+        for col in 17...23 { pixels[19][col] = f }
+        pixels[19][23] = fd
+
+        // Lens rows
+        for row in 16...18 {
+            pixels[row][17] = f
+            pixels[row][18] = c
+            pixels[row][19] = c
+            pixels[row][20] = c
+            pixels[row][21] = c
+            pixels[row][22] = c
+            pixels[row][23] = fd
+        }
+        // Cyan highlight
+        pixels[18][20] = cl
+        pixels[18][21] = cl
+
+        // Bottom frame
+        for col in 17...23 { pixels[15][col] = fd }
+
+        // === BRIDGE (white cardboard connecting lenses) ===
+        pixels[18][15] = f
+        pixels[18][16] = f
+        pixels[17][15] = fd
+        pixels[17][16] = fd
+
+        // === TEMPLE ARMS (cardboard arms) ===
+        // Left arm
+        pixels[18][7] = f
+        pixels[18][6] = f
+        pixels[18][5] = fd
+        pixels[17][7] = fd
+        // Right arm
+        pixels[18][24] = f
+        pixels[18][25] = f
+        pixels[18][26] = fd
+        pixels[17][24] = fd
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
@@ -836,6 +925,8 @@ class ClawdachiOutfitSprites {
             return generateSunglassesTexture()
         case "nerd":
             return generateNerdGlassesTexture()
+        case "3d":
+            return generate3DGlassesTexture()
         default:
             return nil
         }
