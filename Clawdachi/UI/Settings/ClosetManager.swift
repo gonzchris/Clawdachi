@@ -275,7 +275,7 @@ class ClosetManager {
             ClosetItem(id: "tophat", name: "Top Hat", category: .hats, isPremium: false),
             ClosetItem(id: "beanie", name: "Beanie", category: .hats, isPremium: false),
             ClosetItem(id: "cowboy", name: "Cowboy Hat", category: .hats, isPremium: false),
-            ClosetItem(id: "crown", name: "Crown", category: .hats, isPremium: true),
+            ClosetItem(id: "crown", name: "Crown", category: .hats, isPremium: false),
             ClosetItem(id: "propeller", name: "Propeller Cap", category: .hats, isPremium: true),
             ClosetItem(id: "headphones", name: "Headphones", category: .hats, isPremium: false),
         ]

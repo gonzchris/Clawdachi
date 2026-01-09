@@ -301,6 +301,15 @@ class ClawdachiOutfitSprites {
     private static let beanieDark = PixelColor(r: 50, g: 100, b: 140)      // Shadow
     private static let beanieRib = PixelColor(r: 60, g: 115, b: 160)       // Ribbed cuff
 
+    // MARK: - Crown Colors
+
+    private static let crownGold = PixelColor(r: 255, g: 200, b: 50)       // Main gold
+    private static let crownLight = PixelColor(r: 255, g: 230, b: 120)     // Gold highlight
+    private static let crownDark = PixelColor(r: 180, g: 140, b: 30)       // Gold shadow
+    private static let crownRed = PixelColor(r: 180, g: 30, b: 50)         // Ruby jewel
+    private static let crownBlue = PixelColor(r: 40, g: 80, b: 180)        // Sapphire jewel
+    private static let crownWhite = PixelColor(r: 255, g: 255, b: 255)     // Jewel shine
+
     // MARK: - Cowboy Hat
 
     /// Generates a cowboy hat texture (32x32) positioned on top of sprite head
@@ -594,6 +603,102 @@ class ClawdachiOutfitSprites {
         for col in 14...17 { pixels[29][col] = l }
         pixels[29][14] = m
         pixels[29][15] = m
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
+    }
+
+    // MARK: - Crown
+
+    /// Generates a crown texture (32x32) - royal gold crown with jewels
+    static func generateCrownTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
+
+        let g = crownGold
+        let l = crownLight
+        let d = crownDark
+        let r = crownRed
+        let b = crownBlue
+        let w = crownWhite
+
+        // === BASE BAND (rows 22-23) ===
+        // Row 22 - bottom of crown
+        for col in 8...23 { pixels[22][col] = d }
+
+        // Row 23 - band with center jewel
+        for col in 8...23 { pixels[23][col] = g }
+        pixels[23][8] = d
+        pixels[23][9] = d
+        pixels[23][22] = l
+        pixels[23][23] = l
+        // Center ruby
+        pixels[23][15] = r
+        pixels[23][16] = r
+
+        // === CROWN BODY (rows 24-25) ===
+        // Row 24
+        for col in 9...22 { pixels[24][col] = g }
+        pixels[24][9] = d
+        pixels[24][21] = l
+        pixels[24][22] = l
+        // Side sapphires
+        pixels[24][11] = b
+        pixels[24][20] = b
+
+        // Row 25
+        for col in 9...22 { pixels[25][col] = g }
+        pixels[25][9] = d
+        pixels[25][21] = l
+        pixels[25][22] = l
+
+        // === SPIRES (rows 26-29) - 5 pointed peaks ===
+        // Row 26 - base of spires
+        pixels[26][9] = d    // Left spire
+        pixels[26][10] = g
+        pixels[26][12] = g   // Left-mid spire
+        pixels[26][13] = g
+        pixels[26][15] = g   // Center spire
+        pixels[26][16] = g
+        pixels[26][18] = g   // Right-mid spire
+        pixels[26][19] = g
+        pixels[26][21] = g   // Right spire
+        pixels[26][22] = l
+
+        // Row 27
+        pixels[27][9] = d
+        pixels[27][10] = g
+        pixels[27][12] = g
+        pixels[27][13] = l
+        pixels[27][15] = g
+        pixels[27][16] = l
+        pixels[27][18] = g
+        pixels[27][19] = l
+        pixels[27][21] = l
+        pixels[27][22] = l
+
+        // Row 28 - tips forming
+        pixels[28][9] = g
+        pixels[28][10] = l
+        pixels[28][12] = l
+        pixels[28][15] = g
+        pixels[28][16] = l
+        pixels[28][19] = l
+        pixels[28][21] = l
+
+        // Row 29 - top points
+        pixels[29][9] = l    // Left tip
+        pixels[29][12] = l   // Left-mid tip
+        pixels[29][15] = l   // Center tip (tallest)
+        pixels[29][16] = l
+        pixels[29][19] = l   // Right-mid tip
+        pixels[29][22] = l   // Right tip
+
+        // Row 30 - center spire extends higher
+        pixels[30][15] = l
+        pixels[30][16] = l
+
+        // === JEWEL HIGHLIGHTS ===
+        pixels[23][15] = w  // Ruby shine
+        pixels[24][11] = w  // Left sapphire shine
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
@@ -1079,6 +1184,8 @@ class ClawdachiOutfitSprites {
             return generateTopHatTexture()
         case "beanie":
             return generateBeanieTexture()
+        case "crown":
+            return generateCrownTexture()
         default:
             return nil
         }
