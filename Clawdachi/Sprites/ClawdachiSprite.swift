@@ -15,6 +15,7 @@ class ClawdachiSprite: SKNode {
 
     var bodyNode: SKSpriteNode!
     var outfitNode: SKSpriteNode!
+    var hatNode: SKSpriteNode!
     var heldItemNode: SKSpriteNode!
     var leftEyeNode: SKSpriteNode!
     var rightEyeNode: SKSpriteNode!
@@ -237,6 +238,7 @@ class ClawdachiSprite: SKNode {
         // Ensure UI updates happen on main thread
         DispatchQueue.main.async { [weak self] in
             self?.updateOutfit()
+            self?.updateHat()
             self?.updateHeldItem()
         }
     }
@@ -323,6 +325,14 @@ class ClawdachiSprite: SKNode {
         outfitNode.alpha = 0  // Hidden by default
         addChild(outfitNode)
 
+        // Hat overlay (on top of head)
+        hatNode = SKSpriteNode()
+        hatNode.size = CGSize(width: 32, height: 32)
+        hatNode.position = .zero
+        hatNode.zPosition = 3  // On top of everything
+        hatNode.alpha = 0  // Hidden by default
+        addChild(hatNode)
+
         // Held item overlay (in front of body, behind face)
         heldItemNode = SKSpriteNode()
         heldItemNode.size = CGSize(width: 32, height: 32)
@@ -331,8 +341,9 @@ class ClawdachiSprite: SKNode {
         heldItemNode.alpha = 0  // Hidden by default
         addChild(heldItemNode)
 
-        // Apply any equipped outfit and held item
+        // Apply any equipped outfit, hat, and held item
         updateOutfit()
+        updateHat()
         updateHeldItem()
 
         // Left Eye (Layer 2)
@@ -396,6 +407,24 @@ class ClawdachiSprite: SKNode {
         innerRightLegNode.texture = ClawdachiBodySprites.generateRightLegTexture()
         outerRightLegNode.texture = ClawdachiBodySprites.generateRightLegTexture()
     }
+
+    // MARK: - Hat Management
+
+    /// Updates the hat overlay based on currently equipped hat
+    func updateHat() {
+        let equippedHat = ClosetManager.shared.equippedHat
+
+        if let hat = equippedHat,
+           let texture = ClawdachiOutfitSprites.hatTexture(for: hat.id) {
+            hatNode.texture = texture
+            hatNode.alpha = 1
+        } else {
+            hatNode.texture = nil
+            hatNode.alpha = 0
+        }
+    }
+
+    // MARK: - Held Item Management
 
     /// Updates the held item overlay based on currently equipped held item
     func updateHeldItem() {

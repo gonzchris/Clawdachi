@@ -280,6 +280,76 @@ class ClawdachiOutfitSprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
 
+    // MARK: - Cowboy Hat Colors
+
+    private static let hatBrown = PixelColor(r: 139, g: 90, b: 43)        // Main brown
+    private static let hatBrownLight = PixelColor(r: 180, g: 120, b: 60)  // Highlight
+    private static let hatBrownDark = PixelColor(r: 101, g: 67, b: 33)    // Shadow
+    private static let hatBand = PixelColor(r: 60, g: 40, b: 20)          // Dark band
+
+    // MARK: - Cowboy Hat
+
+    /// Generates a cowboy hat texture (32x32) positioned on top of sprite head
+    static func generateCowboyHatTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
+
+        let b = hatBrown
+        let l = hatBrownLight
+        let d = hatBrownDark
+        let band = hatBand
+
+        // === WIDE BRIM (rows 22-23) ===
+        // Row 22 - bottom of brim (shadow)
+        for col in 3...28 { pixels[22][col] = d }
+
+        // Row 23 - top of brim
+        for col in 3...28 { pixels[23][col] = b }
+        pixels[23][3] = d
+        pixels[23][4] = d
+        pixels[23][27] = l
+        pixels[23][28] = l
+
+        // === HAT BAND (row 24) ===
+        for col in 8...23 { pixels[24][col] = band }
+        pixels[24][7] = d
+        pixels[24][24] = d
+
+        // === CROWN (rows 25-29) ===
+        // Row 25 - base of crown
+        for col in 8...23 { pixels[25][col] = b }
+        pixels[25][7] = d
+        pixels[25][8] = d
+        pixels[25][23] = l
+        pixels[25][24] = d
+
+        // Row 26
+        for col in 9...22 { pixels[26][col] = b }
+        pixels[26][8] = d
+        pixels[26][9] = d
+        pixels[26][22] = l
+        pixels[26][23] = d
+
+        // Row 27
+        for col in 9...22 { pixels[27][col] = b }
+        pixels[27][9] = d
+        pixels[27][22] = l
+
+        // Row 28 - near top
+        for col in 10...21 { pixels[28][col] = b }
+        pixels[28][10] = d
+        pixels[28][21] = l
+
+        // Row 29 - top of crown (indented for classic cowboy shape)
+        for col in 11...20 { pixels[29][col] = l }
+        pixels[29][11] = b
+        pixels[29][20] = b
+
+        // Row 30 - very top highlight
+        for col in 12...19 { pixels[30][col] = l }
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
+    }
+
     // MARK: - Coffee Mug
 
     /// Generates a coffee mug held item texture (32x32 to match body)
@@ -452,6 +522,18 @@ class ClawdachiOutfitSprites {
         }
     }
 
+    // MARK: - Hat Texture Lookup
+
+    /// Returns the texture for a given hat ID, or nil if not found
+    static func hatTexture(for hatId: String) -> SKTexture? {
+        switch hatId {
+        case "cowboy":
+            return generateCowboyHatTexture()
+        default:
+            return nil
+        }
+    }
+
     // MARK: - Held Item Texture Lookup
 
     /// Returns the texture for a given held item ID, or nil if not found
@@ -475,6 +557,15 @@ class ClawdachiOutfitSprites {
         guard let outfitTexture = texture(for: outfitId) else { return nil }
 
         return generateCompositePreview(overlayTexture: outfitTexture, size: size)
+    }
+
+    /// Generates a preview NSImage of the sprite with a hat (for grid display)
+    /// Returns nil if hat not found
+    static func generateHatPreviewImage(for hatId: String, size: CGFloat) -> NSImage? {
+        // Get hat texture
+        guard let hatTexture = hatTexture(for: hatId) else { return nil }
+
+        return generateCompositePreview(overlayTexture: hatTexture, size: size)
     }
 
     /// Generates a preview NSImage of the sprite with a held item (for grid display)
