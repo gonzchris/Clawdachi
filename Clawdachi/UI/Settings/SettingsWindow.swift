@@ -46,9 +46,9 @@ class SettingsWindow: NSWindow {
     private func setupWindow() {
         isOpaque = false
         backgroundColor = .clear
-        level = .floating
+        level = .normal
         hasShadow = true
-        collectionBehavior = [.canJoinAllSpaces, .stationary]
+        collectionBehavior = [.canJoinAllSpaces]
         isMovableByWindowBackground = true
     }
 

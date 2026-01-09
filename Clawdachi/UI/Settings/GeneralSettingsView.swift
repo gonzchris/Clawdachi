@@ -16,7 +16,6 @@ class GeneralSettingsView: NSView {
 
     private var titleLabel: NSTextField!
     private var launchAtLoginCheckbox: NSButton!
-    private var rememberPositionCheckbox: NSButton!
     private var hideDockIconCheckbox: NSButton!
     private var showMenuBarCheckbox: NSButton!
 
@@ -59,21 +58,15 @@ class GeneralSettingsView: NSView {
         styleCheckbox(launchAtLoginCheckbox)
         addSubview(launchAtLoginCheckbox)
 
-        // Remember position
-        rememberPositionCheckbox = NSButton(checkboxWithTitle: "Remember window position", target: self, action: #selector(checkboxChanged(_:)))
-        rememberPositionCheckbox.frame = NSRect(x: 20, y: 90, width: 250, height: 24)
-        styleCheckbox(rememberPositionCheckbox)
-        addSubview(rememberPositionCheckbox)
-
         // Hide dock icon
         hideDockIconCheckbox = NSButton(checkboxWithTitle: "Hide dock icon", target: self, action: #selector(checkboxChanged(_:)))
-        hideDockIconCheckbox.frame = NSRect(x: 20, y: 130, width: 200, height: 24)
+        hideDockIconCheckbox.frame = NSRect(x: 20, y: 90, width: 200, height: 24)
         styleCheckbox(hideDockIconCheckbox)
         addSubview(hideDockIconCheckbox)
 
         // Show menu bar icon
         showMenuBarCheckbox = NSButton(checkboxWithTitle: "Show menu bar icon", target: self, action: #selector(checkboxChanged(_:)))
-        showMenuBarCheckbox.frame = NSRect(x: 20, y: 160, width: 200, height: 24)
+        showMenuBarCheckbox.frame = NSRect(x: 20, y: 120, width: 200, height: 24)
         styleCheckbox(showMenuBarCheckbox)
         addSubview(showMenuBarCheckbox)
     }
@@ -95,7 +88,6 @@ class GeneralSettingsView: NSView {
 
     private func loadSettings() {
         launchAtLoginCheckbox.state = SettingsManager.shared.launchAtLogin ? .on : .off
-        rememberPositionCheckbox.state = SettingsManager.shared.rememberPosition ? .on : .off
         hideDockIconCheckbox.state = SettingsManager.shared.hideDockIcon ? .on : .off
         showMenuBarCheckbox.state = SettingsManager.shared.showMenuBarIcon ? .on : .off
     }
@@ -103,8 +95,6 @@ class GeneralSettingsView: NSView {
     @objc private func checkboxChanged(_ sender: NSButton) {
         if sender === launchAtLoginCheckbox {
             SettingsManager.shared.launchAtLogin = (sender.state == .on)
-        } else if sender === rememberPositionCheckbox {
-            SettingsManager.shared.rememberPosition = (sender.state == .on)
         } else if sender === hideDockIconCheckbox {
             SettingsManager.shared.hideDockIcon = (sender.state == .on)
         } else if sender === showMenuBarCheckbox {
