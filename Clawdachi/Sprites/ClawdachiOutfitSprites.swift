@@ -294,6 +294,13 @@ class ClawdachiOutfitSprites {
     private static let topHatShadow = PixelColor(r: 15, g: 15, b: 20)      // Deep shadow
     private static let topHatBand = PixelColor(r: 140, g: 20, b: 30)       // Red satin band
 
+    // MARK: - Beanie Colors
+
+    private static let beanieMain = PixelColor(r: 70, g: 130, b: 180)      // Steel blue main
+    private static let beanieLight = PixelColor(r: 100, g: 160, b: 210)    // Highlight
+    private static let beanieDark = PixelColor(r: 50, g: 100, b: 140)      // Shadow
+    private static let beanieRib = PixelColor(r: 60, g: 115, b: 160)       // Ribbed cuff
+
     // MARK: - Cowboy Hat
 
     /// Generates a cowboy hat texture (32x32) positioned on top of sprite head
@@ -509,6 +516,84 @@ class ClawdachiOutfitSprites {
         for col in 11...20 { pixels[31][col] = h }
         pixels[31][11] = b
         pixels[31][12] = b
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
+    }
+
+    // MARK: - Beanie
+
+    /// Generates a beanie texture (32x32) - cozy knit cap
+    static func generateBeanieTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
+
+        let m = beanieMain
+        let l = beanieLight
+        let d = beanieDark
+        let r = beanieRib
+
+        // === RIBBED CUFF (rows 21-23) - sits on head ===
+        // Row 21 - bottom of cuff (widest)
+        for col in 6...25 { pixels[21][col] = d }
+
+        // Row 22 - middle cuff with ribbing pattern
+        for col in 6...25 {
+            if col % 2 == 0 {
+                pixels[22][col] = r
+            } else {
+                pixels[22][col] = d
+            }
+        }
+        pixels[22][6] = d
+        pixels[22][25] = d
+
+        // Row 23 - top of cuff (slightly narrower)
+        for col in 7...24 {
+            if col % 2 == 0 {
+                pixels[23][col] = m
+            } else {
+                pixels[23][col] = r
+            }
+        }
+        pixels[23][7] = d
+        pixels[23][24] = l
+
+        // === MAIN BODY (rows 24-27) ===
+        // Row 24
+        for col in 8...23 { pixels[24][col] = m }
+        pixels[24][8] = d
+        pixels[24][9] = d
+        pixels[24][22] = l
+        pixels[24][23] = l
+
+        // Row 25
+        for col in 9...22 { pixels[25][col] = m }
+        pixels[25][9] = d
+        pixels[25][21] = l
+        pixels[25][22] = l
+
+        // Row 26
+        for col in 10...21 { pixels[26][col] = m }
+        pixels[26][10] = d
+        pixels[26][20] = l
+        pixels[26][21] = l
+
+        // Row 27
+        for col in 11...20 { pixels[27][col] = m }
+        pixels[27][11] = d
+        pixels[27][19] = l
+        pixels[27][20] = l
+
+        // === ROUNDED TOP (rows 28-29) ===
+        // Row 28
+        for col in 12...19 { pixels[28][col] = m }
+        pixels[28][12] = d
+        pixels[28][18] = l
+        pixels[28][19] = l
+
+        // Row 29 - very top
+        for col in 14...17 { pixels[29][col] = l }
+        pixels[29][14] = m
+        pixels[29][15] = m
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
@@ -992,6 +1077,8 @@ class ClawdachiOutfitSprites {
             return generateHeadphonesTexture()
         case "tophat":
             return generateTopHatTexture()
+        case "beanie":
+            return generateBeanieTexture()
         default:
             return nil
         }
