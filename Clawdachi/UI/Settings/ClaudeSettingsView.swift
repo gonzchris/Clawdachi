@@ -25,7 +25,6 @@ class ClaudeSettingsView: NSView {
     private var sessionsTableView: NSTableView!
     private var noSessionsLabel: NSTextField!
 
-    private var menuBarCheckbox: NSButton!
     private var notifyCheckbox: NSButton!
 
     private var sessions: [SessionInfo] = []
@@ -162,13 +161,8 @@ class ClaudeSettingsView: NSView {
     }
 
     private func setupToggles() {
-        menuBarCheckbox = NSButton(checkboxWithTitle: "Show menu bar icon", target: self, action: #selector(checkboxChanged(_:)))
-        menuBarCheckbox.frame = NSRect(x: 20, y: 280, width: 250, height: 24)
-        styleCheckbox(menuBarCheckbox)
-        addSubview(menuBarCheckbox)
-
         notifyCheckbox = NSButton(checkboxWithTitle: "Notify when switching sessions", target: self, action: #selector(checkboxChanged(_:)))
-        notifyCheckbox.frame = NSRect(x: 20, y: 306, width: 280, height: 24)
+        notifyCheckbox.frame = NSRect(x: 20, y: 280, width: 280, height: 24)
         styleCheckbox(notifyCheckbox)
         addSubview(notifyCheckbox)
     }
@@ -225,7 +219,6 @@ class ClaudeSettingsView: NSView {
         updateSessionsVisibility()
 
         // Load toggles
-        menuBarCheckbox.state = SettingsManager.shared.showMenuBarIcon ? .on : .off
         notifyCheckbox.state = SettingsManager.shared.notifyOnSessionSwitch ? .on : .off
 
         updateSessionsListEnabled()
@@ -293,10 +286,7 @@ class ClaudeSettingsView: NSView {
     }
 
     @objc private func checkboxChanged(_ sender: NSButton) {
-        if sender === menuBarCheckbox {
-            SettingsManager.shared.showMenuBarIcon = (sender.state == .on)
-            NotificationCenter.default.post(name: .menuBarIconSettingChanged, object: nil)
-        } else if sender === notifyCheckbox {
+        if sender === notifyCheckbox {
             SettingsManager.shared.notifyOnSessionSwitch = (sender.state == .on)
         }
     }

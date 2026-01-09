@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AppKit
 
 /// Singleton manager for app settings (General and Sound)
 class SettingsManager {
@@ -19,11 +20,12 @@ class SettingsManager {
     private enum Keys {
         static let launchAtLogin = "clawdachi.settings.launchAtLogin"
         static let rememberPosition = "clawdachi.settings.rememberPosition"
+        static let hideDockIcon = "clawdachi.settings.hideDockIcon"
+        static let showMenuBarIcon = "clawdachi.settings.showMenuBarIcon"
         static let questionSoundEnabled = "clawdachi.settings.questionSound"
         static let completionSoundEnabled = "clawdachi.settings.completionSound"
         static let savedWindowX = "clawdachi.settings.windowX"
         static let savedWindowY = "clawdachi.settings.windowY"
-        static let showMenuBarIcon = "clawdachi.settings.showMenuBarIcon"
         static let notifyOnSessionSwitch = "clawdachi.settings.notifyOnSessionSwitch"
         static let sessionSelectionMode = "clawdachi.settings.sessionSelectionMode"
     }
@@ -35,9 +37,10 @@ class SettingsManager {
         defaults.register(defaults: [
             Keys.launchAtLogin: false,
             Keys.rememberPosition: true,
+            Keys.hideDockIcon: false,
+            Keys.showMenuBarIcon: false,
             Keys.questionSoundEnabled: true,
             Keys.completionSoundEnabled: true,
-            Keys.showMenuBarIcon: false,
             Keys.notifyOnSessionSwitch: false,
             Keys.sessionSelectionMode: "anyActive"
         ])
@@ -56,6 +59,19 @@ class SettingsManager {
     var rememberPosition: Bool {
         get { defaults.bool(forKey: Keys.rememberPosition) }
         set { defaults.set(newValue, forKey: Keys.rememberPosition) }
+    }
+
+    var hideDockIcon: Bool {
+        get { defaults.bool(forKey: Keys.hideDockIcon) }
+        set {
+            defaults.set(newValue, forKey: Keys.hideDockIcon)
+            updateDockIconVisibility(hidden: newValue)
+        }
+    }
+
+    var showMenuBarIcon: Bool {
+        get { defaults.bool(forKey: Keys.showMenuBarIcon) }
+        set { defaults.set(newValue, forKey: Keys.showMenuBarIcon) }
     }
 
     // MARK: - Sound Settings
@@ -100,12 +116,22 @@ class SettingsManager {
         // TODO: Implement SMAppService for macOS 13+ or SMLoginItemSetEnabled for older versions
     }
 
-    // MARK: - Claude Settings
+    // MARK: - Dock Icon
 
-    var showMenuBarIcon: Bool {
-        get { defaults.bool(forKey: Keys.showMenuBarIcon) }
-        set { defaults.set(newValue, forKey: Keys.showMenuBarIcon) }
+    private func updateDockIconVisibility(hidden: Bool) {
+        if hidden {
+            NSApp.setActivationPolicy(.accessory)
+        } else {
+            NSApp.setActivationPolicy(.regular)
+        }
     }
+
+    /// Call on app launch to apply saved dock icon setting
+    func applyDockIconSetting() {
+        updateDockIconVisibility(hidden: hideDockIcon)
+    }
+
+    // MARK: - Claude Session Settings
 
     var notifyOnSessionSwitch: Bool {
         get { defaults.bool(forKey: Keys.notifyOnSessionSwitch) }

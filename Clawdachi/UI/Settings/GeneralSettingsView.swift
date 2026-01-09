@@ -17,7 +17,8 @@ class GeneralSettingsView: NSView {
     private var titleLabel: NSTextField!
     private var launchAtLoginCheckbox: NSButton!
     private var rememberPositionCheckbox: NSButton!
-    private var resetPositionButton: SettingsButton!
+    private var hideDockIconCheckbox: NSButton!
+    private var showMenuBarCheckbox: NSButton!
 
     // MARK: - Initialization
 
@@ -36,7 +37,6 @@ class GeneralSettingsView: NSView {
 
         setupTitle()
         setupCheckboxes()
-        setupResetButton()
         loadSettings()
     }
 
@@ -61,17 +61,21 @@ class GeneralSettingsView: NSView {
 
         // Remember position
         rememberPositionCheckbox = NSButton(checkboxWithTitle: "Remember window position", target: self, action: #selector(checkboxChanged(_:)))
-        rememberPositionCheckbox.frame = NSRect(x: 20, y: 100, width: 250, height: 24)
+        rememberPositionCheckbox.frame = NSRect(x: 20, y: 90, width: 250, height: 24)
         styleCheckbox(rememberPositionCheckbox)
         addSubview(rememberPositionCheckbox)
-    }
 
-    private func setupResetButton() {
-        let resetFrame = NSRect(x: 20, y: 150, width: 120, height: 24)
-        resetPositionButton = SettingsButton(frame: resetFrame, title: "Reset Position")
-        resetPositionButton.target = self
-        resetPositionButton.action = #selector(resetPositionClicked)
-        addSubview(resetPositionButton)
+        // Hide dock icon
+        hideDockIconCheckbox = NSButton(checkboxWithTitle: "Hide dock icon", target: self, action: #selector(checkboxChanged(_:)))
+        hideDockIconCheckbox.frame = NSRect(x: 20, y: 130, width: 200, height: 24)
+        styleCheckbox(hideDockIconCheckbox)
+        addSubview(hideDockIconCheckbox)
+
+        // Show menu bar icon
+        showMenuBarCheckbox = NSButton(checkboxWithTitle: "Show menu bar icon", target: self, action: #selector(checkboxChanged(_:)))
+        showMenuBarCheckbox.frame = NSRect(x: 20, y: 160, width: 200, height: 24)
+        styleCheckbox(showMenuBarCheckbox)
+        addSubview(showMenuBarCheckbox)
     }
 
     private func styleCheckbox(_ checkbox: NSButton) {
@@ -92,6 +96,8 @@ class GeneralSettingsView: NSView {
     private func loadSettings() {
         launchAtLoginCheckbox.state = SettingsManager.shared.launchAtLogin ? .on : .off
         rememberPositionCheckbox.state = SettingsManager.shared.rememberPosition ? .on : .off
+        hideDockIconCheckbox.state = SettingsManager.shared.hideDockIcon ? .on : .off
+        showMenuBarCheckbox.state = SettingsManager.shared.showMenuBarIcon ? .on : .off
     }
 
     @objc private func checkboxChanged(_ sender: NSButton) {
@@ -99,17 +105,11 @@ class GeneralSettingsView: NSView {
             SettingsManager.shared.launchAtLogin = (sender.state == .on)
         } else if sender === rememberPositionCheckbox {
             SettingsManager.shared.rememberPosition = (sender.state == .on)
+        } else if sender === hideDockIconCheckbox {
+            SettingsManager.shared.hideDockIcon = (sender.state == .on)
+        } else if sender === showMenuBarCheckbox {
+            SettingsManager.shared.showMenuBarIcon = (sender.state == .on)
+            NotificationCenter.default.post(name: .menuBarIconSettingChanged, object: nil)
         }
     }
-
-    @objc private func resetPositionClicked() {
-        // Reset to default position (center of screen)
-        NotificationCenter.default.post(name: .resetSpritePosition, object: nil)
-    }
-}
-
-// MARK: - Notification Names
-
-extension Notification.Name {
-    static let resetSpritePosition = Notification.Name("resetSpritePosition")
 }

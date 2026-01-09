@@ -324,6 +324,18 @@ class SettingsContentView: NSView {
 
     // MARK: - Drag Handling
 
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+        // Allow dragging without requiring focus first
+        if let event = event {
+            let location = convert(event.locationInWindow, from: nil)
+            // Accept first mouse in title bar area
+            if location.y < C.titleBarHeight {
+                return true
+            }
+        }
+        return true
+    }
+
     func setupDragTracking() {
         let options: NSTrackingArea.Options = [.activeAlways, .mouseMoved, .mouseEnteredAndExited]
         trackingArea = NSTrackingArea(rect: bounds, options: options, owner: self, userInfo: nil)

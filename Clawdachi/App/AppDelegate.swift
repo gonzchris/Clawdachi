@@ -24,6 +24,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Apply dock icon visibility setting
+        SettingsManager.shared.applyDockIconSetting()
+
         // Set up Claude Code integration on first launch
         ClaudeIntegrationSetup.setupIfNeeded()
 
