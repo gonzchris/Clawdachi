@@ -287,4 +287,105 @@ class ClawdachiBodySprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 5)
     }
 
+    // MARK: - Wizard Limb Textures (purple robe style)
+
+    private static let wizardPurple = PixelColor(r: 90, g: 50, b: 140)
+    private static let wizardPurpleLight = PixelColor(r: 130, g: 80, b: 180)
+    private static let wizardPurpleDark = PixelColor(r: 55, g: 30, b: 90)
+    private static let wizardGold = PixelColor(r: 255, g: 200, b: 50)
+
+    /// Generate wizard left arm texture (3x3 pixels) - purple sleeve
+    static func generatePurpleLeftArmTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 3)
+
+        // Row 2 (top/inner) - purple robe
+        pixels[2][0] = wizardPurpleDark
+        pixels[2][1] = wizardPurple
+        pixels[2][2] = wizardPurple
+
+        // Row 1 (middle) - purple robe
+        pixels[1][0] = wizardPurpleDark
+        pixels[1][1] = wizardPurple
+        pixels[1][2] = wizardPurple
+
+        // Row 0 (bottom/outer) - gold trim on sleeve
+        pixels[0][0] = wizardGold
+        pixels[0][1] = wizardGold
+        pixels[0][2] = wizardGold
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 3)
+    }
+
+    /// Generate wizard right arm texture (3x3 pixels) - purple sleeve
+    static func generatePurpleRightArmTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 3)
+
+        // Row 2 (top/inner) - purple robe
+        pixels[2][0] = wizardPurple
+        pixels[2][1] = wizardPurple
+        pixels[2][2] = wizardPurpleLight
+
+        // Row 1 (middle) - purple robe
+        pixels[1][0] = wizardPurple
+        pixels[1][1] = wizardPurple
+        pixels[1][2] = wizardPurpleLight
+
+        // Row 0 (bottom/outer) - gold trim on sleeve
+        pixels[0][0] = wizardGold
+        pixels[0][1] = wizardGold
+        pixels[0][2] = wizardGold
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 3)
+    }
+
+    /// Generate wizard left leg texture (2x5 pixels) - purple robe with gold trim
+    static func generatePurpleLeftLegTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 2), count: 5)
+
+        // Row 4 (top) - purple
+        pixels[4][0] = wizardPurpleDark
+        pixels[4][1] = wizardPurple
+
+        // Row 3 - purple
+        pixels[3][0] = wizardPurpleDark
+        pixels[3][1] = wizardPurple
+
+        // Row 2 - purple
+        pixels[2][0] = wizardPurpleDark
+        pixels[2][1] = wizardPurple
+
+        // Rows 0-1 (bottom) - gold trim at hem
+        pixels[1][0] = wizardGold
+        pixels[1][1] = wizardGold
+        pixels[0][0] = wizardGold
+        pixels[0][1] = wizardGold
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 5)
+    }
+
+    /// Generate wizard right leg texture (2x5 pixels) - purple robe with gold trim
+    static func generatePurpleRightLegTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 2), count: 5)
+
+        // Row 4 (top) - purple
+        pixels[4][0] = wizardPurple
+        pixels[4][1] = wizardPurpleLight
+
+        // Row 3 - purple
+        pixels[3][0] = wizardPurple
+        pixels[3][1] = wizardPurpleLight
+
+        // Row 2 - purple
+        pixels[2][0] = wizardPurple
+        pixels[2][1] = wizardPurpleLight
+
+        // Rows 0-1 (bottom) - gold trim at hem
+        pixels[1][0] = wizardGold
+        pixels[1][1] = wizardGold
+        pixels[0][0] = wizardGold
+        pixels[0][1] = wizardGold
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 5)
+    }
+
 }

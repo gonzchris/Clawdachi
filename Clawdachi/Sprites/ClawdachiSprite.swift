@@ -391,7 +391,7 @@ class ClawdachiSprite: SKNode {
             outfitNode.texture = texture
             outfitNode.alpha = 1
 
-            // Swap limb textures for astronaut suit
+            // Swap limb textures for specific outfits
             if outfit.id == "astronaut" {
                 leftArmNode.texture = ClawdachiBodySprites.generateWhiteLeftArmTexture()
                 rightArmNode.texture = ClawdachiBodySprites.generateWhiteRightArmTexture()
@@ -399,6 +399,13 @@ class ClawdachiSprite: SKNode {
                 innerLeftLegNode.texture = ClawdachiBodySprites.generateWhiteLeftLegTexture()
                 innerRightLegNode.texture = ClawdachiBodySprites.generateWhiteRightLegTexture()
                 outerRightLegNode.texture = ClawdachiBodySprites.generateWhiteRightLegTexture()
+            } else if outfit.id == "wizard" {
+                leftArmNode.texture = ClawdachiBodySprites.generatePurpleLeftArmTexture()
+                rightArmNode.texture = ClawdachiBodySprites.generatePurpleRightArmTexture()
+                outerLeftLegNode.texture = ClawdachiBodySprites.generatePurpleLeftLegTexture()
+                innerLeftLegNode.texture = ClawdachiBodySprites.generatePurpleLeftLegTexture()
+                innerRightLegNode.texture = ClawdachiBodySprites.generatePurpleRightLegTexture()
+                outerRightLegNode.texture = ClawdachiBodySprites.generatePurpleRightLegTexture()
             } else {
                 restoreNormalLimbTextures()
             }

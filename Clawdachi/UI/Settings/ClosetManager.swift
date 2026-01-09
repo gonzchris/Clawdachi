@@ -265,7 +265,7 @@ class ClosetManager {
             ClosetItem(id: "hoodie", name: "Hoodie", category: .outfits, isPremium: true),
             ClosetItem(id: "tuxedo", name: "Tuxedo", category: .outfits, isPremium: true),
             ClosetItem(id: "superhero", name: "Superhero Cape", category: .outfits, isPremium: true),
-            ClosetItem(id: "wizard", name: "Wizard Robe", category: .outfits, isPremium: true),
+            ClosetItem(id: "wizard", name: "Wizard Robe", category: .outfits, isPremium: false),
             ClosetItem(id: "astronaut", name: "Astronaut Suit", category: .outfits, isPremium: false),
             ClosetItem(id: "pirate", name: "Pirate Outfit", category: .outfits, isPremium: true),
         ]
@@ -291,7 +291,6 @@ class ClosetManager {
         availableHeld = [
             ClosetItem(id: "coffee", name: "Coffee Mug", category: .held, isPremium: true),
             ClosetItem(id: "cigarette", name: "Cigarette", category: .held, isPremium: false),
-            ClosetItem(id: "laptop", name: "Tiny Laptop", category: .held, isPremium: true),
         ]
 
         // Set default theme
