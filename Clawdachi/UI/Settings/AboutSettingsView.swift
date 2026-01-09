@@ -21,8 +21,6 @@ class AboutSettingsView: NSView {
     private var spriteContainer: NSView!
     private var descriptionLabel: NSTextField!
     private var followButton: SettingsButton!
-    private var creditsLabel: NSTextField!
-    private var handleButton: NSButton!
     private var updateTimer: Timer?
 
     // MARK: - Initialization
@@ -72,8 +70,7 @@ class AboutSettingsView: NSView {
 
     private func setupVersion() {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        versionLabel = NSTextField(labelWithString: "v\(version) (\(build))")
+        versionLabel = NSTextField(labelWithString: "v\(version)")
         versionLabel.frame = NSRect(x: 245, y: 50, width: 80, height: 16)
         versionLabel.font = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
         versionLabel.textColor = C.textDimColor
@@ -85,7 +82,7 @@ class AboutSettingsView: NSView {
         let centerX: CGFloat = 20
 
         // Container with border
-        spriteContainer = NSView(frame: NSRect(x: centerX, y: 100, width: spriteSize, height: spriteSize))
+        spriteContainer = NSView(frame: NSRect(x: centerX, y: 88, width: spriteSize, height: spriteSize))
         spriteContainer.wantsLayer = true
         spriteContainer.layer?.backgroundColor = C.cellBackgroundColor.cgColor
         spriteContainer.layer?.cornerRadius = 6
@@ -102,45 +99,22 @@ class AboutSettingsView: NSView {
 
     private func setupDescription() {
         descriptionLabel = NSTextField(labelWithString: "A desktop companion for Claude Code")
-        descriptionLabel.frame = NSRect(x: 20, y: 190, width: 250, height: 20)
+        descriptionLabel.frame = NSRect(x: 20, y: 176, width: 250, height: 20)
         descriptionLabel.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
         descriptionLabel.textColor = C.textColor
         addSubview(descriptionLabel)
     }
 
     private func setupFollowButton() {
-        let buttonFrame = NSRect(x: 20, y: 220, width: 150, height: 24)
-        followButton = SettingsButton(frame: buttonFrame, title: "𝕏  Follow @clawdachi")
+        let buttonFrame = NSRect(x: 20, y: 206, width: 150, height: 24)
+        followButton = SettingsButton(frame: buttonFrame, title: "𝕏  @clawdachi")
         followButton.target = self
         followButton.action = #selector(followClicked)
         addSubview(followButton)
     }
 
     private func setupCredits() {
-        // "Made with <3 by " - plain text
-        creditsLabel = NSTextField(labelWithString: "Made with <3 by ")
-        creditsLabel.frame = NSRect(x: 20, y: 255, width: 110, height: 16)
-        creditsLabel.font = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
-        creditsLabel.textColor = C.textDimColor
-        addSubview(creditsLabel)
-
-        // "@chrisgonzalez" - clickable link
-        handleButton = NSButton(frame: NSRect(x: 125, y: 253, width: 100, height: 20))
-        handleButton.bezelStyle = .inline
-        handleButton.isBordered = false
-        handleButton.target = self
-        handleButton.action = #selector(handleClicked)
-
-        let handleText = "@chrisgonzalez"
-        let attributedTitle = NSMutableAttributedString(string: handleText)
-        attributedTitle.addAttributes([
-            .font: NSFont.monospacedSystemFont(ofSize: 10, weight: .regular),
-            .foregroundColor: C.accentColor,
-            .underlineStyle: NSUnderlineStyle.single.rawValue
-        ], range: NSRange(location: 0, length: handleText.count))
-        handleButton.attributedTitle = attributedTitle
-
-        addSubview(handleButton)
+        // Credits section removed
     }
 
     // MARK: - Animation
@@ -175,12 +149,6 @@ class AboutSettingsView: NSView {
 
     @objc private func followClicked() {
         if let url = URL(string: "https://x.com/clawdachi") {
-            NSWorkspace.shared.open(url)
-        }
-    }
-
-    @objc private func handleClicked() {
-        if let url = URL(string: "https://x.com/chrisgonzalez") {
             NSWorkspace.shared.open(url)
         }
     }
