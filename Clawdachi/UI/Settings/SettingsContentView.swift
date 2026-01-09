@@ -22,6 +22,7 @@ class SettingsContentView: NSView {
 
     // Section views
     private var customizationView: CustomizationSectionView!
+    private var claudeView: ClaudeSettingsView!
     private var generalView: GeneralSettingsView!
     private var soundView: SoundSettingsView!
     private var aboutView: AboutSettingsView!
@@ -111,6 +112,11 @@ class SettingsContentView: NSView {
         customizationView.isHidden = true
         contentContainer.addSubview(customizationView)
 
+        // Claude settings
+        claudeView = ClaudeSettingsView(frame: sectionFrame)
+        claudeView.isHidden = true
+        contentContainer.addSubview(claudeView)
+
         // General settings
         generalView = GeneralSettingsView(frame: sectionFrame)
         generalView.isHidden = true
@@ -149,6 +155,7 @@ class SettingsContentView: NSView {
         // Hide all sections and stop their animations
         customizationView.isHidden = true
         customizationView.stopAnimation()
+        claudeView.isHidden = true
         generalView.isHidden = true
         soundView.isHidden = true
         aboutView.isHidden = true
@@ -159,6 +166,9 @@ class SettingsContentView: NSView {
         case .customize:
             customizationView.isHidden = false
             customizationView.startAnimation()
+        case .claude:
+            claudeView.isHidden = false
+            claudeView.refresh()
         case .general:
             generalView.isHidden = false
         case .sound:

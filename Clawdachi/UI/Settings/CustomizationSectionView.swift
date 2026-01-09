@@ -2,7 +2,7 @@
 //  CustomizationSectionView.swift
 //  Clawdachi
 //
-//  Customization section combining preview and item grid
+//  Customization section with vertical layout: preview, tabs, grid
 //
 
 import AppKit
@@ -16,8 +16,11 @@ class CustomizationSectionView: NSView {
     // MARK: - Properties
 
     private var previewView: CustomizationPreviewView!
+    private var tabBar: CustomizationTabBar!
     private var itemGridView: CustomizationGridView!
     private var resetButton: SettingsButton!
+
+    private var currentCategory: ClosetCategory = .themes
 
     // MARK: - Initialization
 
@@ -35,6 +38,7 @@ class CustomizationSectionView: NSView {
         wantsLayer = true
 
         setupPreviewView()
+        setupTabBar()
         setupItemGridView()
         setupResetButton()
     }
@@ -42,22 +46,47 @@ class CustomizationSectionView: NSView {
     // MARK: - Subview Setup
 
     private func setupPreviewView() {
+        // Preview centered at top
+        let previewAreaHeight: CGFloat = C.previewBoxSize + 20
         let previewFrame = NSRect(
-            x: C.panelPadding,
+            x: 0,
             y: 0,
-            width: C.customizationPreviewWidth - C.panelPadding,
-            height: bounds.height - 40  // Leave space for reset button
+            width: bounds.width,
+            height: previewAreaHeight
         )
         previewView = CustomizationPreviewView(frame: previewFrame)
         addSubview(previewView)
     }
 
+    private func setupTabBar() {
+        // Tabs centered below preview
+        let previewAreaHeight: CGFloat = C.previewBoxSize + 20
+        let tabWidth: CGFloat = min(bounds.width - C.panelPadding * 2, 400)
+        let tabX = (bounds.width - tabWidth) / 2
+
+        let tabFrame = NSRect(
+            x: tabX,
+            y: previewAreaHeight + C.gridSpacing,
+            width: tabWidth,
+            height: C.tabHeight
+        )
+        tabBar = CustomizationTabBar(frame: tabFrame, categories: ClosetCategory.allCases)
+        tabBar.delegate = self
+        addSubview(tabBar)
+    }
+
     private func setupItemGridView() {
+        // Grid below tabs
+        let previewAreaHeight: CGFloat = C.previewBoxSize + 20
+        let tabAreaHeight = C.tabHeight + C.gridSpacing * 2
+        let topOffset = previewAreaHeight + tabAreaHeight
+        let bottomPadding: CGFloat = 40  // Space for reset button
+
         let gridFrame = NSRect(
-            x: C.customizationPreviewWidth,
-            y: 0,
-            width: C.customizationGridWidth,
-            height: bounds.height
+            x: 0,
+            y: topOffset,
+            width: bounds.width,
+            height: bounds.height - topOffset - bottomPadding
         )
         itemGridView = CustomizationGridView(frame: gridFrame)
         itemGridView.delegate = self
@@ -65,10 +94,11 @@ class CustomizationSectionView: NSView {
     }
 
     private func setupResetButton() {
+        let buttonWidth: CGFloat = 70
         let resetFrame = NSRect(
-            x: C.panelPadding,
+            x: bounds.width - buttonWidth - C.panelPadding,
             y: bounds.height - 34,
-            width: 70,
+            width: buttonWidth,
             height: 24
         )
         resetButton = SettingsButton(frame: resetFrame, title: "RESET")
@@ -102,6 +132,15 @@ class CustomizationSectionView: NSView {
     func refresh() {
         previewView.updatePreview()
         itemGridView.refresh()
+    }
+}
+
+// MARK: - Tab Bar Delegate
+
+extension CustomizationSectionView: CustomizationTabBarDelegate {
+    func tabBar(_ tabBar: CustomizationTabBar, didSelectCategory category: ClosetCategory) {
+        currentCategory = category
+        itemGridView.loadCategory(category)
     }
 }
 

@@ -15,14 +15,14 @@ class AboutSettingsView: NSView {
 
     // MARK: - Properties
 
-    private var titleLabel: NSTextField!
-    private var spriteImageView: NSImageView!
-    private var spriteContainer: NSView!
     private var appNameLabel: NSTextField!
     private var versionLabel: NSTextField!
+    private var spriteImageView: NSImageView!
+    private var spriteContainer: NSView!
     private var descriptionLabel: NSTextField!
-    private var githubButton: SettingsButton!
+    private var followButton: SettingsButton!
     private var creditsLabel: NSTextField!
+    private var handleButton: NSButton!
     private var updateTimer: Timer?
 
     // MARK: - Initialization
@@ -40,10 +40,11 @@ class AboutSettingsView: NSView {
     private func setupViews() {
         wantsLayer = true
 
-        setupTitle()
+        setupAsciiArt()
+        setupVersion()
         setupSpritePreview()
-        setupAppInfo()
-        setupGithubButton()
+        setupDescription()
+        setupFollowButton()
         setupCredits()
     }
 
@@ -51,21 +52,40 @@ class AboutSettingsView: NSView {
 
     // MARK: - UI Setup
 
-    private func setupTitle() {
-        titleLabel = NSTextField(labelWithString: "ABOUT")
-        titleLabel.frame = NSRect(x: 20, y: 20, width: 200, height: 20)
-        titleLabel.font = NSFont.monospacedSystemFont(ofSize: C.titleFontSize, weight: .bold)
-        titleLabel.textColor = C.accentColor
-        addSubview(titleLabel)
+    private func setupAsciiArt() {
+        let asciiArt = """
+   ██████╗██╗      █████╗ ██╗    ██╗██████╗  █████╗  ██████╗██╗  ██╗██╗
+  ██╔════╝██║     ██╔══██╗██║    ██║██╔══██╗██╔══██╗██╔════╝██║  ██║██║
+  ██║     ██║     ███████║██║ █╗ ██║██║  ██║███████║██║     ███████║██║
+  ██║     ██║     ██╔══██║██║███╗██║██║  ██║██╔══██║██║     ██╔══██║██║
+  ╚██████╗███████╗██║  ██║╚███╔███╔╝██████╔╝██║  ██║╚██████╗██║  ██║██║
+   ╚═════╝╚══════╝╚═╝  ╚═╝ ╚══╝╚══╝ ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚═╝
+"""
+        appNameLabel = NSTextField(labelWithString: asciiArt)
+        appNameLabel.frame = NSRect(x: 20, y: 20, width: 220, height: 70)
+        appNameLabel.font = NSFont.monospacedSystemFont(ofSize: 5, weight: .regular)
+        appNameLabel.textColor = C.accentColor
+        appNameLabel.maximumNumberOfLines = 6
+        appNameLabel.lineBreakMode = .byClipping
+        addSubview(appNameLabel)
+    }
+
+    private func setupVersion() {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        versionLabel = NSTextField(labelWithString: "v\(version) (\(build))")
+        versionLabel.frame = NSRect(x: 245, y: 50, width: 80, height: 16)
+        versionLabel.font = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
+        versionLabel.textColor = C.textDimColor
+        addSubview(versionLabel)
     }
 
     private func setupSpritePreview() {
-        let spriteSize: CGFloat = 100
-        let spriteX: CGFloat = 20
-        let spriteY: CGFloat = 55
+        let spriteSize: CGFloat = 80
+        let centerX: CGFloat = 20
 
         // Container with border
-        spriteContainer = NSView(frame: NSRect(x: spriteX, y: spriteY, width: spriteSize, height: spriteSize))
+        spriteContainer = NSView(frame: NSRect(x: centerX, y: 100, width: spriteSize, height: spriteSize))
         spriteContainer.wantsLayer = true
         spriteContainer.layer?.backgroundColor = C.cellBackgroundColor.cgColor
         spriteContainer.layer?.cornerRadius = 6
@@ -80,48 +100,47 @@ class AboutSettingsView: NSView {
         spriteContainer.addSubview(spriteImageView)
     }
 
-    private func setupAppInfo() {
-        let textX: CGFloat = 140
-
-        // App name
-        appNameLabel = NSTextField(labelWithString: "Clawdachi")
-        appNameLabel.frame = NSRect(x: textX, y: 60, width: 200, height: 24)
-        appNameLabel.font = NSFont.monospacedSystemFont(ofSize: 16, weight: .bold)
-        appNameLabel.textColor = C.accentColor
-        addSubview(appNameLabel)
-
-        // Version
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        versionLabel = NSTextField(labelWithString: "v\(version) (\(build))")
-        versionLabel.frame = NSRect(x: textX, y: 88, width: 200, height: 16)
-        versionLabel.font = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
-        versionLabel.textColor = C.textDimColor
-        addSubview(versionLabel)
-
-        // Description
-        descriptionLabel = NSTextField(labelWithString: "A desktop companion\nfor Claude Code")
-        descriptionLabel.frame = NSRect(x: textX, y: 112, width: 250, height: 36)
+    private func setupDescription() {
+        descriptionLabel = NSTextField(labelWithString: "A desktop companion for Claude Code")
+        descriptionLabel.frame = NSRect(x: 20, y: 190, width: 250, height: 20)
         descriptionLabel.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
         descriptionLabel.textColor = C.textColor
-        descriptionLabel.maximumNumberOfLines = 2
         addSubview(descriptionLabel)
     }
 
-    private func setupGithubButton() {
-        let buttonFrame = NSRect(x: 20, y: 175, width: 140, height: 24)
-        githubButton = SettingsButton(frame: buttonFrame, title: "View on GitHub")
-        githubButton.target = self
-        githubButton.action = #selector(githubClicked)
-        addSubview(githubButton)
+    private func setupFollowButton() {
+        let buttonFrame = NSRect(x: 20, y: 220, width: 150, height: 24)
+        followButton = SettingsButton(frame: buttonFrame, title: "𝕏  Follow @clawdachi")
+        followButton.target = self
+        followButton.action = #selector(followClicked)
+        addSubview(followButton)
     }
 
     private func setupCredits() {
-        creditsLabel = NSTextField(labelWithString: "Made with <3 by Chris")
-        creditsLabel.frame = NSRect(x: 20, y: 220, width: 200, height: 16)
+        // "Made with <3 by " - plain text
+        creditsLabel = NSTextField(labelWithString: "Made with <3 by ")
+        creditsLabel.frame = NSRect(x: 20, y: 255, width: 110, height: 16)
         creditsLabel.font = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
         creditsLabel.textColor = C.textDimColor
         addSubview(creditsLabel)
+
+        // "@chrisgonzalez" - clickable link
+        handleButton = NSButton(frame: NSRect(x: 125, y: 253, width: 100, height: 20))
+        handleButton.bezelStyle = .inline
+        handleButton.isBordered = false
+        handleButton.target = self
+        handleButton.action = #selector(handleClicked)
+
+        let handleText = "@chrisgonzalez"
+        let attributedTitle = NSMutableAttributedString(string: handleText)
+        attributedTitle.addAttributes([
+            .font: NSFont.monospacedSystemFont(ofSize: 10, weight: .regular),
+            .foregroundColor: C.accentColor,
+            .underlineStyle: NSUnderlineStyle.single.rawValue
+        ], range: NSRange(location: 0, length: handleText.count))
+        handleButton.attributedTitle = attributedTitle
+
+        addSubview(handleButton)
     }
 
     // MARK: - Animation
@@ -154,8 +173,14 @@ class AboutSettingsView: NSView {
 
     // MARK: - Actions
 
-    @objc private func githubClicked() {
-        if let url = URL(string: "https://github.com/chrisgonzgonz/Clawdachi") {
+    @objc private func followClicked() {
+        if let url = URL(string: "https://x.com/clawdachi") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    @objc private func handleClicked() {
+        if let url = URL(string: "https://x.com/chrisgonzalez") {
             NSWorkspace.shared.open(url)
         }
     }

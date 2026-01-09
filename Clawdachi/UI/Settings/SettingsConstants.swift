@@ -14,10 +14,10 @@ enum SettingsConstants {
     // MARK: - Window Sizing
 
     /// Total window width
-    static let windowWidth: CGFloat = 520
+    static let windowWidth: CGFloat = 775
 
     /// Total window height
-    static let windowHeight: CGFloat = 420
+    static let windowHeight: CGFloat = 525
 
     /// Title bar height
     static let titleBarHeight: CGFloat = 28
@@ -37,7 +37,7 @@ enum SettingsConstants {
     // MARK: - Layout Panels
 
     /// Sidebar width for navigation
-    static let sidebarWidth: CGFloat = 150
+    static let sidebarWidth: CGFloat = 188
 
     /// Content area width (after sidebar)
     static let contentAreaWidth: CGFloat = windowWidth - sidebarWidth
@@ -45,40 +45,46 @@ enum SettingsConstants {
     // MARK: - Customization Section Layout
 
     /// Left panel width (preview area) within customization
-    static let customizationPreviewWidth: CGFloat = 180
+    static let customizationPreviewWidth: CGFloat = 210
 
     /// Right panel width (items) within customization
-    static let customizationGridWidth: CGFloat = contentAreaWidth - customizationPreviewWidth - panelPadding
+    static let customizationGridWidth: CGFloat = contentAreaWidth - customizationPreviewWidth
 
     // MARK: - Preview
 
     /// Preview box size (sprite display area)
-    static let previewBoxSize: CGFloat = 150
+    static let previewBoxSize: CGFloat = 175
 
     /// Preview sprite scale
     static let previewScale: CGFloat = 2.5
 
     // MARK: - Item Grid
 
-    /// Number of columns in item grid
-    static let gridColumns: Int = 4
+    /// Number of columns in item grid (calculated dynamically)
+    static let gridColumns: Int = 5
 
     /// Number of visible rows
-    static let gridVisibleRows: Int = 2
+    static let gridVisibleRows: Int = 3
 
     /// Item cell size (slot)
-    static let itemCellSize: CGFloat = 40
+    static let itemCellSize: CGFloat = 48
 
     /// Spacing between slots
-    static let gridSpacing: CGFloat = 4
+    static let gridSpacing: CGFloat = 6
 
     // MARK: - Tab Bar
 
     /// Category tab height
-    static let tabHeight: CGFloat = 26
+    static let tabHeight: CGFloat = 28
 
     /// Tab font size
     static let tabFontSize: CGFloat = 10
+
+    /// Spacing between tabs
+    static let tabSpacing: CGFloat = 6
+
+    /// Tab horizontal padding
+    static let tabPadding: CGFloat = 8
 
     // MARK: - Fonts
 
@@ -190,6 +196,7 @@ enum SettingsConstants {
 
     enum Section: String, CaseIterable {
         case customize = "Customize"
+        case claude = "Claude Code"
         case general = "General"
         case sound = "Sound"
         case about = "About"
@@ -204,6 +211,7 @@ enum SettingsConstants {
         static let locked = "unlock plus!"
         static let reset = "back to basics"
         static let themeChanged = "new look!"
+        static let outfitEquipped = "nice outfit!"
         static let hatEquipped = "nice hat!"
         static let glassesEquipped = "lookin smart!"
         static let heldEquipped = "handy!"

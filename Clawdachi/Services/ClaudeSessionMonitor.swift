@@ -14,13 +14,29 @@ struct SessionInfo: Equatable {
     let timestamp: Double
     let cwd: String?
     let tty: String?  // Terminal TTY device (e.g., /dev/ttys003)
+    var tabTitle: String?  // Terminal tab title (e.g., "* Menu Bar Icon")
 
-    /// Display name for the session (project folder name or truncated ID)
+    /// Display name for the session: "Project — Task" or "Project — Claude Code" if no task
     var displayName: String {
-        if let cwd = cwd {
-            return (cwd as NSString).lastPathComponent
+        let projectName = projectFolderName ?? truncatedSessionId
+
+        // If we have a meaningful task name from the tab title, show "Project — Task"
+        if let title = tabTitle, !title.isEmpty {
+            return "\(projectName) — \(title)"
         }
-        // Fallback to truncated session ID
+
+        // No task yet (just launched), show "Project — Claude Code"
+        return "\(projectName) — Claude Code"
+    }
+
+    /// Project folder name from cwd
+    private var projectFolderName: String? {
+        guard let cwd = cwd else { return nil }
+        return (cwd as NSString).lastPathComponent
+    }
+
+    /// Truncated session ID as fallback
+    private var truncatedSessionId: String {
         let idWithoutPrefix = id.hasPrefix("claude-session-")
             ? String(id.dropFirst("claude-session-".count))
             : id
@@ -56,6 +72,10 @@ enum SessionSelectionMode: Equatable {
 
 /// Monitors Claude Code session status by watching session files
 class ClaudeSessionMonitor: PollingService {
+
+    // MARK: - Shared Instance
+
+    static let shared = ClaudeSessionMonitor()
 
     // MARK: - Properties
 
@@ -100,6 +120,9 @@ class ClaudeSessionMonitor: PollingService {
 
     /// Callback when the list of active sessions changes
     var onSessionListChanged: (([SessionInfo]) -> Void)?
+
+    /// Callback when the monitored session switches to a different one (oldSessionId, newSession)
+    var onSessionSwitched: ((String?, SessionInfo?) -> Void)?
 
     // MARK: - PollingService
 
@@ -216,6 +239,19 @@ class ClaudeSessionMonitor: PollingService {
 
             // Sort by timestamp (most recent first)
             sessions.sort { $0.timestamp > $1.timestamp }
+
+            // Fetch tab titles for all sessions with TTYs
+            let ttys = sessions.compactMap { $0.tty }
+            let tabTitles = TerminalTabTitleService.shared.fetchAllTabTitles(for: ttys)
+
+            // Update sessions with tab titles
+            sessions = sessions.map { session in
+                var updated = session
+                if let tty = session.tty, let title = tabTitles[tty] {
+                    updated.tabTitle = title
+                }
+                return updated
+            }
 
             // Select which session to monitor
             let monitoredSession = selectMonitoredSession(from: sessions)
@@ -422,6 +458,13 @@ class ClaudeSessionMonitor: PollingService {
             activeSessions = allSessions
             onSessionListChanged?(allSessions)
 
+            // Post notification for UI updates
+            NotificationCenter.default.post(
+                name: .claudeSessionsDidUpdate,
+                object: self,
+                userInfo: ["sessions": allSessions]
+            )
+
             // If specific session no longer exists, fall back to anyActive mode
             if case .specific(let selectedId) = selectionMode,
                !allSessions.contains(where: { $0.id == selectedId }) {
@@ -430,6 +473,10 @@ class ClaudeSessionMonitor: PollingService {
                 return
             }
         }
+
+        // Check if we switched to a different session
+        let sessionSwitched = sessionId != self.currentSessionId && sessionId != nil
+        let oldSessionId = self.currentSessionId
 
         // Only fire status callback if state actually changed
         let statusChanged = isActive != self.isActive || status != self.currentStatus || sessionId != self.currentSessionId
@@ -440,6 +487,23 @@ class ClaudeSessionMonitor: PollingService {
         self.currentStatus = status
         self.currentSessionId = sessionId
         onStatusChanged?(isActive, status, sessionId)
+
+        // Post notification for other observers (like MenuBarController)
+        NotificationCenter.default.post(
+            name: .claudeStatusDidChange,
+            object: self,
+            userInfo: [
+                "isActive": isActive,
+                "status": status as Any,
+                "sessionId": sessionId as Any
+            ]
+        )
+
+        // Fire session switched callback if we switched to a different session
+        if sessionSwitched {
+            let newSession = allSessions.first { $0.id == sessionId }
+            onSessionSwitched?(oldSessionId, newSession)
+        }
     }
 }
 
@@ -452,4 +516,11 @@ private struct SessionData: Codable {
     let tool_name: String?
     let cwd: String?
     let tty: String?
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let claudeSessionsDidUpdate = Notification.Name("claudeSessionsDidUpdate")
+    static let claudeStatusDidChange = Notification.Name("claudeStatusDidChange")
 }

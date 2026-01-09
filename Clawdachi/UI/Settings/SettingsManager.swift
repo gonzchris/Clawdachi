@@ -23,6 +23,9 @@ class SettingsManager {
         static let completionSoundEnabled = "clawdachi.settings.completionSound"
         static let savedWindowX = "clawdachi.settings.windowX"
         static let savedWindowY = "clawdachi.settings.windowY"
+        static let showMenuBarIcon = "clawdachi.settings.showMenuBarIcon"
+        static let notifyOnSessionSwitch = "clawdachi.settings.notifyOnSessionSwitch"
+        static let sessionSelectionMode = "clawdachi.settings.sessionSelectionMode"
     }
 
     // MARK: - Initialization
@@ -33,7 +36,10 @@ class SettingsManager {
             Keys.launchAtLogin: false,
             Keys.rememberPosition: true,
             Keys.questionSoundEnabled: true,
-            Keys.completionSoundEnabled: true
+            Keys.completionSoundEnabled: true,
+            Keys.showMenuBarIcon: false,
+            Keys.notifyOnSessionSwitch: false,
+            Keys.sessionSelectionMode: "anyActive"
         ])
     }
 
@@ -92,5 +98,22 @@ class SettingsManager {
         // Note: Implementing launch at login requires ServiceManagement framework
         // and a helper app. For now, this is a placeholder.
         // TODO: Implement SMAppService for macOS 13+ or SMLoginItemSetEnabled for older versions
+    }
+
+    // MARK: - Claude Settings
+
+    var showMenuBarIcon: Bool {
+        get { defaults.bool(forKey: Keys.showMenuBarIcon) }
+        set { defaults.set(newValue, forKey: Keys.showMenuBarIcon) }
+    }
+
+    var notifyOnSessionSwitch: Bool {
+        get { defaults.bool(forKey: Keys.notifyOnSessionSwitch) }
+        set { defaults.set(newValue, forKey: Keys.notifyOnSessionSwitch) }
+    }
+
+    var sessionSelectionMode: String {
+        get { defaults.string(forKey: Keys.sessionSelectionMode) ?? "anyActive" }
+        set { defaults.set(newValue, forKey: Keys.sessionSelectionMode) }
     }
 }

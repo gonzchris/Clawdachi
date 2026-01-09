@@ -10,6 +10,7 @@ import UserNotifications
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
     private var animationRecorder: AnimationRecorder?
+    private var scene: ClawdachiScene?
 
     /// Public accessor for the sprite window (used by ChatBubbleWindow)
     var spriteWindow: NSWindow { window }
@@ -47,14 +48,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         skView.allowsTransparency = true
 
         // Create and present scene
-        let scene = ClawdachiScene()
+        scene = ClawdachiScene()
         skView.presentScene(scene)
 
         // Set as window content
         window.contentView = skView
 
         // Set up debug menu
-        DebugMenuController.shared.setupDebugMenu(scene: scene)
+        DebugMenuController.shared.setupDebugMenu(scene: scene!)
 
         // Restore saved position or center window
         restoreWindowPosition()
@@ -69,32 +70,44 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         // Set up animation recorder
-        animationRecorder = AnimationRecorder(scene: scene, view: skView)
+        animationRecorder = AnimationRecorder(scene: scene!, view: skView)
 
         // Set up keyboard shortcut for recording (Cmd+Shift+R)
         setupRecordingShortcut()
+
+        // Initialize menu bar controller (will show icon if enabled in settings)
+        _ = MenuBarController.shared
 
         // Request notification permissions for recording feedback
         requestNotificationPermissions()
     }
 
     private func setupRecordingShortcut() {
-        // Global monitor for when app is not focused
+        // Global monitor for recording only (works when app is not focused)
         globalEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            self?.handleKeyEvent(event)
+            self?.handleGlobalKeyEvent(event)
         }
 
-        // Local monitor for when app is focused
+        // Local monitor for all shortcuts (only when app is focused)
         localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            if self?.handleKeyEvent(event) == true {
+            if self?.handleLocalKeyEvent(event) == true {
                 return nil  // Consume the event
             }
             return event
         }
     }
 
-    @discardableResult
-    private func handleKeyEvent(_ event: NSEvent) -> Bool {
+    private func handleGlobalKeyEvent(_ event: NSEvent) {
+        let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+
+        // Only Cmd+Shift+R (recording) works globally
+        if modifierFlags == [.command, .shift],
+           event.charactersIgnoringModifiers?.lowercased() == "r" {
+            animationRecorder?.toggleRecording()
+        }
+    }
+
+    private func handleLocalKeyEvent(_ event: NSEvent) -> Bool {
         let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
 
         // Check for Cmd+Shift+R (recording)
@@ -104,14 +117,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return true
         }
 
-        // Check for Cmd+, (settings)
+        // Check for Cmd+, (settings) - local only
         if modifierFlags == [.command],
            event.charactersIgnoringModifiers == "," {
             openSettings()
             return true
         }
 
+        // Check for Cmd+Z (sleep mode toggle) - local only
+        if modifierFlags == [.command],
+           event.charactersIgnoringModifiers?.lowercased() == "z" {
+            toggleSleep()
+            return true
+        }
+
         return false
+    }
+
+    private func toggleSleep() {
+        guard let scene = scene else { return }
+        scene.toggleSleep()
     }
 
     private func openSettings() {

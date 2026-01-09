@@ -2,7 +2,7 @@
 //  CustomizationGridView.swift
 //  Clawdachi
 //
-//  Right panel with category tabs and item selection grid - RPG inventory style
+//  Item selection grid - RPG inventory style
 //
 
 import AppKit
@@ -25,11 +25,11 @@ class CustomizationGridView: NSView {
 
     weak var delegate: CustomizationGridDelegate?
 
-    private var tabBar: CustomizationTabBar!
     private var gridScrollView: NSScrollView!
     private var gridView: NSView!
-    private var equippedLabel: NSTextField!
     private var itemCells: [CustomizationItemCell] = []
+    private var itemNameLabel: NSTextField!
+    private var selectedItemName: String = ""
 
     private var currentCategory: ClosetCategory = .themes
 
@@ -48,74 +48,70 @@ class CustomizationGridView: NSView {
     private func setupViews() {
         wantsLayer = true
 
-        setupTabBar()
         setupGrid()
-        setupEquippedSection()
+        setupItemNameLabel()
 
         // Initial load
         loadItems(for: currentCategory)
     }
 
-    // MARK: - Tab Bar
-
-    private func setupTabBar() {
-        // Tab bar at bottom (view is flipped)
-        let tabFrame = NSRect(
-            x: 0,
-            y: bounds.height - C.tabHeight,
-            width: bounds.width,
-            height: C.tabHeight
-        )
-        tabBar = CustomizationTabBar(frame: tabFrame, categories: ClosetCategory.allCases)
-        tabBar.delegate = self
-        addSubview(tabBar)
-    }
-
     // MARK: - Grid
 
     private func setupGrid() {
-        // Position grid at top (view is flipped, so y=0 is top)
-        let gridY: CGFloat = 4
-        let gridHeight = (C.itemCellSize + C.gridSpacing) * CGFloat(C.gridVisibleRows) + C.gridSpacing
+        // Constrain grid width for better centering
+        let maxGridWidth: CGFloat = 400
+        let gridWidth = min(bounds.width, maxGridWidth)
+        let gridX = (bounds.width - gridWidth) / 2
 
-        // Scroll view for grid
+        // Scroll view for grid - centered horizontally
         gridScrollView = NSScrollView(frame: NSRect(
-            x: 4,
-            y: gridY,
-            width: bounds.width - 8,
-            height: gridHeight
+            x: gridX,
+            y: 0,
+            width: gridWidth,
+            height: bounds.height
         ))
-        gridScrollView.hasVerticalScroller = false
+        gridScrollView.hasVerticalScroller = true
         gridScrollView.hasHorizontalScroller = false
         gridScrollView.drawsBackground = false
         gridScrollView.backgroundColor = .clear
+        gridScrollView.scrollerStyle = .overlay
+        gridScrollView.autohidesScrollers = true
 
         // Content view
-        gridView = NSView(frame: NSRect(x: 0, y: 0, width: gridScrollView.bounds.width, height: gridHeight))
+        gridView = NSView(frame: NSRect(x: 0, y: 0, width: gridScrollView.bounds.width, height: bounds.height))
         gridScrollView.documentView = gridView
 
         addSubview(gridScrollView)
     }
 
-    // MARK: - Equipped Section
+    // MARK: - Item Name Label
 
-    private func setupEquippedSection() {
-        // Equipped items label at bottom
-        equippedLabel = NSTextField(labelWithString: "")
-        equippedLabel.frame = NSRect(x: 4, y: 4, width: bounds.width - 8, height: 52)
-        equippedLabel.font = NSFont.monospacedSystemFont(ofSize: C.equippedFontSize, weight: .regular)
-        equippedLabel.textColor = C.textDimColor
-        equippedLabel.backgroundColor = .clear
-        equippedLabel.isBezeled = false
-        equippedLabel.isEditable = false
-        equippedLabel.maximumNumberOfLines = 4
-        equippedLabel.lineBreakMode = .byWordWrapping
-        addSubview(equippedLabel)
+    private func setupItemNameLabel() {
+        // Item name label - will be positioned in loadItems below the grid content
+        itemNameLabel = NSTextField(labelWithString: "")
+        itemNameLabel.frame = NSRect(x: 0, y: 0, width: gridScrollView.bounds.width, height: 20)
+        itemNameLabel.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .medium)
+        itemNameLabel.textColor = C.textColor
+        itemNameLabel.backgroundColor = .clear
+        itemNameLabel.isBezeled = false
+        itemNameLabel.isEditable = false
+        itemNameLabel.alignment = .center
+        gridView.addSubview(itemNameLabel)
+    }
 
-        updateEquippedLabel()
+    func updateItemName(_ name: String) {
+        selectedItemName = name
+        itemNameLabel.stringValue = name
     }
 
     override var isFlipped: Bool { true }
+
+    // MARK: - Public API
+
+    func loadCategory(_ category: ClosetCategory) {
+        currentCategory = category
+        loadItems(for: category)
+    }
 
     // MARK: - Loading Items
 
@@ -129,32 +125,61 @@ class CustomizationGridView: NSView {
         // Get items for category
         let items = ClosetManager.shared.items(for: category)
 
-        // Calculate grid layout
+        // Calculate grid layout dynamically
         let cellSize = C.itemCellSize
         let spacing = C.gridSpacing
-        let columns = C.gridColumns
-        let rows = max(C.gridVisibleRows, (items.count + columns - 1) / columns)
+        let availableWidth = gridScrollView.bounds.width - spacing
+        let maxColumns = 8
+        let columns = min(maxColumns, max(1, Int(availableWidth / (cellSize + spacing))))
+        let rows = max(1, (items.count + columns - 1) / columns)
+
+        // Calculate total grid dimensions and center offsets
+        let totalGridWidth = CGFloat(columns) * (cellSize + spacing)
+        let leftOffset = (gridScrollView.bounds.width - totalGridWidth) / 2 + spacing / 2
+
+        let labelHeight: CGFloat = 24
+        let itemsHeight = CGFloat(rows) * (cellSize + spacing) + spacing
+        let contentHeight = itemsHeight + labelHeight
+        let viewHeight = max(contentHeight, gridScrollView.bounds.height)
+
+        // Calculate vertical center offset (center the items + label together)
+        let topOffset = max(0, (gridScrollView.bounds.height - contentHeight) / 2)
 
         // Resize grid view if needed
-        let gridHeight = CGFloat(rows) * (cellSize + spacing) + spacing
-        gridView.frame = NSRect(x: 0, y: 0, width: gridScrollView.bounds.width, height: max(gridHeight, gridScrollView.bounds.height))
+        gridView.frame = NSRect(x: 0, y: 0, width: gridScrollView.bounds.width, height: viewHeight)
+
+        // Position item name label below the items
+        let labelY = topOffset + itemsHeight
+        itemNameLabel.frame = NSRect(x: 0, y: labelY, width: gridScrollView.bounds.width, height: labelHeight)
 
         // Create cells
         for (index, item) in items.enumerated() {
             let col = index % columns
             let row = index / columns
 
-            let x = spacing + CGFloat(col) * (cellSize + spacing)
-            let y = spacing + CGFloat(row) * (cellSize + spacing)
+            let x = leftOffset + CGFloat(col) * (cellSize + spacing)
+            let y = topOffset + spacing + CGFloat(row) * (cellSize + spacing)
 
             let cellFrame = NSRect(x: x, y: y, width: cellSize, height: cellSize)
             let cell = CustomizationItemCell(frame: cellFrame, item: item)
             cell.delegate = self
+            cell.hoverDelegate = self
             cell.isSelected = ClosetManager.shared.isEquipped(item)
             cell.isLocked = item.isPremium && !ClosetManager.shared.isPremiumUnlocked
 
             itemCells.append(cell)
             gridView.addSubview(cell)
+        }
+
+        // Update item name to show selected item
+        updateSelectedItemName()
+    }
+
+    private func updateSelectedItemName() {
+        if let selectedCell = itemCells.first(where: { $0.isSelected }) {
+            updateItemName(selectedCell.item.name)
+        } else {
+            updateItemName("")
         }
     }
 
@@ -162,36 +187,6 @@ class CustomizationGridView: NSView {
 
     func refresh() {
         loadItems(for: currentCategory)
-        updateEquippedLabel()
-    }
-
-    private func updateEquippedLabel() {
-        let manager = ClosetManager.shared
-
-        var lines: [String] = []
-
-        if let hat = manager.equippedHat {
-            lines.append("Hat: \(hat.name)")
-        }
-
-        if let glasses = manager.equippedGlasses {
-            lines.append("Glasses: \(glasses.name)")
-        }
-
-        if let held = manager.equippedHeld {
-            lines.append("Held: \(held.name)")
-        }
-
-        equippedLabel.stringValue = lines.joined(separator: "\n")
-    }
-}
-
-// MARK: - Tab Bar Delegate
-
-extension CustomizationGridView: CustomizationTabBarDelegate {
-    func tabBar(_ tabBar: CustomizationTabBar, didSelectCategory category: ClosetCategory) {
-        currentCategory = category
-        loadItems(for: category)
     }
 }
 
@@ -223,7 +218,19 @@ extension CustomizationGridView: CustomizationItemCellDelegate {
             delegate?.itemGrid(self, didSelectItem: item, in: item.category)
         }
 
-        updateEquippedLabel()
+        updateSelectedItemName()
+    }
+}
+
+// MARK: - Item Cell Hover Delegate
+
+extension CustomizationGridView: CustomizationItemCellHoverDelegate {
+    func cellDidHover(_ cell: CustomizationItemCell) {
+        updateItemName(cell.item.name)
+    }
+
+    func cellDidUnhover(_ cell: CustomizationItemCell) {
+        updateSelectedItemName()
     }
 }
 
@@ -256,14 +263,16 @@ class CustomizationTabBar: NSView {
     }
 
     private func setupTabs() {
-        let tabWidth = bounds.width / CGFloat(categories.count)
+        let spacing = C.tabSpacing
+        let totalSpacing = spacing * CGFloat(categories.count + 1)
+        let tabWidth = (bounds.width - totalSpacing) / CGFloat(categories.count)
 
         for (index, category) in categories.enumerated() {
             let tabFrame = NSRect(
-                x: CGFloat(index) * tabWidth,
-                y: 0,
+                x: spacing + CGFloat(index) * (tabWidth + spacing),
+                y: 2,
                 width: tabWidth,
-                height: bounds.height
+                height: bounds.height - 4
             )
             let tab = CustomizationTabButton(frame: tabFrame, title: category.shortName, index: index)
             tab.isSelected = (index == selectedIndex)
@@ -371,12 +380,18 @@ protocol CustomizationItemCellDelegate: AnyObject {
     func cellWasTapped(_ cell: CustomizationItemCell)
 }
 
+protocol CustomizationItemCellHoverDelegate: AnyObject {
+    func cellDidHover(_ cell: CustomizationItemCell)
+    func cellDidUnhover(_ cell: CustomizationItemCell)
+}
+
 class CustomizationItemCell: NSView {
 
     private typealias C = SettingsConstants
 
     let item: ClosetItem
     weak var delegate: CustomizationItemCellDelegate?
+    weak var hoverDelegate: CustomizationItemCellHoverDelegate?
 
     var isSelected: Bool = false {
         didSet { needsDisplay = true }
@@ -490,11 +505,13 @@ class CustomizationItemCell: NSView {
     override func mouseEntered(with event: NSEvent) {
         isHovered = true
         needsDisplay = true
+        hoverDelegate?.cellDidHover(self)
     }
 
     override func mouseExited(with event: NSEvent) {
         isHovered = false
         needsDisplay = true
+        hoverDelegate?.cellDidUnhover(self)
     }
 
     override func mouseUp(with event: NSEvent) {
@@ -520,6 +537,7 @@ extension ClosetCategory {
     var shortName: String {
         switch self {
         case .themes: return "Color"
+        case .outfits: return "Outfits"
         case .hats: return "Hats"
         case .glasses: return "Glasses"
         case .held: return "Held"

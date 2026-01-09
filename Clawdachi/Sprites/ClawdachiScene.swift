@@ -79,7 +79,7 @@ class ClawdachiScene: SKScene {
     }
 
     private func setupClaudeMonitor() {
-        claudeMonitor = ClaudeSessionMonitor()
+        claudeMonitor = ClaudeSessionMonitor.shared
 
         // Load saved selection mode preference
         if let mode = loadSelectionMode() {
@@ -108,6 +108,15 @@ class ClawdachiScene: SKScene {
         claudeMonitor.onStatusChanged = { [weak self] isActive, status, sessionId in
             guard let self = self, !self.isSleeping else { return }
             self.claudeStatusHandler.handleStatusChanged(isActive: isActive, status: status, sessionId: sessionId)
+        }
+
+        // Session switch notification (when anyActive switches between sessions)
+        claudeMonitor.onSessionSwitched = { [weak self] _, newSession in
+            guard let self = self,
+                  !self.isSleeping,
+                  SettingsManager.shared.notifyOnSessionSwitch,
+                  let session = newSession else { return }
+            self.showChatBubble("> watching \(session.displayName)", duration: 2.5)
         }
 
         // Set up terminal focus monitor (used when in followFocusedTab mode)
@@ -265,6 +274,11 @@ class ClawdachiScene: SKScene {
 
         // If it was a click (not a drag) on the sprite, trigger reaction or wake up
         if !isDragging && dragStartedOnSprite {
+            // Double-click opens Browse dialog to launch Claude Code
+            if event.clickCount == 2 {
+                launchClaudeBrowse()
+                return
+            }
             // Check if any overlay is visible before dismissing
             let hadLightbulb = clawdachi.isLightbulbVisible
             let hadQuestionMark = clawdachi.isQuestionMarkVisible
@@ -366,6 +380,7 @@ class ClawdachiScene: SKScene {
 
         // Launch Claude Code submenu (top of menu)
         let launchItem = NSMenuItem(title: "Launch Claude Code", action: nil, keyEquivalent: "")
+        launchItem.image = NSImage(systemSymbolName: "terminal", accessibilityDescription: nil)
         let launchSubmenu = NSMenu(title: "Launch Claude Code")
         buildLaunchClaudeSubmenu(launchSubmenu)
         launchItem.submenu = launchSubmenu
@@ -373,20 +388,11 @@ class ClawdachiScene: SKScene {
 
         menu.addItem(NSMenuItem.separator())
 
-        // Monitor Instance submenu
-        let instanceItem = NSMenuItem(title: "Monitor Instance", action: nil, keyEquivalent: "")
-        let instanceSubmenu = NSMenu(title: "Monitor Instance")
-        buildInstanceSubmenu(instanceSubmenu)
-        instanceItem.submenu = instanceSubmenu
-        menu.addItem(instanceItem)
-
-        menu.addItem(NSMenuItem.separator())
-
         // Settings
         let settingsItem = NSMenuItem(
             title: "Settings",
             action: #selector(openSettings),
-            keyEquivalent: ""
+            keyEquivalent: ","
         )
         settingsItem.target = self
         menu.addItem(settingsItem)
@@ -395,9 +401,10 @@ class ClawdachiScene: SKScene {
         let sleepItem = NSMenuItem(
             title: isSleeping ? "Wake Up" : "Sleep Mode",
             action: #selector(toggleSleep),
-            keyEquivalent: ""
+            keyEquivalent: "z"
         )
         sleepItem.target = self
+        sleepItem.image = NSImage(systemSymbolName: isSleeping ? "sun.max.fill" : "moon.fill", accessibilityDescription: nil)
         menu.addItem(sleepItem)
 
         // Quit
@@ -407,6 +414,7 @@ class ClawdachiScene: SKScene {
             keyEquivalent: "q"
         )
         quitItem.target = self
+        quitItem.image = NSImage(systemSymbolName: "power", accessibilityDescription: nil)
         menu.addItem(quitItem)
 
         // Show menu at click location
@@ -580,6 +588,7 @@ class ClawdachiScene: SKScene {
                 )
                 item.target = self
                 item.representedObject = dir.path
+                item.image = NSImage(systemSymbolName: "folder", accessibilityDescription: nil)
                 menu.addItem(item)
             }
         }
@@ -593,6 +602,7 @@ class ClawdachiScene: SKScene {
             keyEquivalent: ""
         )
         browseItem.target = self
+        browseItem.image = NSImage(systemSymbolName: "folder.badge.plus", accessibilityDescription: nil)
         menu.addItem(browseItem)
 
         menu.addItem(NSMenuItem.separator())
@@ -616,6 +626,7 @@ class ClawdachiScene: SKScene {
                 item.target = self
                 item.representedObject = terminal.rawValue
                 item.state = (terminal == preferredTerminal) ? .on : .off
+                item.image = NSImage(systemSymbolName: "terminal.fill", accessibilityDescription: nil)
                 menu.addItem(item)
             }
         }
@@ -682,7 +693,7 @@ class ClawdachiScene: SKScene {
         ClaudeLauncher.shared.preferredTerminal = terminal
     }
 
-    @objc private func toggleSleep() {
+    @objc func toggleSleep() {
         if isSleeping {
             isSleeping = false
             clawdachi.wakeUp { [weak self] in

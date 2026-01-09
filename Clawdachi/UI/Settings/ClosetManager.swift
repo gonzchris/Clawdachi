@@ -13,6 +13,7 @@ import AppKit
 /// Categories of closet items
 enum ClosetCategory: String, CaseIterable {
     case themes
+    case outfits
     case hats
     case glasses
     case held
@@ -20,6 +21,7 @@ enum ClosetCategory: String, CaseIterable {
     var displayName: String {
         switch self {
         case .themes: return "THEMES"
+        case .outfits: return "OUTFITS"
         case .hats: return "HATS"
         case .glasses: return "GLASSES"
         case .held: return "HELD"
@@ -67,6 +69,7 @@ class ClosetManager {
     // MARK: - Equipped State
 
     private(set) var currentTheme: ClosetTheme
+    private(set) var equippedOutfit: ClosetItem?
     private(set) var equippedHat: ClosetItem?
     private(set) var equippedGlasses: ClosetItem?
     private(set) var equippedHeld: ClosetItem?
@@ -74,6 +77,7 @@ class ClosetManager {
     // MARK: - Available Items
 
     let availableThemes: [ClosetTheme]
+    let availableOutfits: [ClosetItem]
     let availableHats: [ClosetItem]
     let availableGlasses: [ClosetItem]
     let availableHeld: [ClosetItem]
@@ -82,6 +86,7 @@ class ClosetManager {
 
     private enum Keys {
         static let theme = "clawdachi.closet.theme"
+        static let outfit = "clawdachi.closet.outfit"
         static let hat = "clawdachi.closet.hat"
         static let glasses = "clawdachi.closet.glasses"
         static let held = "clawdachi.closet.held"
@@ -174,6 +179,16 @@ class ClosetManager {
             )
         ]
 
+        // Define available outfits
+        availableOutfits = [
+            ClosetItem(id: "hoodie", name: "Hoodie", category: .outfits, isPremium: true),
+            ClosetItem(id: "tuxedo", name: "Tuxedo", category: .outfits, isPremium: true),
+            ClosetItem(id: "superhero", name: "Superhero Cape", category: .outfits, isPremium: true),
+            ClosetItem(id: "wizard", name: "Wizard Robe", category: .outfits, isPremium: true),
+            ClosetItem(id: "astronaut", name: "Astronaut Suit", category: .outfits, isPremium: true),
+            ClosetItem(id: "pirate", name: "Pirate Outfit", category: .outfits, isPremium: true),
+        ]
+
         // Define available hats
         availableHats = [
             ClosetItem(id: "tophat", name: "Top Hat", category: .hats, isPremium: true),
@@ -215,6 +230,11 @@ class ClosetManager {
             currentTheme = theme
         }
 
+        // Load outfit
+        if let outfitId = defaults.string(forKey: Keys.outfit) {
+            equippedOutfit = availableOutfits.first(where: { $0.id == outfitId })
+        }
+
         // Load hat
         if let hatId = defaults.string(forKey: Keys.hat) {
             equippedHat = availableHats.first(where: { $0.id == hatId })
@@ -235,6 +255,7 @@ class ClosetManager {
         let defaults = UserDefaults.standard
 
         defaults.set(currentTheme.id, forKey: Keys.theme)
+        defaults.set(equippedOutfit?.id, forKey: Keys.outfit)
         defaults.set(equippedHat?.id, forKey: Keys.hat)
         defaults.set(equippedGlasses?.id, forKey: Keys.glasses)
         defaults.set(equippedHeld?.id, forKey: Keys.held)
@@ -248,6 +269,8 @@ class ClosetManager {
             if let theme = availableThemes.first(where: { $0.id == item.id }) {
                 currentTheme = theme
             }
+        case .outfits:
+            equippedOutfit = item
         case .hats:
             equippedHat = item
         case .glasses:
@@ -270,6 +293,8 @@ class ClosetManager {
         case .themes:
             // Can't unequip theme, reset to default
             currentTheme = availableThemes[0]
+        case .outfits:
+            equippedOutfit = nil
         case .hats:
             equippedHat = nil
         case .glasses:
@@ -283,6 +308,7 @@ class ClosetManager {
 
     func resetToDefaults() {
         currentTheme = availableThemes[0]
+        equippedOutfit = nil
         equippedHat = nil
         equippedGlasses = nil
         equippedHeld = nil
@@ -299,6 +325,8 @@ class ClosetManager {
             return availableThemes.map { theme in
                 ClosetItem(id: theme.id, name: theme.name, category: .themes, isPremium: theme.isPremium)
             }
+        case .outfits:
+            return availableOutfits
         case .hats:
             return availableHats
         case .glasses:
@@ -312,6 +340,8 @@ class ClosetManager {
         switch category {
         case .themes:
             return ClosetItem(id: currentTheme.id, name: currentTheme.name, category: .themes, isPremium: currentTheme.isPremium)
+        case .outfits:
+            return equippedOutfit
         case .hats:
             return equippedHat
         case .glasses:
@@ -325,6 +355,8 @@ class ClosetManager {
         switch item.category {
         case .themes:
             return currentTheme.id == item.id
+        case .outfits:
+            return equippedOutfit?.id == item.id
         case .hats:
             return equippedHat?.id == item.id
         case .glasses:
