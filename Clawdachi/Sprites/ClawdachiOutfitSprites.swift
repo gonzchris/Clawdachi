@@ -434,11 +434,17 @@ class ClawdachiOutfitSprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
 
-    // MARK: - Sunglasses Colors
+    // MARK: - Glasses Colors
 
     private static let glassesFrame = PixelColor(r: 25, g: 25, b: 30)       // Dark frame
     private static let glassesLens = PixelColor(r: 40, g: 45, b: 55)        // Dark lens
     private static let glassesShine = PixelColor(r: 80, g: 90, b: 110)      // Lens reflection
+
+    // Nerd glasses colors
+    private static let nerdFrame = PixelColor(r: 35, g: 30, b: 25)          // Dark brown/black frame
+    private static let nerdFrameLight = PixelColor(r: 60, g: 50, b: 40)     // Frame highlight
+    private static let nerdLens = PixelColor(r: 200, g: 220, b: 240, a: 100) // Clear lens with slight tint
+    private static let nerdShine = PixelColor(r: 255, g: 255, b: 255, a: 150) // Lens glare
 
     // MARK: - Sunglasses
 
@@ -506,6 +512,131 @@ class ClawdachiOutfitSprites {
         pixels[18][23] = f
         pixels[18][24] = f
         pixels[18][25] = f
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
+    }
+
+    // MARK: - Nerd Glasses
+
+    /// Generates nerd glasses texture (32x32) with round frames
+    static func generateNerdGlassesTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
+
+        let f = nerdFrame
+        let fl = nerdFrameLight
+        let l = nerdLens
+        let s = nerdShine
+
+        // Round frames - more circular than sunglasses
+        // Eyes are around rows 16-18, left eye cols 11-13, right eye cols 18-20
+
+        // === LEFT LENS (round, cols 9-14, rows 15-20) ===
+        // Row 20 - top of round frame
+        pixels[20][10] = f
+        pixels[20][11] = f
+        pixels[20][12] = f
+        pixels[20][13] = f
+
+        // Row 19
+        pixels[19][9] = f
+        pixels[19][10] = l
+        pixels[19][11] = l
+        pixels[19][12] = l
+        pixels[19][13] = l
+        pixels[19][14] = f
+
+        // Row 18
+        pixels[18][9] = f
+        pixels[18][10] = l
+        pixels[18][11] = s  // Shine
+        pixels[18][12] = l
+        pixels[18][13] = l
+        pixels[18][14] = fl
+
+        // Row 17
+        pixels[17][9] = f
+        pixels[17][10] = l
+        pixels[17][11] = l
+        pixels[17][12] = l
+        pixels[17][13] = l
+        pixels[17][14] = fl
+
+        // Row 16
+        pixels[16][9] = f
+        pixels[16][10] = l
+        pixels[16][11] = l
+        pixels[16][12] = l
+        pixels[16][13] = l
+        pixels[16][14] = f
+
+        // Row 15 - bottom of round frame
+        pixels[15][10] = f
+        pixels[15][11] = f
+        pixels[15][12] = f
+        pixels[15][13] = f
+
+        // === RIGHT LENS (round, cols 17-22, rows 15-20) ===
+        // Row 20 - top of round frame
+        pixels[20][18] = f
+        pixels[20][19] = f
+        pixels[20][20] = f
+        pixels[20][21] = f
+
+        // Row 19
+        pixels[19][17] = f
+        pixels[19][18] = l
+        pixels[19][19] = l
+        pixels[19][20] = l
+        pixels[19][21] = l
+        pixels[19][22] = f
+
+        // Row 18
+        pixels[18][17] = f
+        pixels[18][18] = l
+        pixels[18][19] = s  // Shine
+        pixels[18][20] = l
+        pixels[18][21] = l
+        pixels[18][22] = fl
+
+        // Row 17
+        pixels[17][17] = f
+        pixels[17][18] = l
+        pixels[17][19] = l
+        pixels[17][20] = l
+        pixels[17][21] = l
+        pixels[17][22] = fl
+
+        // Row 16
+        pixels[16][17] = f
+        pixels[16][18] = l
+        pixels[16][19] = l
+        pixels[16][20] = l
+        pixels[16][21] = l
+        pixels[16][22] = f
+
+        // Row 15 - bottom of round frame
+        pixels[15][18] = f
+        pixels[15][19] = f
+        pixels[15][20] = f
+        pixels[15][21] = f
+
+        // === BRIDGE (thick, connects lenses) ===
+        pixels[18][15] = f
+        pixels[18][16] = f
+        pixels[17][15] = f
+        pixels[17][16] = f
+
+        // === TEMPLE ARMS (thicker for nerd look) ===
+        // Left arm
+        pixels[18][8] = f
+        pixels[18][7] = f
+        pixels[18][6] = fl
+        pixels[17][8] = f
+        // Right arm
+        pixels[18][23] = f
+        pixels[18][24] = f
+        pixels[18][25] = fl
+        pixels[17][23] = f
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
@@ -703,6 +834,8 @@ class ClawdachiOutfitSprites {
         switch glassesId {
         case "sunglasses":
             return generateSunglassesTexture()
+        case "nerd":
+            return generateNerdGlassesTexture()
         default:
             return nil
         }
