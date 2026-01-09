@@ -14,10 +14,10 @@ enum SettingsConstants {
     // MARK: - Window Sizing
 
     /// Total window width
-    static let windowWidth: CGFloat = 775
+    static let windowWidth: CGFloat = 850
 
     /// Total window height
-    static let windowHeight: CGFloat = 525
+    static let windowHeight: CGFloat = 575
 
     /// Title bar height
     static let titleBarHeight: CGFloat = 28
@@ -53,10 +53,10 @@ enum SettingsConstants {
     // MARK: - Preview
 
     /// Preview box size (sprite display area)
-    static let previewBoxSize: CGFloat = 175
+    static let previewBoxSize: CGFloat = 200
 
     /// Preview sprite scale
-    static let previewScale: CGFloat = 2.5
+    static let previewScale: CGFloat = 3.0
 
     // MARK: - Item Grid
 
@@ -67,24 +67,24 @@ enum SettingsConstants {
     static let gridVisibleRows: Int = 3
 
     /// Item cell size (slot)
-    static let itemCellSize: CGFloat = 48
+    static let itemCellSize: CGFloat = 64
 
     /// Spacing between slots
-    static let gridSpacing: CGFloat = 6
+    static let gridSpacing: CGFloat = 8
 
     // MARK: - Tab Bar
 
     /// Category tab height
-    static let tabHeight: CGFloat = 28
+    static let tabHeight: CGFloat = 32
 
     /// Tab font size
-    static let tabFontSize: CGFloat = 10
+    static let tabFontSize: CGFloat = 12
 
     /// Spacing between tabs
-    static let tabSpacing: CGFloat = 6
+    static let tabSpacing: CGFloat = 8
 
     /// Tab horizontal padding
-    static let tabPadding: CGFloat = 8
+    static let tabPadding: CGFloat = 10
 
     // MARK: - Fonts
 

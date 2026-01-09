@@ -163,4 +163,58 @@ class ClawdachiOutfitSprites {
             return nil
         }
     }
+
+    // MARK: - Preview Generation
+
+    /// Generates a preview NSImage of the sprite wearing an outfit (for grid display)
+    /// Returns nil if outfit not found
+    static func generatePreviewImage(for outfitId: String, size: CGFloat) -> NSImage? {
+        // Get outfit texture
+        guard let outfitTexture = texture(for: outfitId) else { return nil }
+
+        // Generate body texture with current theme
+        let bodyTexture = ClawdachiBodySprites.generateBreathingFrames()[1] // Neutral frame
+
+        // Create composite image
+        let imageSize = NSSize(width: size, height: size)
+        let image = NSImage(size: imageSize)
+
+        image.lockFocus()
+
+        // Clear background
+        NSColor.clear.setFill()
+        NSRect(origin: .zero, size: imageSize).fill()
+
+        // Draw body
+        let bodyCG = bodyTexture.cgImage()
+        let bodyImage = NSImage(cgImage: bodyCG, size: NSSize(width: 32, height: 32))
+        bodyImage.draw(in: NSRect(origin: .zero, size: imageSize),
+                      from: .zero,
+                      operation: .sourceOver,
+                      fraction: 1.0)
+
+        // Draw outfit overlay
+        let outfitCG = outfitTexture.cgImage()
+        let outfitImage = NSImage(cgImage: outfitCG, size: NSSize(width: 32, height: 32))
+        outfitImage.draw(in: NSRect(origin: .zero, size: imageSize),
+                        from: .zero,
+                        operation: .sourceOver,
+                        fraction: 1.0)
+
+        // Draw eyes (simple black rectangles at eye positions)
+        let scale = size / 32.0
+        NSColor.black.setFill()
+
+        // Left eye
+        let leftEyeRect = NSRect(x: 12 * scale, y: 18 * scale, width: 2 * scale, height: 3 * scale)
+        leftEyeRect.fill()
+
+        // Right eye
+        let rightEyeRect = NSRect(x: 18 * scale, y: 18 * scale, width: 2 * scale, height: 3 * scale)
+        rightEyeRect.fill()
+
+        image.unlockFocus()
+
+        return image
+    }
 }

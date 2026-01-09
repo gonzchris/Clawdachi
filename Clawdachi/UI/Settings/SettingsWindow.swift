@@ -159,42 +159,14 @@ class SettingsWindow: NSWindow {
     // MARK: - Positioning
 
     private func positionRelativeToSprite() {
-        guard let spriteWindow = spriteWindow else { return }
-
-        // Position to the right of the sprite, centered vertically
-        let spriteFrame = spriteWindow.frame
-        let settingsX = spriteFrame.maxX + 20
-        let settingsY = spriteFrame.midY - C.windowHeight / 2
-
-        // Ensure on screen
-        if let screen = spriteWindow.screen ?? NSScreen.main {
+        // Center on screen
+        if let screen = spriteWindow?.screen ?? NSScreen.main {
             let screenFrame = screen.visibleFrame
-            var finalX = settingsX
-            var finalY = settingsY
-
-            // Adjust if off right edge
-            if finalX + C.windowWidth > screenFrame.maxX {
-                finalX = spriteFrame.minX - C.windowWidth - 20
-            }
-
-            // Adjust if off left edge
-            if finalX < screenFrame.minX {
-                finalX = screenFrame.minX + 20
-            }
-
-            // Adjust if off top
-            if finalY + C.windowHeight > screenFrame.maxY {
-                finalY = screenFrame.maxY - C.windowHeight - 20
-            }
-
-            // Adjust if off bottom
-            if finalY < screenFrame.minY {
-                finalY = screenFrame.minY + 20
-            }
-
-            setFrameOrigin(NSPoint(x: finalX, y: finalY))
+            let centerX = screenFrame.midX - C.windowWidth / 2
+            let centerY = screenFrame.midY - C.windowHeight / 2
+            setFrameOrigin(NSPoint(x: centerX, y: centerY))
         } else {
-            setFrameOrigin(NSPoint(x: settingsX, y: settingsY))
+            center()
         }
     }
 

@@ -126,11 +126,20 @@ class CustomizationGridView: NSView {
         let items = ClosetManager.shared.items(for: category)
 
         // Calculate grid layout dynamically
-        let cellSize = C.itemCellSize
         let spacing = C.gridSpacing
         let availableWidth = gridScrollView.bounds.width - spacing
-        let maxColumns = 8
-        let columns = min(maxColumns, max(1, Int(availableWidth / (cellSize + spacing))))
+
+        // For color/themes, force 8 columns with smaller cells
+        let columns: Int
+        let cellSize: CGFloat
+        if category == .themes {
+            columns = 8
+            cellSize = (availableWidth - spacing * CGFloat(8)) / CGFloat(8)
+        } else {
+            cellSize = C.itemCellSize
+            let maxColumns = 8
+            columns = min(maxColumns, max(1, Int(availableWidth / (cellSize + spacing))))
+        }
         let rows = max(1, (items.count + columns - 1) / columns)
 
         // Calculate total grid dimensions and center offsets
@@ -394,7 +403,14 @@ class CustomizationItemCell: NSView {
     weak var hoverDelegate: CustomizationItemCellHoverDelegate?
 
     var isSelected: Bool = false {
-        didSet { needsDisplay = true }
+        didSet {
+            needsDisplay = true
+            if isSelected {
+                startPulseAnimation()
+            } else {
+                stopPulseAnimation()
+            }
+        }
     }
     var isLocked: Bool = false {
         didSet { needsDisplay = true }
@@ -402,10 +418,12 @@ class CustomizationItemCell: NSView {
 
     private var isHovered = false
     private var trackingArea: NSTrackingArea?
+    private var glowLayer: CALayer?
 
     init(frame: NSRect, item: ClosetItem) {
         self.item = item
         super.init(frame: frame)
+        wantsLayer = true
         setupTracking()
     }
 
@@ -508,22 +526,37 @@ class CustomizationItemCell: NSView {
                 )
                 NSBezierPath(ovalIn: rightEyeRect).fill()
             }
+        } else if item.category == .outfits {
+            // Draw sprite preview with outfit - fill the entire cell
+            if let previewImage = ClawdachiOutfitSprites.generatePreviewImage(for: item.id, size: rect.width) {
+                previewImage.draw(in: rect,
+                                  from: .zero,
+                                  operation: .sourceOver,
+                                  fraction: isLocked ? 0.5 : 1.0)
+            } else {
+                // Fallback to letter for outfits without preview
+                drawLetterPlaceholder(in: rect)
+            }
         } else {
             // Draw first letter of item name as placeholder
-            let font = NSFont.monospacedSystemFont(ofSize: 16, weight: .bold)
-            let attrs: [NSAttributedString.Key: Any] = [
-                .font: font,
-                .foregroundColor: isLocked ? C.lockedColor : C.textColor
-            ]
-            let letter = String(item.name.prefix(1))
-            let str = NSAttributedString(string: letter, attributes: attrs)
-            let size = str.size()
-            let point = NSPoint(
-                x: rect.midX - size.width / 2,
-                y: rect.midY - size.height / 2
-            )
-            str.draw(at: point)
+            drawLetterPlaceholder(in: rect)
         }
+    }
+
+    private func drawLetterPlaceholder(in rect: NSRect) {
+        let font = NSFont.monospacedSystemFont(ofSize: 16, weight: .bold)
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: isLocked ? C.lockedColor : C.textColor
+        ]
+        let letter = String(item.name.prefix(1))
+        let str = NSAttributedString(string: letter, attributes: attrs)
+        let size = str.size()
+        let point = NSPoint(
+            x: rect.midX - size.width / 2,
+            y: rect.midY - size.height / 2
+        )
+        str.draw(at: point)
     }
 
     override func mouseEntered(with event: NSEvent) {
@@ -551,6 +584,51 @@ class CustomizationItemCell: NSView {
         animation.duration = C.shakeDuration
         animation.values = [-4, 4, -3, 3, -2, 2, 0]
         layer?.add(animation, forKey: "shake")
+    }
+
+    // MARK: - Pulse Animation
+
+    private func startPulseAnimation() {
+        guard glowLayer == nil else { return }
+
+        // Create glow layer
+        let glow = CALayer()
+        glow.frame = bounds.insetBy(dx: 1, dy: 1)
+        glow.cornerRadius = 4
+        glow.borderWidth = 2
+        glow.borderColor = C.accentColor.cgColor
+        glow.shadowColor = C.accentColor.cgColor
+        glow.shadowRadius = 6
+        glow.shadowOpacity = 0.8
+        glow.shadowOffset = .zero
+        layer?.addSublayer(glow)
+        glowLayer = glow
+
+        // Pulse animation on shadow opacity
+        let pulseOpacity = CABasicAnimation(keyPath: "shadowOpacity")
+        pulseOpacity.fromValue = 0.3
+        pulseOpacity.toValue = 0.9
+        pulseOpacity.duration = 0.8
+        pulseOpacity.autoreverses = true
+        pulseOpacity.repeatCount = .infinity
+        pulseOpacity.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        glow.add(pulseOpacity, forKey: "pulseOpacity")
+
+        // Subtle pulse on shadow radius
+        let pulseRadius = CABasicAnimation(keyPath: "shadowRadius")
+        pulseRadius.fromValue = 4
+        pulseRadius.toValue = 8
+        pulseRadius.duration = 0.8
+        pulseRadius.autoreverses = true
+        pulseRadius.repeatCount = .infinity
+        pulseRadius.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        glow.add(pulseRadius, forKey: "pulseRadius")
+    }
+
+    private func stopPulseAnimation() {
+        glowLayer?.removeAllAnimations()
+        glowLayer?.removeFromSuperlayer()
+        glowLayer = nil
     }
 }
 

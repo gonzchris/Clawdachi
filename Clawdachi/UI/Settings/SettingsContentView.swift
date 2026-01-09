@@ -250,7 +250,7 @@ class SettingsContentView: NSView {
         let titleStr = NSAttributedString(string: title, attributes: attrs)
         let titleSize = titleStr.size()
         let titlePoint = NSPoint(
-            x: (bounds.width - titleSize.width) / 2,
+            x: 16,
             y: (C.titleBarHeight - titleSize.height) / 2 + 1
         )
         titleStr.draw(at: titlePoint)
