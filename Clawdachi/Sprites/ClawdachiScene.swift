@@ -8,9 +8,13 @@ import AppKit
 
 class ClawdachiScene: SKScene {
 
+    // MARK: - Shared Instance
+
+    private(set) static weak var shared: ClawdachiScene?
+
     // MARK: - Properties
 
-    private var clawdachi: ClawdachiSprite!
+    private(set) var clawdachi: ClawdachiSprite!
     private var isSleeping = false
     private var musicMonitor: MusicPlaybackMonitor!
     private var claudeMonitor: ClaudeSessionMonitor!
@@ -35,6 +39,7 @@ class ClawdachiScene: SKScene {
     }
 
     override func didMove(to view: SKView) {
+        ClawdachiScene.shared = self
         setupCharacter()
         setupMusicMonitor()
         setupClaudeMonitor()
@@ -377,6 +382,15 @@ class ClawdachiScene: SKScene {
 
         menu.addItem(NSMenuItem.separator())
 
+        // Settings
+        let settingsItem = NSMenuItem(
+            title: "Settings",
+            action: #selector(openSettings),
+            keyEquivalent: ""
+        )
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
         // Sleep mode toggle
         let sleepItem = NSMenuItem(
             title: isSleeping ? "Wake Up" : "Sleep Mode",
@@ -687,6 +701,11 @@ class ClawdachiScene: SKScene {
             clawdachi.startSleeping()
             showChatBubble(ClawdachiMessages.sleepMessage, duration: 3.0)
         }
+    }
+
+    @objc private func openSettings() {
+        guard let window = view?.window else { return }
+        SettingsWindow.shared.toggle(relativeTo: window)
     }
 
     @objc private func quitApp() {

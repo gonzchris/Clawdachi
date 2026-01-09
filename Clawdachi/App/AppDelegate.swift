@@ -95,16 +95,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @discardableResult
     private func handleKeyEvent(_ event: NSEvent) -> Bool {
-        // Check for Cmd+Shift+R
         let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        let requiredFlags: NSEvent.ModifierFlags = [.command, .shift]
 
-        if modifierFlags == requiredFlags,
+        // Check for Cmd+Shift+R (recording)
+        if modifierFlags == [.command, .shift],
            event.charactersIgnoringModifiers?.lowercased() == "r" {
             animationRecorder?.toggleRecording()
             return true
         }
+
+        // Check for Cmd+, (settings)
+        if modifierFlags == [.command],
+           event.charactersIgnoringModifiers == "," {
+            openSettings()
+            return true
+        }
+
         return false
+    }
+
+    private func openSettings() {
+        guard let mainWindow = window else { return }
+        SettingsWindow.shared.toggle(relativeTo: mainWindow)
     }
 
     private func requestNotificationPermissions() {
