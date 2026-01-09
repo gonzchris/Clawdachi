@@ -7,15 +7,21 @@ import Foundation
 
 /// Color palette for Clawdachi, matching Clawd's warm orange/amber aesthetic
 struct ClawdachiPalette {
-    // Primary orange/amber (Clawd's main color)
-    static let primaryOrange = PixelColor(r: 255, g: 153, b: 51)    // #FF9933
-    static let primary = primaryOrange  // Alias for convenience
+    // Dynamic body colors from current theme
+    static var primaryOrange: PixelColor {
+        ClosetManager.shared.currentTheme.colors.primary
+    }
+    static var primary: PixelColor { primaryOrange }
 
-    // Darker orange for shading
-    static let shadowOrange = PixelColor(r: 204, g: 102, b: 0)      // #CC6600
+    // Darker variant for shading (from theme)
+    static var shadowOrange: PixelColor {
+        ClosetManager.shared.currentTheme.colors.shadow
+    }
 
-    // Lighter orange for highlights
-    static let highlightOrange = PixelColor(r: 255, g: 187, b: 119) // #FFBB77
+    // Lighter variant for highlights (from theme)
+    static var highlightOrange: PixelColor {
+        ClosetManager.shared.currentTheme.colors.highlight
+    }
 
     // Eyes - white with dark pupils
     static let eyeWhite = PixelColor(r: 255, g: 255, b: 255)        // #FFFFFF

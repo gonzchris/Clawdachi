@@ -20,7 +20,7 @@ enum ClosetCategory: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .themes: return "THEMES"
+        case .themes: return "COLOR"
         case .outfits: return "OUTFITS"
         case .hats: return "HATS"
         case .glasses: return "GLASSES"
@@ -176,11 +176,92 @@ class ClosetManager {
                     highlight: PixelColor(r: 187, g: 187, b: 187)  // #BBBBBB
                 ),
                 isPremium: true
+            ),
+            ClosetTheme(
+                id: "cherry",
+                name: "Cherry Red",
+                colors: ClosetTheme.ThemeColors(
+                    primary: PixelColor(r: 220, g: 53, b: 69),     // #DC3545
+                    shadow: PixelColor(r: 165, g: 29, b: 42),      // #A51D2A
+                    highlight: PixelColor(r: 255, g: 102, b: 117)  // #FF6675
+                ),
+                isPremium: true
+            ),
+            ClosetTheme(
+                id: "lemon",
+                name: "Lemon Yellow",
+                colors: ClosetTheme.ThemeColors(
+                    primary: PixelColor(r: 255, g: 220, b: 77),    // #FFDC4D
+                    shadow: PixelColor(r: 204, g: 170, b: 26),     // #CCAA1A
+                    highlight: PixelColor(r: 255, g: 238, b: 153)  // #FFEE99
+                ),
+                isPremium: true
+            ),
+            ClosetTheme(
+                id: "teal",
+                name: "Teal",
+                colors: ClosetTheme.ThemeColors(
+                    primary: PixelColor(r: 32, g: 178, b: 170),    // #20B2AA
+                    shadow: PixelColor(r: 0, g: 128, b: 128),      // #008080
+                    highlight: PixelColor(r: 102, g: 210, b: 204)  // #66D2CC
+                ),
+                isPremium: true
+            ),
+            ClosetTheme(
+                id: "coral",
+                name: "Coral",
+                colors: ClosetTheme.ThemeColors(
+                    primary: PixelColor(r: 255, g: 127, b: 80),    // #FF7F50
+                    shadow: PixelColor(r: 205, g: 92, b: 52),      // #CD5C34
+                    highlight: PixelColor(r: 255, g: 170, b: 136)  // #FFAA88
+                ),
+                isPremium: true
+            ),
+            ClosetTheme(
+                id: "mint",
+                name: "Mint",
+                colors: ClosetTheme.ThemeColors(
+                    primary: PixelColor(r: 152, g: 224, b: 190),   // #98E0BE
+                    shadow: PixelColor(r: 102, g: 179, b: 145),    // #66B391
+                    highlight: PixelColor(r: 192, g: 245, b: 220)  // #C0F5DC
+                ),
+                isPremium: true
+            ),
+            ClosetTheme(
+                id: "peach",
+                name: "Peach",
+                colors: ClosetTheme.ThemeColors(
+                    primary: PixelColor(r: 255, g: 185, b: 155),   // #FFB99B
+                    shadow: PixelColor(r: 220, g: 140, b: 110),    // #DC8C6E
+                    highlight: PixelColor(r: 255, g: 218, b: 200)  // #FFDAC8
+                ),
+                isPremium: true
+            ),
+            ClosetTheme(
+                id: "sky",
+                name: "Sky Blue",
+                colors: ClosetTheme.ThemeColors(
+                    primary: PixelColor(r: 135, g: 206, b: 250),   // #87CEFA
+                    shadow: PixelColor(r: 85, g: 156, b: 200),     // #559CC8
+                    highlight: PixelColor(r: 185, g: 230, b: 255)  // #B9E6FF
+                ),
+                isPremium: true
+            ),
+            ClosetTheme(
+                id: "gold",
+                name: "Gold",
+                colors: ClosetTheme.ThemeColors(
+                    primary: PixelColor(r: 255, g: 193, b: 37),    // #FFC125
+                    shadow: PixelColor(r: 204, g: 145, b: 0),      // #CC9100
+                    highlight: PixelColor(r: 255, g: 223, b: 128)  // #FFDF80
+                ),
+                isPremium: true
             )
         ]
 
         // Define available outfits
         availableOutfits = [
+            ClosetItem(id: "bikini", name: "Bikini Mode", category: .outfits, isPremium: false),
             ClosetItem(id: "hoodie", name: "Hoodie", category: .outfits, isPremium: true),
             ClosetItem(id: "tuxedo", name: "Tuxedo", category: .outfits, isPremium: true),
             ClosetItem(id: "superhero", name: "Superhero Cape", category: .outfits, isPremium: true),
@@ -370,8 +451,8 @@ class ClosetManager {
 
     var isPremiumUnlocked: Bool {
         // TODO: Integrate with PremiumManager when implemented
-        // For now, return false to show all items as locked
-        return false
+        // For testing, return true to unlock all items
+        return true
     }
 
     func canEquip(_ item: ClosetItem) -> Bool {

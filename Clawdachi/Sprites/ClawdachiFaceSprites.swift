@@ -172,15 +172,16 @@ class ClawdachiFaceSprites {
         return generateMusicSymbolTexture(symbol: "♫")
     }
 
-    /// Helper to generate any music symbol texture with orange gradient and black outline
+    /// Helper to generate any music symbol texture with theme-colored gradient and black outline
     private static func generateMusicSymbolTexture(symbol: String) -> SKTexture {
         let size = CGSize(width: 32, height: 32)
 
-        // Colors
+        // Use dynamic theme colors
+        let theme = ClosetManager.shared.currentTheme.colors
         let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)      // Dark outline
-        let highlightColor = NSColor(red: 255/255, green: 200/255, blue: 140/255, alpha: 1.0) // Light orange
-        let mainColor = NSColor(red: 255/255, green: 153/255, blue: 51/255, alpha: 1.0)       // #FF9933
-        let shadowColor = NSColor(red: 180/255, green: 80/255, blue: 0/255, alpha: 1.0)       // Dark orange
+        let highlightColor = NSColor(red: CGFloat(theme.highlight.r)/255, green: CGFloat(theme.highlight.g)/255, blue: CGFloat(theme.highlight.b)/255, alpha: 1.0)
+        let mainColor = NSColor(red: CGFloat(theme.primary.r)/255, green: CGFloat(theme.primary.g)/255, blue: CGFloat(theme.primary.b)/255, alpha: 1.0)
+        let shadowColor = NSColor(red: CGFloat(theme.shadow.r)/255, green: CGFloat(theme.shadow.g)/255, blue: CGFloat(theme.shadow.b)/255, alpha: 1.0)
 
         let image = NSImage(size: size, flipped: false) { rect in
             guard NSGraphicsContext.current != nil else { return false }
@@ -251,7 +252,7 @@ class ClawdachiFaceSprites {
 
     // MARK: - Effect Textures
 
-    /// Generates a pixel-art heart texture with orange gradient and black outline
+    /// Generates a pixel-art heart texture with theme-colored gradient and black outline
     static func generateHeartTexture() -> SKTexture {
         // Heart pattern (1 = outline, 2 = highlight, 3 = main, 4 = shadow)
         let pattern: [[Int]] = [
@@ -264,23 +265,30 @@ class ClawdachiFaceSprites {
             [0, 0, 0, 1, 0, 0, 0],
         ]
 
+        // Use dynamic theme colors
+        let theme = ClosetManager.shared.currentTheme.colors
+        let highlightColor = NSColor(red: CGFloat(theme.highlight.r)/255, green: CGFloat(theme.highlight.g)/255, blue: CGFloat(theme.highlight.b)/255, alpha: 1.0)
+        let mainColor = NSColor(red: CGFloat(theme.primary.r)/255, green: CGFloat(theme.primary.g)/255, blue: CGFloat(theme.primary.b)/255, alpha: 1.0)
+        let shadowColor = NSColor(red: CGFloat(theme.shadow.r)/255, green: CGFloat(theme.shadow.g)/255, blue: CGFloat(theme.shadow.b)/255, alpha: 1.0)
+
         return renderPixelPattern(pattern, colorMap: [
             1: Colors.outline,
-            2: Colors.orangeHighlight,
-            3: Colors.orangeMain,
-            4: Colors.orangeShadow
+            2: highlightColor,
+            3: mainColor,
+            4: shadowColor
         ], pixelSize: 4)
     }
 
-    /// Generates a "Z" texture for sleeping animation with orange gradient and black outline
+    /// Generates a "Z" texture for sleeping animation with theme-colored gradient and black outline
     static func generateZzzTexture() -> SKTexture {
         let size = CGSize(width: 28, height: 28)
 
-        // Colors
+        // Use dynamic theme colors
+        let theme = ClosetManager.shared.currentTheme.colors
         let outlineColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)      // Dark outline
-        let highlightColor = NSColor(red: 255/255, green: 200/255, blue: 140/255, alpha: 1.0) // Light orange
-        let mainColor = NSColor(red: 255/255, green: 153/255, blue: 51/255, alpha: 1.0)       // #FF9933
-        let shadowColor = NSColor(red: 180/255, green: 80/255, blue: 0/255, alpha: 1.0)       // Dark orange
+        let highlightColor = NSColor(red: CGFloat(theme.highlight.r)/255, green: CGFloat(theme.highlight.g)/255, blue: CGFloat(theme.highlight.b)/255, alpha: 1.0)
+        let mainColor = NSColor(red: CGFloat(theme.primary.r)/255, green: CGFloat(theme.primary.g)/255, blue: CGFloat(theme.primary.b)/255, alpha: 1.0)
+        let shadowColor = NSColor(red: CGFloat(theme.shadow.r)/255, green: CGFloat(theme.shadow.g)/255, blue: CGFloat(theme.shadow.b)/255, alpha: 1.0)
 
         let image = NSImage(size: size, flipped: false) { rect in
             NSColor.clear.setFill()
@@ -793,18 +801,14 @@ class ClawdachiFaceSprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 4, height: 4)
     }
 
-    // MARK: - Thinking Orb Textures (White floating dots)
+    // MARK: - Thinking Orb Textures (Theme-colored floating dots)
 
-    /// White color palette for thinking orbs
-    private static let orbHighlight = PixelColor(r: 255, g: 255, b: 255)  // #FFFFFF
-    private static let orbMain = PixelColor(r: 240, g: 242, b: 248)       // #F0F2F8
-    private static let orbShadow = PixelColor(r: 200, g: 205, b: 215)     // #C8CDD7
-
-    /// Generates a tiny thinking orb (2x2 pixels)
+    /// Generates a tiny thinking orb (2x2 pixels) using theme colors
     static func generateThinkingOrbTiny() -> SKTexture {
+        let P = ClawdachiPalette.self
         let pixels: [[PixelColor]] = [
-            [orbHighlight, orbMain],
-            [orbMain, orbShadow],
+            [P.highlightOrange, P.primaryOrange],
+            [P.primaryOrange, P.shadowOrange],
         ]
         return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 2)
     }

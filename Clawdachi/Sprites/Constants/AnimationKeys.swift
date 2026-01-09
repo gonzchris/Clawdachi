@@ -21,6 +21,9 @@ enum AnimationKey: String {
     /// Face/mouth breathing animation
     case faceBreathing
 
+    /// Outfit breathing animation (synced with body)
+    case outfitBreathing
+
     /// Body sway animation
     case sway
 

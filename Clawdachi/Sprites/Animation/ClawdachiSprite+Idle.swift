@@ -155,6 +155,7 @@ extension ClawdachiSprite {
         // Note: Eye breathing is now handled by updateEyePositions() in EyeTracking extension
         // This allows eye tracking offset + breathing bob to coexist
         mouthNode.run(SKAction.repeatForever(faceBreath), withKey: AnimationKey.faceBreathing.rawValue)
+
     }
 
     func startSwayAnimation() {

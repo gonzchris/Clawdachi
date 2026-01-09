@@ -52,6 +52,14 @@ class ClawdachiScene: SKScene {
             object: nil
         )
 
+        // Watch for theme/closet changes to update sprite colors
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(closetDidChange),
+            name: .closetItemChanged,
+            object: nil
+        )
+
         // Show time-of-day greeting after a brief delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.showChatBubble(ClawdachiMessages.greetingForCurrentTime(), duration: 4.0)
@@ -369,6 +377,10 @@ class ClawdachiScene: SKScene {
 
     @objc private func appDidResignActive() {
         endDragIfNeeded()
+    }
+
+    @objc private func closetDidChange() {
+        clawdachi.regenerateTextures()
     }
 
     // MARK: - Context Menu

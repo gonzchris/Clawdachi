@@ -76,6 +76,13 @@ extension ClawdachiSprite {
         ClawdachiFaceSprites.generateGearTexture()
     }()
 
+    // MARK: - Theme Texture Regeneration
+
+    /// Regenerates theme-dependent cached textures (called when color theme changes)
+    static func regenerateThemeTextures() {
+        thinkingOrbTexture = ClawdachiFaceSprites.generateThinkingOrbTiny()
+    }
+
     /// Name for the lightbulb node
     private static let lightbulbName = "completionLightbulb"
 
@@ -484,12 +491,16 @@ extension ClawdachiSprite {
     private static let maxThinkingSymbols = 6
     private static let mathSymbols = ["+", "−", "×", "=", "%", "?", "!", "*", "#", "&", "<", ">", "~"]
 
-    // Orange color variations for symbols
-    private static let symbolColors: [NSColor] = [
-        NSColor(red: 255/255, green: 153/255, blue: 51/255, alpha: 1.0),   // Primary orange #FF9933
-        NSColor(red: 255/255, green: 187/255, blue: 119/255, alpha: 1.0), // Highlight orange #FFBB77
-        NSColor(red: 230/255, green: 140/255, blue: 50/255, alpha: 1.0),  // Mid orange
-    ]
+    // Theme-colored variations for symbols (computed from current theme)
+    private static var symbolColors: [NSColor] {
+        let theme = ClosetManager.shared.currentTheme.colors
+        return [
+            NSColor(red: CGFloat(theme.primary.r)/255, green: CGFloat(theme.primary.g)/255, blue: CGFloat(theme.primary.b)/255, alpha: 1.0),
+            NSColor(red: CGFloat(theme.highlight.r)/255, green: CGFloat(theme.highlight.g)/255, blue: CGFloat(theme.highlight.b)/255, alpha: 1.0),
+            // Mid-tone between primary and shadow (convert to CGFloat first to avoid overflow)
+            NSColor(red: (CGFloat(theme.primary.r) + CGFloat(theme.shadow.r))/2/255, green: (CGFloat(theme.primary.g) + CGFloat(theme.shadow.g))/2/255, blue: (CGFloat(theme.primary.b) + CGFloat(theme.shadow.b))/2/255, alpha: 1.0),
+        ]
+    }
 
     /// Start spawning floating math symbols from sprite's head
     private func startThinkingSymbols() {
@@ -567,11 +578,12 @@ extension ClawdachiSprite {
         // Pick a random orange shade
         let mainColor = Self.symbolColors.randomElement()!
 
-        // Create shadow label (slightly offset, darker)
+        // Create shadow label (slightly offset, darker) using theme shadow color
+        let theme = ClosetManager.shared.currentTheme.colors
         let shadow = SKLabelNode(text: symbol)
         shadow.fontName = "Menlo-Bold"
         shadow.fontSize = 12  // Render larger for crispness
-        shadow.fontColor = NSColor(red: 150/255, green: 80/255, blue: 0/255, alpha: 0.5)  // Dark orange shadow
+        shadow.fontColor = NSColor(red: CGFloat(theme.shadow.r)/255, green: CGFloat(theme.shadow.g)/255, blue: CGFloat(theme.shadow.b)/255, alpha: 0.5)
         shadow.verticalAlignmentMode = .center
         shadow.horizontalAlignmentMode = .center
         shadow.position = CGPoint(x: 0.5, y: -0.5)  // Offset for shadow effect

@@ -471,7 +471,7 @@ class CustomizationItemCell: NSView {
 
     private func drawItemIcon(in rect: NSRect) {
         if item.category == .themes {
-            // Get theme colors and show a color swatch
+            // Get theme colors and show a color swatch with eyes
             if let theme = ClosetManager.shared.availableThemes.first(where: { $0.id == item.id }) {
                 let nsColor = NSColor(
                     red: CGFloat(theme.colors.primary.r) / 255,
@@ -483,6 +483,30 @@ class CustomizationItemCell: NSView {
                 let colorRect = rect.insetBy(dx: 2, dy: 2)
                 let path = NSBezierPath(roundedRect: colorRect, xRadius: 4, yRadius: 4)
                 path.fill()
+
+                // Draw two black eyes
+                NSColor.black.setFill()
+                let eyeSize: CGFloat = 4
+                let eyeY = colorRect.midY + 1
+                let eyeSpacing: CGFloat = 6
+
+                // Left eye
+                let leftEyeRect = NSRect(
+                    x: colorRect.midX - eyeSpacing - eyeSize / 2,
+                    y: eyeY - eyeSize / 2,
+                    width: eyeSize,
+                    height: eyeSize
+                )
+                NSBezierPath(ovalIn: leftEyeRect).fill()
+
+                // Right eye
+                let rightEyeRect = NSRect(
+                    x: colorRect.midX + eyeSpacing - eyeSize / 2,
+                    y: eyeY - eyeSize / 2,
+                    width: eyeSize,
+                    height: eyeSize
+                )
+                NSBezierPath(ovalIn: rightEyeRect).fill()
             }
         } else {
             // Draw first letter of item name as placeholder

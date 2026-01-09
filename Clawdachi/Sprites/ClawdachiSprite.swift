@@ -14,6 +14,7 @@ class ClawdachiSprite: SKNode {
     // MARK: - Sprite Layers (internal for extension access)
 
     var bodyNode: SKSpriteNode!
+    var outfitNode: SKSpriteNode!
     var leftEyeNode: SKSpriteNode!
     var rightEyeNode: SKSpriteNode!
     var mouthNode: SKSpriteNode!
@@ -209,6 +210,7 @@ class ClawdachiSprite: SKNode {
         super.init()
         generateTextures()
         setupSprites()
+        setupNotifications()
         startAnimations()  // Defined in ClawdachiSprite+Idle.swift
     }
 
@@ -218,6 +220,20 @@ class ClawdachiSprite: SKNode {
 
     deinit {
         removeAllActions()
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    private func setupNotifications() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleClosetChange),
+            name: .closetItemChanged,
+            object: nil
+        )
+    }
+
+    @objc private func handleClosetChange() {
+        updateOutfit()
     }
 
     // MARK: - Setup
@@ -294,6 +310,17 @@ class ClawdachiSprite: SKNode {
         bodyNode.zPosition = 1
         addChild(bodyNode)
 
+        // Outfit overlay (sibling of face elements so it bobs in sync)
+        outfitNode = SKSpriteNode()
+        outfitNode.size = CGSize(width: 32, height: 32)
+        outfitNode.position = .zero
+        outfitNode.zPosition = 1.5  // Between body and face
+        outfitNode.alpha = 0  // Hidden by default
+        addChild(outfitNode)
+
+        // Apply any equipped outfit
+        updateOutfit()
+
         // Left Eye (Layer 2)
         leftEyeNode = SKSpriteNode(texture: eyeOpenTexture)
         leftEyeNode.size = CGSize(width: 2, height: 3)
@@ -315,5 +342,50 @@ class ClawdachiSprite: SKNode {
         mouthNode.zPosition = 2
         mouthNode.alpha = 0
         addChild(mouthNode)
+    }
+
+    // MARK: - Outfit Management
+
+    /// Updates the outfit overlay based on currently equipped outfit
+    func updateOutfit() {
+        let equippedOutfit = ClosetManager.shared.equippedOutfit
+
+        if let outfit = equippedOutfit,
+           let texture = ClawdachiOutfitSprites.texture(for: outfit.id) {
+            outfitNode.texture = texture
+            outfitNode.alpha = 1
+        } else {
+            outfitNode.texture = nil
+            outfitNode.alpha = 0
+        }
+    }
+
+    // MARK: - Theme Support
+
+    /// Regenerates all body textures when theme changes
+    func regenerateTextures() {
+        // Regenerate breathing frames with new colors
+        breathingFrames = ClawdachiBodySprites.generateBreathingFrames()
+
+        // Restart breathing animation with new frames
+        // (replaces the running animation since it uses a key)
+        startBreathingAnimation()
+
+        // Regenerate limb textures
+        leftArmNode.texture = ClawdachiBodySprites.generateLeftArmTexture()
+        rightArmNode.texture = ClawdachiBodySprites.generateRightArmTexture()
+        outerLeftLegNode.texture = ClawdachiBodySprites.generateLeftLegTexture()
+        innerLeftLegNode.texture = ClawdachiBodySprites.generateLeftLegTexture()
+        innerRightLegNode.texture = ClawdachiBodySprites.generateRightLegTexture()
+        outerRightLegNode.texture = ClawdachiBodySprites.generateRightLegTexture()
+
+        // Regenerate effect textures (music notes, hearts, Z's, etc.)
+        musicNoteTexture = ClawdachiFaceSprites.generateMusicNoteTexture()
+        doubleNoteTexture = ClawdachiFaceSprites.generateDoubleNoteTexture()
+        heartTexture = ClawdachiFaceSprites.generateHeartTexture()
+        zzzTexture = ClawdachiFaceSprites.generateZzzTexture()
+
+        // Regenerate Claude animation cached textures
+        ClawdachiSprite.regenerateThemeTextures()
     }
 }
