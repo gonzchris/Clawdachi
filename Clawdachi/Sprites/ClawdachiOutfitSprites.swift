@@ -434,6 +434,82 @@ class ClawdachiOutfitSprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
 
+    // MARK: - Sunglasses Colors
+
+    private static let glassesFrame = PixelColor(r: 25, g: 25, b: 30)       // Dark frame
+    private static let glassesLens = PixelColor(r: 40, g: 45, b: 55)        // Dark lens
+    private static let glassesShine = PixelColor(r: 80, g: 90, b: 110)      // Lens reflection
+
+    // MARK: - Sunglasses
+
+    /// Generates sunglasses texture (32x32) positioned over eyes
+    static func generateSunglassesTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
+
+        let f = glassesFrame
+        let l = glassesLens
+        let s = glassesShine
+
+        // Eyes are around rows 16-18, left eye cols 11-13, right eye cols 18-20
+        // Sunglasses should cover rows 15-19
+
+        // === LEFT LENS (cols 9-14) ===
+        // Top frame
+        for col in 9...14 { pixels[19][col] = f }
+        // Lens rows
+        for col in 9...14 {
+            pixels[18][col] = l
+            pixels[17][col] = l
+            pixels[16][col] = l
+        }
+        // Bottom frame
+        for col in 9...14 { pixels[15][col] = f }
+        // Side frames
+        for row in 15...19 {
+            pixels[row][9] = f
+            pixels[row][14] = f
+        }
+        // Lens shine
+        pixels[18][10] = s
+        pixels[18][11] = s
+
+        // === RIGHT LENS (cols 17-22) ===
+        // Top frame
+        for col in 17...22 { pixels[19][col] = f }
+        // Lens rows
+        for col in 17...22 {
+            pixels[18][col] = l
+            pixels[17][col] = l
+            pixels[16][col] = l
+        }
+        // Bottom frame
+        for col in 17...22 { pixels[15][col] = f }
+        // Side frames
+        for row in 15...19 {
+            pixels[row][17] = f
+            pixels[row][22] = f
+        }
+        // Lens shine
+        pixels[18][20] = s
+        pixels[18][21] = s
+
+        // === BRIDGE (connects lenses) ===
+        pixels[18][15] = f
+        pixels[18][16] = f
+
+        // === TEMPLE ARMS (sides going back) ===
+        // Left arm
+        pixels[18][8] = f
+        pixels[18][7] = f
+        pixels[18][6] = f
+        // Right arm
+        pixels[18][23] = f
+        pixels[18][24] = f
+        pixels[18][25] = f
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
+    }
+
     // MARK: - Coffee Mug
 
     /// Generates a coffee mug held item texture (32x32 to match body)
@@ -620,6 +696,18 @@ class ClawdachiOutfitSprites {
         }
     }
 
+    // MARK: - Glasses Texture Lookup
+
+    /// Returns the texture for a given glasses ID, or nil if not found
+    static func glassesTexture(for glassesId: String) -> SKTexture? {
+        switch glassesId {
+        case "sunglasses":
+            return generateSunglassesTexture()
+        default:
+            return nil
+        }
+    }
+
     // MARK: - Held Item Texture Lookup
 
     /// Returns the texture for a given held item ID, or nil if not found
@@ -652,6 +740,15 @@ class ClawdachiOutfitSprites {
         guard let hatTexture = hatTexture(for: hatId) else { return nil }
 
         return generateCompositePreview(overlayTexture: hatTexture, size: size)
+    }
+
+    /// Generates a preview NSImage of the sprite with glasses (for grid display)
+    /// Returns nil if glasses not found
+    static func generateGlassesPreviewImage(for glassesId: String, size: CGFloat) -> NSImage? {
+        // Get glasses texture
+        guard let glassesTexture = glassesTexture(for: glassesId) else { return nil }
+
+        return generateCompositePreview(overlayTexture: glassesTexture, size: size)
     }
 
     /// Generates a preview NSImage of the sprite with a held item (for grid display)

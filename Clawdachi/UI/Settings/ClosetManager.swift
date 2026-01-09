@@ -282,7 +282,7 @@ class ClosetManager {
 
         // Define available glasses
         availableGlasses = [
-            ClosetItem(id: "sunglasses", name: "Sunglasses", category: .glasses, isPremium: true),
+            ClosetItem(id: "sunglasses", name: "Sunglasses", category: .glasses, isPremium: false),
             ClosetItem(id: "nerd", name: "Nerd Glasses", category: .glasses, isPremium: true),
             ClosetItem(id: "3d", name: "3D Glasses", category: .glasses, isPremium: true),
         ]

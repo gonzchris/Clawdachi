@@ -548,6 +548,17 @@ class CustomizationItemCell: NSView {
                 // Fallback to letter for hats without preview
                 drawLetterPlaceholder(in: rect)
             }
+        } else if item.category == .glasses {
+            // Draw sprite preview with glasses - fill the entire cell
+            if let previewImage = ClawdachiOutfitSprites.generateGlassesPreviewImage(for: item.id, size: rect.width) {
+                previewImage.draw(in: rect,
+                                  from: .zero,
+                                  operation: .sourceOver,
+                                  fraction: isLocked ? 0.5 : 1.0)
+            } else {
+                // Fallback to letter for glasses without preview
+                drawLetterPlaceholder(in: rect)
+            }
         } else if item.category == .held {
             // Draw sprite preview with held item - fill the entire cell
             if let previewImage = ClawdachiOutfitSprites.generateHeldItemPreviewImage(for: item.id, size: rect.width) {

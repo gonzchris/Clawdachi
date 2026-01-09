@@ -16,6 +16,7 @@ class ClawdachiSprite: SKNode {
     var bodyNode: SKSpriteNode!
     var outfitNode: SKSpriteNode!
     var hatNode: SKSpriteNode!
+    var glassesNode: SKSpriteNode!
     var heldItemNode: SKSpriteNode!
     var leftEyeNode: SKSpriteNode!
     var rightEyeNode: SKSpriteNode!
@@ -239,6 +240,7 @@ class ClawdachiSprite: SKNode {
         DispatchQueue.main.async { [weak self] in
             self?.updateOutfit()
             self?.updateHat()
+            self?.updateGlasses()
             self?.updateHeldItem()
         }
     }
@@ -333,6 +335,14 @@ class ClawdachiSprite: SKNode {
         hatNode.alpha = 0  // Hidden by default
         addChild(hatNode)
 
+        // Glasses overlay (over eyes)
+        glassesNode = SKSpriteNode()
+        glassesNode.size = CGSize(width: 32, height: 32)
+        glassesNode.position = .zero
+        glassesNode.zPosition = 2.5  // Above face, below hat
+        glassesNode.alpha = 0  // Hidden by default
+        addChild(glassesNode)
+
         // Held item overlay (in front of body, behind face)
         heldItemNode = SKSpriteNode()
         heldItemNode.size = CGSize(width: 32, height: 32)
@@ -341,9 +351,10 @@ class ClawdachiSprite: SKNode {
         heldItemNode.alpha = 0  // Hidden by default
         addChild(heldItemNode)
 
-        // Apply any equipped outfit, hat, and held item
+        // Apply any equipped outfit, hat, glasses, and held item
         updateOutfit()
         updateHat()
+        updateGlasses()
         updateHeldItem()
 
         // Left Eye (Layer 2)
@@ -421,6 +432,22 @@ class ClawdachiSprite: SKNode {
         } else {
             hatNode.texture = nil
             hatNode.alpha = 0
+        }
+    }
+
+    // MARK: - Glasses Management
+
+    /// Updates the glasses overlay based on currently equipped glasses
+    func updateGlasses() {
+        let equippedGlasses = ClosetManager.shared.equippedGlasses
+
+        if let glasses = equippedGlasses,
+           let texture = ClawdachiOutfitSprites.glassesTexture(for: glasses.id) {
+            glassesNode.texture = texture
+            glassesNode.alpha = 1
+        } else {
+            glassesNode.texture = nil
+            glassesNode.alpha = 0
         }
     }
 
