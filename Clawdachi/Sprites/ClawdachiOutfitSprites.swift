@@ -310,6 +310,17 @@ class ClawdachiOutfitSprites {
     private static let crownBlue = PixelColor(r: 40, g: 80, b: 180)        // Sapphire jewel
     private static let crownWhite = PixelColor(r: 255, g: 255, b: 255)     // Jewel shine
 
+    // MARK: - Propeller Cap Colors
+
+    private static let propCapRed = PixelColor(r: 220, g: 50, b: 50)       // Red panel
+    private static let propCapYellow = PixelColor(r: 255, g: 220, b: 50)   // Yellow panel
+    private static let propCapBlue = PixelColor(r: 50, g: 100, b: 200)     // Blue panel
+    private static let propCapGreen = PixelColor(r: 50, g: 180, b: 80)     // Green panel
+    private static let propCapDark = PixelColor(r: 40, g: 40, b: 45)       // Shadow/seams
+    private static let propBlade = PixelColor(r: 180, g: 180, b: 190)      // Propeller blade
+    private static let propBladeLight = PixelColor(r: 220, g: 220, b: 230) // Blade highlight
+    private static let propHub = PixelColor(r: 100, g: 100, b: 110)        // Center hub
+
     // MARK: - Cowboy Hat
 
     /// Generates a cowboy hat texture (32x32) positioned on top of sprite head
@@ -699,6 +710,105 @@ class ClawdachiOutfitSprites {
         // === JEWEL HIGHLIGHTS ===
         pixels[23][15] = w  // Ruby shine
         pixels[24][11] = w  // Left sapphire shine
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
+    }
+
+    // MARK: - Propeller Cap
+
+    /// Generates a propeller cap texture (32x32) - colorful beanie with spinning propeller
+    static func generatePropellerCapTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
+
+        let r = propCapRed
+        let y = propCapYellow
+        let b = propCapBlue
+        let g = propCapGreen
+        let d = propCapDark
+        let blade = propBlade
+        let bl = propBladeLight
+        let hub = propHub
+
+        // === CAP BASE (rows 22-24) - colorful panels ===
+        // Row 22 - bottom edge
+        for col in 7...24 { pixels[22][col] = d }
+
+        // Row 23 - 4 color panels
+        for col in 7...10 { pixels[23][col] = r }   // Red
+        for col in 11...15 { pixels[23][col] = y }  // Yellow
+        for col in 16...20 { pixels[23][col] = b }  // Blue
+        for col in 21...24 { pixels[23][col] = g }  // Green
+        pixels[23][7] = d
+        pixels[23][11] = d  // Seam
+        pixels[23][16] = d  // Seam
+        pixels[23][21] = d  // Seam
+
+        // Row 24 - panels continue
+        for col in 8...10 { pixels[24][col] = r }
+        for col in 11...15 { pixels[24][col] = y }
+        for col in 16...20 { pixels[24][col] = b }
+        for col in 21...23 { pixels[24][col] = g }
+        pixels[24][8] = d
+        pixels[24][11] = d
+        pixels[24][16] = d
+        pixels[24][21] = d
+
+        // === CAP DOME (rows 25-27) ===
+        // Row 25
+        for col in 9...22 { pixels[25][col] = y }
+        pixels[25][9] = r
+        pixels[25][10] = r
+        pixels[25][11] = d
+        pixels[25][16] = d
+        pixels[25][17] = b
+        pixels[25][18] = b
+        pixels[25][19] = b
+        pixels[25][20] = b
+        pixels[25][21] = g
+        pixels[25][22] = g
+
+        // Row 26
+        for col in 10...21 { pixels[26][col] = y }
+        pixels[26][10] = r
+        pixels[26][11] = d
+        pixels[26][16] = d
+        pixels[26][17] = b
+        pixels[26][18] = b
+        pixels[26][19] = b
+        pixels[26][20] = b
+        pixels[26][21] = g
+
+        // Row 27
+        for col in 12...19 { pixels[27][col] = y }
+        pixels[27][12] = d
+        pixels[27][17] = b
+        pixels[27][18] = b
+        pixels[27][19] = d
+
+        // === PROPELLER HUB (rows 28) ===
+        pixels[28][15] = hub
+        pixels[28][16] = hub
+
+        // === PROPELLER BLADES (rows 29-30) ===
+        // Left blade
+        pixels[29][11] = blade
+        pixels[29][12] = blade
+        pixels[29][13] = bl
+        pixels[29][14] = bl
+        pixels[30][10] = blade
+        pixels[30][11] = bl
+
+        // Right blade
+        pixels[29][17] = bl
+        pixels[29][18] = bl
+        pixels[29][19] = blade
+        pixels[29][20] = blade
+        pixels[30][20] = bl
+        pixels[30][21] = blade
+
+        // Hub top
+        pixels[29][15] = hub
+        pixels[29][16] = hub
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
@@ -1186,6 +1296,8 @@ class ClawdachiOutfitSprites {
             return generateBeanieTexture()
         case "crown":
             return generateCrownTexture()
+        case "propeller":
+            return generatePropellerCapTexture()
         default:
             return nil
         }
