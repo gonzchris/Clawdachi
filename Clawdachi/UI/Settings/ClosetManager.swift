@@ -267,7 +267,7 @@ class ClosetManager {
             ClosetItem(id: "superhero", name: "Superhero Cape", category: .outfits, isPremium: true),
             ClosetItem(id: "wizard", name: "Wizard Robe", category: .outfits, isPremium: false),
             ClosetItem(id: "astronaut", name: "Astronaut Suit", category: .outfits, isPremium: false),
-            ClosetItem(id: "pirate", name: "Pirate Outfit", category: .outfits, isPremium: true),
+            ClosetItem(id: "pirate", name: "Pirate Outfit", category: .outfits, isPremium: false),
         ]
 
         // Define available hats

@@ -330,6 +330,20 @@ class ClawdachiOutfitSprites {
     private static let wizardGoldDark = PixelColor(r: 180, g: 140, b: 30)   // Gold shadow
     private static let wizardStar = PixelColor(r: 255, g: 255, b: 200)      // Star/sparkle
 
+    // MARK: - Pirate Outfit Colors
+
+    private static let pirateRed = PixelColor(r: 180, g: 40, b: 40)         // Bandana red
+    private static let pirateRedDark = PixelColor(r: 130, g: 25, b: 25)     // Dark red
+    private static let pirateRedLight = PixelColor(r: 220, g: 70, b: 70)    // Light red
+    private static let pirateShirt = PixelColor(r: 245, g: 235, b: 220)     // Cream shirt
+    private static let pirateShirtDark = PixelColor(r: 200, g: 190, b: 175) // Shirt shadow
+    private static let pirateShirtLight = PixelColor(r: 255, g: 250, b: 245) // Shirt highlight
+    private static let pirateBelt = PixelColor(r: 80, g: 50, b: 30)         // Brown belt
+    private static let pirateBeltDark = PixelColor(r: 50, g: 30, b: 15)     // Belt shadow
+    private static let pirateBuckle = PixelColor(r: 255, g: 200, b: 50)     // Gold buckle
+    private static let pirateVest = PixelColor(r: 40, g: 35, b: 30)         // Black vest
+    private static let pirateVestLight = PixelColor(r: 60, g: 55, b: 50)    // Vest highlight
+
     // MARK: - Cowboy Hat
 
     /// Generates a cowboy hat texture (32x32) positioned on top of sprite head
@@ -964,6 +978,114 @@ class ClawdachiOutfitSprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
 
+    // MARK: - Pirate Outfit
+
+    /// Generates pirate outfit with bandana, vest, and belt
+    static func generatePirateTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
+
+        let r = pirateRed
+        let rd = pirateRedDark
+        let rl = pirateRedLight
+        let s = pirateShirt
+        let sd = pirateShirtDark
+        let sl = pirateShirtLight
+        let v = pirateVest
+        let vl = pirateVestLight
+        let b = pirateBelt
+        let bd = pirateBeltDark
+        let bu = pirateBuckle
+
+        // === RED BANDANA (rows 22-25) ===
+        // Row 25 - top knot
+        pixels[25][18] = rd
+        pixels[25][19] = r
+        pixels[25][20] = r
+        pixels[25][21] = rd
+
+        // Row 24 - bandana top with knot
+        for col in 8...23 { pixels[24][col] = r }
+        pixels[24][8] = rd
+        pixels[24][9] = rd
+        pixels[24][22] = rl
+        pixels[24][23] = rl
+        // Knot tails
+        pixels[24][24] = rd
+        pixels[24][25] = r
+
+        // Row 23 - main bandana
+        for col in 6...25 { pixels[23][col] = r }
+        pixels[23][6] = rd
+        pixels[23][7] = rd
+        pixels[23][24] = rl
+        pixels[23][25] = rl
+        // Tail hanging down
+        pixels[23][26] = r
+        pixels[23][27] = rd
+
+        // Row 22 - bandana bottom edge
+        for col in 5...26 { pixels[22][col] = rd }
+        // Tail continues
+        pixels[22][27] = r
+        pixels[22][28] = rd
+
+        // === VEST AND SHIRT (rows 10-21) ===
+        for row in 10...21 {
+            // Left vest edge
+            pixels[row][4] = bd
+            pixels[row][5] = v
+            pixels[row][6] = v
+            pixels[row][7] = vl  // Vest inner edge
+
+            // Shirt showing in middle (face opening area)
+            // Leave cols 8-23 clear for face
+
+            // Right vest edge
+            pixels[row][24] = vl  // Vest inner edge
+            pixels[row][25] = v
+            pixels[row][26] = v
+            pixels[row][27] = bd
+        }
+
+        // === BELT (rows 8-9) ===
+        // Row 9 - belt top
+        for col in 5...26 { pixels[9][col] = b }
+        pixels[9][5] = bd
+        pixels[9][6] = bd
+        pixels[9][25] = b
+        pixels[9][26] = b
+        // Gold buckle
+        pixels[9][14] = bu
+        pixels[9][15] = bu
+        pixels[9][16] = bu
+        pixels[9][17] = bu
+
+        // Row 8 - belt bottom
+        for col in 5...26 { pixels[8][col] = bd }
+        // Buckle continues
+        pixels[8][14] = bu
+        pixels[8][15] = bu
+        pixels[8][16] = bu
+        pixels[8][17] = bu
+
+        // Row 7 - shirt bottom peeking below belt
+        for col in 6...25 { pixels[7][col] = sd }
+        pixels[7][6] = bd
+        pixels[7][25] = bd
+
+        // === SHIRT V-NECK DETAIL (visible in face area) ===
+        // Shirt collar peeking at top of opening
+        pixels[21][8] = sl
+        pixels[21][9] = s
+        pixels[21][22] = s
+        pixels[21][23] = sl
+
+        pixels[20][8] = s
+        pixels[20][23] = s
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
+    }
+
     // MARK: - Glasses Colors
 
     private static let glassesFrame = PixelColor(r: 25, g: 25, b: 30)       // Dark frame
@@ -1429,6 +1551,8 @@ class ClawdachiOutfitSprites {
             return generateAstronautTexture()
         case "wizard":
             return generateWizardRobeTexture()
+        case "pirate":
+            return generatePirateTexture()
         default:
             return nil
         }
