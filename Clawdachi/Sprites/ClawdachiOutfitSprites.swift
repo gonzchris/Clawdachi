@@ -350,6 +350,90 @@ class ClawdachiOutfitSprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
 
+    // MARK: - Headphones Colors
+
+    private static let headphoneBlack = PixelColor(r: 30, g: 30, b: 35)
+    private static let headphoneGray = PixelColor(r: 55, g: 55, b: 60)
+    private static let headphoneLight = PixelColor(r: 85, g: 85, b: 90)
+    private static let headphonePad = PixelColor(r: 45, g: 45, b: 50)
+    private static let headphoneAccent = PixelColor(r: 120, g: 120, b: 125)  // Light gray accent
+
+    // MARK: - Headphones
+
+    /// Generates headphones texture (32x32) positioned on sprite head
+    static func generateHeadphonesTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
+
+        let b = headphoneBlack
+        let g = headphoneGray
+        let l = headphoneLight
+        let p = headphonePad
+        let a = headphoneAccent
+
+        // === HEADBAND (rows 22-24) - arched over head ===
+        // Row 24 - top center of headband
+        for col in 11...20 { pixels[24][col] = l }
+
+        // Row 23 - wider part
+        for col in 9...22 { pixels[23][col] = g }
+        pixels[23][8] = l
+        pixels[23][23] = b
+
+        // Row 22 - bottom of headband, curves down to cups
+        pixels[22][7] = g
+        pixels[22][8] = g
+        pixels[22][23] = g
+        pixels[22][24] = g
+
+        // === LEFT EAR CUP (rows 14-20) ===
+        // Row 20 - top of cup
+        pixels[20][4] = b
+        pixels[20][5] = g
+        pixels[20][6] = g
+
+        // Rows 15-19 - main cup body
+        for row in 15...19 {
+            pixels[row][4] = b
+            pixels[row][5] = l
+            pixels[row][6] = g
+            pixels[row][7] = p  // Inner pad
+        }
+
+        // Row 14 - bottom of cup
+        pixels[14][4] = b
+        pixels[14][5] = g
+        pixels[14][6] = g
+
+        // Red accent on left cup
+        pixels[17][5] = a
+        pixels[16][5] = a
+
+        // === RIGHT EAR CUP (rows 14-20) ===
+        // Row 20 - top of cup
+        pixels[20][25] = g
+        pixels[20][26] = g
+        pixels[20][27] = b
+
+        // Rows 15-19 - main cup body
+        for row in 15...19 {
+            pixels[row][24] = p  // Inner pad
+            pixels[row][25] = g
+            pixels[row][26] = l
+            pixels[row][27] = b
+        }
+
+        // Row 14 - bottom of cup
+        pixels[14][25] = g
+        pixels[14][26] = g
+        pixels[14][27] = b
+
+        // Red accent on right cup
+        pixels[17][26] = a
+        pixels[16][26] = a
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
+    }
+
     // MARK: - Coffee Mug
 
     /// Generates a coffee mug held item texture (32x32 to match body)
@@ -529,6 +613,8 @@ class ClawdachiOutfitSprites {
         switch hatId {
         case "cowboy":
             return generateCowboyHatTexture()
+        case "headphones":
+            return generateHeadphonesTexture()
         default:
             return nil
         }
