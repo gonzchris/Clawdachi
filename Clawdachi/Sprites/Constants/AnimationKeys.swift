@@ -197,4 +197,12 @@ enum AnimationKey: String {
 
     /// Arm celebration animation
     case partyArm
+
+    // MARK: - Held Item Animations
+
+    /// Coffee mug steam spawner
+    case coffeeSteam
+
+    /// Cigarette smoke spawner
+    case cigaretteHeldSmoke
 }

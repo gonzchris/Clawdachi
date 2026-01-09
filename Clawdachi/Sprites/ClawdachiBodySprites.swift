@@ -183,4 +183,108 @@ class ClawdachiBodySprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 5)
     }
 
+    // MARK: - Astronaut Limb Textures (NASA style)
+
+    private static let suitWhite = PixelColor(r: 240, g: 240, b: 245)
+    private static let suitGray = PixelColor(r: 180, g: 185, b: 190)
+    private static let suitLight = PixelColor(r: 255, g: 255, b: 255)
+    private static let nasaRed = PixelColor(r: 200, g: 50, b: 50)
+    private static let nasaBlue = PixelColor(r: 30, g: 60, b: 120)
+    private static let bootGray = PixelColor(r: 90, g: 95, b: 100)
+    private static let bootDark = PixelColor(r: 60, g: 65, b: 70)
+
+    /// Generate astronaut left arm texture (3x3 pixels) - white with gray gloves
+    static func generateWhiteLeftArmTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 3)
+
+        // Row 2 (top/inner) - white suit
+        pixels[2][0] = suitGray
+        pixels[2][1] = suitWhite
+        pixels[2][2] = suitWhite
+
+        // Row 1 (middle) - white suit
+        pixels[1][0] = suitGray
+        pixels[1][1] = suitWhite
+        pixels[1][2] = suitWhite
+
+        // Row 0 (bottom/outer) - gray glove
+        pixels[0][0] = bootDark
+        pixels[0][1] = bootGray
+        pixels[0][2] = bootGray
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 3)
+    }
+
+    /// Generate astronaut right arm texture (3x3 pixels) - white with gray gloves
+    static func generateWhiteRightArmTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 3), count: 3)
+
+        // Row 2 (top/inner) - white suit
+        pixels[2][0] = suitWhite
+        pixels[2][1] = suitWhite
+        pixels[2][2] = suitLight
+
+        // Row 1 (middle) - white suit
+        pixels[1][0] = suitWhite
+        pixels[1][1] = suitWhite
+        pixels[1][2] = suitLight
+
+        // Row 0 (bottom/outer) - gray glove
+        pixels[0][0] = bootGray
+        pixels[0][1] = bootGray
+        pixels[0][2] = bootDark
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 3, height: 3)
+    }
+
+    /// Generate astronaut left leg texture (2x5 pixels) - NASA style with blue band and gray boots
+    static func generateWhiteLeftLegTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 2), count: 5)
+
+        // Row 4 (top) - white
+        pixels[4][0] = suitGray
+        pixels[4][1] = suitWhite
+
+        // Row 3 - blue band
+        pixels[3][0] = nasaBlue
+        pixels[3][1] = nasaBlue
+
+        // Row 2 - white
+        pixels[2][0] = suitGray
+        pixels[2][1] = suitWhite
+
+        // Rows 0-1 (bottom) - gray boots
+        pixels[1][0] = bootGray
+        pixels[1][1] = bootGray
+        pixels[0][0] = bootDark
+        pixels[0][1] = bootDark
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 5)
+    }
+
+    /// Generate astronaut right leg texture (2x5 pixels) - NASA style with blue band and gray boots
+    static func generateWhiteRightLegTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: P.clear, count: 2), count: 5)
+
+        // Row 4 (top) - white
+        pixels[4][0] = suitWhite
+        pixels[4][1] = suitLight
+
+        // Row 3 - blue band
+        pixels[3][0] = nasaBlue
+        pixels[3][1] = nasaBlue
+
+        // Row 2 - white
+        pixels[2][0] = suitWhite
+        pixels[2][1] = suitLight
+
+        // Rows 0-1 (bottom) - gray boots
+        pixels[1][0] = bootGray
+        pixels[1][1] = bootGray
+        pixels[0][0] = bootDark
+        pixels[0][1] = bootDark
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 2, height: 5)
+    }
+
 }

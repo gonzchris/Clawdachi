@@ -53,6 +53,7 @@ class SettingsContentView: NSView {
         wantsLayer = true
         layer?.backgroundColor = C.backgroundColor.cgColor
         layer?.cornerRadius = 8
+        layer?.masksToBounds = true  // Clip content to rounded corners
         layer?.borderWidth = 2
         layer?.borderColor = C.frameColor.cgColor
 
@@ -273,8 +274,33 @@ class SettingsContentView: NSView {
             width: C.sidebarWidth - 2,
             height: bounds.height - C.titleBarHeight - C.bottomBarHeight
         )
+
+        // Custom path with rounded bottom-left corner only
+        let radius: CGFloat = 6
+        let sidebarPath = NSBezierPath()
+
+        // Start at top-left
+        sidebarPath.move(to: NSPoint(x: sidebarRect.minX, y: sidebarRect.minY))
+        // Line to top-right
+        sidebarPath.line(to: NSPoint(x: sidebarRect.maxX, y: sidebarRect.minY))
+        // Line down right side
+        sidebarPath.line(to: NSPoint(x: sidebarRect.maxX, y: sidebarRect.maxY))
+        // Line to bottom-left corner start
+        sidebarPath.line(to: NSPoint(x: sidebarRect.minX + radius, y: sidebarRect.maxY))
+        // Rounded bottom-left corner
+        sidebarPath.appendArc(
+            withCenter: NSPoint(x: sidebarRect.minX + radius, y: sidebarRect.maxY - radius),
+            radius: radius,
+            startAngle: 270,
+            endAngle: 180,
+            clockwise: true
+        )
+        // Line back up
+        sidebarPath.line(to: NSPoint(x: sidebarRect.minX, y: sidebarRect.minY))
+        sidebarPath.close()
+
         C.panelColor.setFill()
-        NSBezierPath(rect: sidebarRect).fill()
+        sidebarPath.fill()
 
         // Sidebar divider
         C.frameColor.setStroke()

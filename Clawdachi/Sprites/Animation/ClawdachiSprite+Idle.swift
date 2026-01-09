@@ -92,7 +92,8 @@ extension ClawdachiSprite {
     /// Check if smoking can be performed (without triggering it)
     private func canPerformSmoking() -> Bool {
         // Must be in pure idle state (not in any idle substate or Claude state)
-        return currentState == .idle
+        // Also don't smoke if holding an item (coffee mug, cigarette, etc.)
+        return currentState == .idle && ClosetManager.shared.equippedHeld == nil
     }
 
     /// Called when whistle animation completes - schedules next in cycle

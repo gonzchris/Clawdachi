@@ -15,6 +15,7 @@ class ClawdachiSprite: SKNode {
 
     var bodyNode: SKSpriteNode!
     var outfitNode: SKSpriteNode!
+    var heldItemNode: SKSpriteNode!
     var leftEyeNode: SKSpriteNode!
     var rightEyeNode: SKSpriteNode!
     var mouthNode: SKSpriteNode!
@@ -233,7 +234,11 @@ class ClawdachiSprite: SKNode {
     }
 
     @objc private func handleClosetChange() {
-        updateOutfit()
+        // Ensure UI updates happen on main thread
+        DispatchQueue.main.async { [weak self] in
+            self?.updateOutfit()
+            self?.updateHeldItem()
+        }
     }
 
     // MARK: - Setup
@@ -318,8 +323,17 @@ class ClawdachiSprite: SKNode {
         outfitNode.alpha = 0  // Hidden by default
         addChild(outfitNode)
 
-        // Apply any equipped outfit
+        // Held item overlay (in front of body, behind face)
+        heldItemNode = SKSpriteNode()
+        heldItemNode.size = CGSize(width: 32, height: 32)
+        heldItemNode.position = .zero
+        heldItemNode.zPosition = 1.6  // In front of outfit
+        heldItemNode.alpha = 0  // Hidden by default
+        addChild(heldItemNode)
+
+        // Apply any equipped outfit and held item
         updateOutfit()
+        updateHeldItem()
 
         // Left Eye (Layer 2)
         leftEyeNode = SKSpriteNode(texture: eyeOpenTexture)
@@ -354,10 +368,121 @@ class ClawdachiSprite: SKNode {
            let texture = ClawdachiOutfitSprites.texture(for: outfit.id) {
             outfitNode.texture = texture
             outfitNode.alpha = 1
+
+            // Swap limb textures for astronaut suit
+            if outfit.id == "astronaut" {
+                leftArmNode.texture = ClawdachiBodySprites.generateWhiteLeftArmTexture()
+                rightArmNode.texture = ClawdachiBodySprites.generateWhiteRightArmTexture()
+                outerLeftLegNode.texture = ClawdachiBodySprites.generateWhiteLeftLegTexture()
+                innerLeftLegNode.texture = ClawdachiBodySprites.generateWhiteLeftLegTexture()
+                innerRightLegNode.texture = ClawdachiBodySprites.generateWhiteRightLegTexture()
+                outerRightLegNode.texture = ClawdachiBodySprites.generateWhiteRightLegTexture()
+            } else {
+                restoreNormalLimbTextures()
+            }
         } else {
             outfitNode.texture = nil
             outfitNode.alpha = 0
+            restoreNormalLimbTextures()
         }
+    }
+
+    /// Restores limb textures to normal orange colors
+    private func restoreNormalLimbTextures() {
+        leftArmNode.texture = ClawdachiBodySprites.generateLeftArmTexture()
+        rightArmNode.texture = ClawdachiBodySprites.generateRightArmTexture()
+        outerLeftLegNode.texture = ClawdachiBodySprites.generateLeftLegTexture()
+        innerLeftLegNode.texture = ClawdachiBodySprites.generateLeftLegTexture()
+        innerRightLegNode.texture = ClawdachiBodySprites.generateRightLegTexture()
+        outerRightLegNode.texture = ClawdachiBodySprites.generateRightLegTexture()
+    }
+
+    /// Updates the held item overlay based on currently equipped held item
+    func updateHeldItem() {
+        let equippedHeld = ClosetManager.shared.equippedHeld
+
+        // Stop all held item animations first
+        stopCoffeeSteamAnimation()
+        stopCigaretteSmokeAnimation()
+
+        if let heldItem = equippedHeld,
+           let texture = ClawdachiOutfitSprites.heldItemTexture(for: heldItem.id) {
+            heldItemNode.texture = texture
+            heldItemNode.alpha = 1
+
+            // Start item-specific animations
+            switch heldItem.id {
+            case "coffee":
+                startCoffeeSteamAnimation()
+            case "cigarette":
+                startCigaretteSmokeAnimation()
+            default:
+                break
+            }
+        } else {
+            heldItemNode.texture = nil
+            heldItemNode.alpha = 0
+        }
+    }
+
+    // MARK: - Held Item Animations
+
+    /// Starts the coffee steam animation
+    func startCoffeeSteamAnimation() {
+        // Don't start if already running
+        guard action(forKey: AnimationKey.coffeeSteam.rawValue) == nil else { return }
+
+        var steamVariation = 0
+        let steamSpawn = SKAction.run { [weak self] in
+            guard let self = self else { return }
+            ParticleSpawner.spawnCoffeeSteam(
+                texture: self.smokeTexture,
+                variation: steamVariation,
+                parent: self
+            )
+            steamVariation = (steamVariation + 1) % 3
+        }
+
+        // Spawn steam every 0.8-1.2 seconds
+        let steamSequence = SKAction.sequence([
+            steamSpawn,
+            SKAction.wait(forDuration: 0.8, withRange: 0.4)
+        ])
+        run(SKAction.repeatForever(steamSequence), withKey: AnimationKey.coffeeSteam.rawValue)
+    }
+
+    /// Stops the coffee steam animation
+    func stopCoffeeSteamAnimation() {
+        removeAction(forKey: AnimationKey.coffeeSteam.rawValue)
+    }
+
+    /// Starts the cigarette smoke animation
+    func startCigaretteSmokeAnimation() {
+        // Don't start if already running
+        guard action(forKey: AnimationKey.cigaretteHeldSmoke.rawValue) == nil else { return }
+
+        var smokeVariation = 0
+        let smokeSpawn = SKAction.run { [weak self] in
+            guard let self = self else { return }
+            ParticleSpawner.spawnCigaretteHeldSmoke(
+                texture: self.smokeTexture,
+                variation: smokeVariation,
+                parent: self
+            )
+            smokeVariation = (smokeVariation + 1) % 3
+        }
+
+        // Spawn smoke every 0.6-1.0 seconds
+        let smokeSequence = SKAction.sequence([
+            smokeSpawn,
+            SKAction.wait(forDuration: 0.6, withRange: 0.4)
+        ])
+        run(SKAction.repeatForever(smokeSequence), withKey: AnimationKey.cigaretteHeldSmoke.rawValue)
+    }
+
+    /// Stops the cigarette smoke animation
+    func stopCigaretteSmokeAnimation() {
+        removeAction(forKey: AnimationKey.cigaretteHeldSmoke.rawValue)
     }
 
     // MARK: - Theme Support

@@ -537,6 +537,17 @@ class CustomizationItemCell: NSView {
                 // Fallback to letter for outfits without preview
                 drawLetterPlaceholder(in: rect)
             }
+        } else if item.category == .held {
+            // Draw sprite preview with held item - fill the entire cell
+            if let previewImage = ClawdachiOutfitSprites.generateHeldItemPreviewImage(for: item.id, size: rect.width) {
+                previewImage.draw(in: rect,
+                                  from: .zero,
+                                  operation: .sourceOver,
+                                  fraction: isLocked ? 0.5 : 1.0)
+            } else {
+                // Fallback to letter for held items without preview
+                drawLetterPlaceholder(in: rect)
+            }
         } else {
             // Draw first letter of item name as placeholder
             drawLetterPlaceholder(in: rect)

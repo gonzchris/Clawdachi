@@ -543,4 +543,155 @@ enum ParticleSpawner {
 
         return smoke
     }
+
+    /// Spawn a coffee steam wisp (small, rising gently)
+    /// Uses object pooling to reduce memory churn
+    /// - Parameters:
+    ///   - texture: Steam texture
+    ///   - variation: 0, 1, or 2 for different trajectories
+    ///   - parent: Parent node to add to
+    @discardableResult
+    static func spawnCoffeeSteam(
+        texture: SKTexture,
+        variation: Int = 0,
+        parent: SKNode
+    ) -> SKSpriteNode {
+        // Coffee mug rim is at pixel (24-29, 16) in the 32x32 texture
+        // With center anchor (16, 16), world coords are (pixel - 16)
+        // Mug center: pixel x=26.5 → world x=10.5, pixel y=16 → world y=0
+        // Steam should start just above the rim
+        let baseX: CGFloat = 10
+        let baseY: CGFloat = 1
+
+        // Different steam paths for variety - smaller, gentler than cigarette smoke
+        let paths: [(dx: CGFloat, dy: CGFloat, startOffsetX: CGFloat)] = [
+            (CGFloat.random(in: -1...1), CGFloat.random(in: 6...8), -1),
+            (CGFloat.random(in: -0.5...1.5), CGFloat.random(in: 5...7), 0),
+            (CGFloat.random(in: 0...2), CGFloat.random(in: 6...9), 1)
+        ]
+        let path = paths[variation % paths.count]
+
+        let steam = ParticlePool.shared.acquire()
+        steam.texture = texture
+        steam.size = CGSize(width: 3, height: 3)
+        steam.position = CGPoint(x: baseX + path.startOffsetX, y: baseY)
+        steam.alpha = 0
+        steam.zPosition = SpriteZPositions.effects - 1  // Behind other effects
+        steam.setScale(0.3)
+        parent.addChild(steam)
+
+        // Fade in gently
+        let fadeIn = SKAction.fadeAlpha(to: 0.5, duration: 0.2)
+
+        // Float up while expanding slightly
+        let floatDuration: TimeInterval = 1.2
+        let floatUp = SKAction.moveBy(x: path.dx, y: path.dy, duration: floatDuration)
+        floatUp.timingMode = .easeOut
+
+        // Steam expands slightly as it rises
+        let expand = SKAction.scale(to: 0.6, duration: floatDuration)
+        expand.timingMode = .easeOut
+
+        // Gentle wobble
+        let wobble = SKAction.sequence([
+            SKAction.rotate(byAngle: 0.15, duration: floatDuration / 2),
+            SKAction.rotate(byAngle: -0.15, duration: floatDuration / 2)
+        ])
+
+        // Fade out
+        let fadeOut = SKAction.sequence([
+            SKAction.wait(forDuration: floatDuration * 0.4),
+            SKAction.fadeOut(withDuration: floatDuration * 0.6)
+        ])
+
+        let sequence = SKAction.sequence([
+            fadeIn,
+            SKAction.group([floatUp, expand, wobble, fadeOut]),
+            SKAction.run { [weak steam] in
+                guard let steam = steam else { return }
+                DispatchQueue.main.async {
+                    ParticlePool.shared.release(steam)
+                }
+            }
+        ])
+
+        steam.run(sequence)
+
+        return steam
+    }
+
+    /// Spawn cigarette smoke wisp (from held cigarette tip)
+    /// Uses object pooling to reduce memory churn
+    /// - Parameters:
+    ///   - texture: Smoke texture
+    ///   - variation: 0, 1, or 2 for different trajectories
+    ///   - parent: Parent node to add to
+    @discardableResult
+    static func spawnCigaretteHeldSmoke(
+        texture: SKTexture,
+        variation: Int = 0,
+        parent: SKNode
+    ) -> SKSpriteNode {
+        // Cigarette tip is at pixel (28, 12-13) in the 32x32 texture
+        // With center anchor (16, 16), world coords are (pixel - 16)
+        // Tip: pixel x=28 → world x=12, pixel y=12.5 → world y=-3.5
+        let baseX: CGFloat = 12
+        let baseY: CGFloat = -3
+
+        // Different smoke paths for variety
+        let paths: [(dx: CGFloat, dy: CGFloat, startOffsetX: CGFloat)] = [
+            (CGFloat.random(in: -1...2), CGFloat.random(in: 8...12), 0),
+            (CGFloat.random(in: 0...3), CGFloat.random(in: 7...10), 1),
+            (CGFloat.random(in: -2...1), CGFloat.random(in: 9...13), -1)
+        ]
+        let path = paths[variation % paths.count]
+
+        let smoke = ParticlePool.shared.acquire()
+        smoke.texture = texture
+        smoke.size = CGSize(width: 4, height: 4)
+        smoke.position = CGPoint(x: baseX + path.startOffsetX, y: baseY)
+        smoke.alpha = 0
+        smoke.zPosition = SpriteZPositions.effects
+        smoke.setScale(0.3)
+        parent.addChild(smoke)
+
+        // Fade in
+        let fadeIn = SKAction.fadeAlpha(to: 0.6, duration: 0.15)
+
+        // Float up while expanding
+        let floatDuration: TimeInterval = 1.5
+        let floatUp = SKAction.moveBy(x: path.dx, y: path.dy, duration: floatDuration)
+        floatUp.timingMode = .easeOut
+
+        // Smoke expands as it rises
+        let expand = SKAction.scale(to: 1.0, duration: floatDuration)
+        expand.timingMode = .easeOut
+
+        // Gentle wobble
+        let wobble = SKAction.sequence([
+            SKAction.rotate(byAngle: 0.2, duration: floatDuration / 2),
+            SKAction.rotate(byAngle: -0.2, duration: floatDuration / 2)
+        ])
+
+        // Fade out
+        let fadeOut = SKAction.sequence([
+            SKAction.wait(forDuration: floatDuration * 0.4),
+            SKAction.fadeOut(withDuration: floatDuration * 0.6)
+        ])
+
+        let sequence = SKAction.sequence([
+            fadeIn,
+            SKAction.group([floatUp, expand, wobble, fadeOut]),
+            SKAction.run { [weak smoke] in
+                guard let smoke = smoke else { return }
+                DispatchQueue.main.async {
+                    ParticlePool.shared.release(smoke)
+                }
+            }
+        ])
+
+        smoke.run(sequence)
+
+        return smoke
+    }
 }
