@@ -151,7 +151,7 @@ class ChatBubbleManager {
     /// Calculate Y position for a given stack index
     private func calculateBubbleY(stackIndex: Int) -> CGFloat {
         guard let parent = spriteWindow else { return 0 }
-        let verticalOffset = currentVerticalOffset ?? C.verticalOffsetFromSpriteCenter
+        let verticalOffset = currentVerticalOffset ?? C.verticalOffsetNoHat
         let baseY = parent.frame.origin.y + 144 + verticalOffset
 
         if stackIndex == 0 {

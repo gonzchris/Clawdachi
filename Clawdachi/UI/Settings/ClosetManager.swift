@@ -13,17 +13,17 @@ import AppKit
 /// Categories of closet items
 enum ClosetCategory: String, CaseIterable {
     case themes
-    case outfits
     case hats
     case glasses
+    case outfits
     case held
 
     var displayName: String {
         switch self {
         case .themes: return "COLOR"
-        case .outfits: return "OUTFITS"
         case .hats: return "HATS"
         case .glasses: return "GLASSES"
+        case .outfits: return "OUTFITS"
         case .held: return "ITEMS"
         }
     }
@@ -263,7 +263,6 @@ class ClosetManager {
         availableOutfits = [
             ClosetItem(id: "bikini", name: "Bikini Mode", category: .outfits, isPremium: false),
             ClosetItem(id: "astronaut", name: "Astronaut Suit", category: .outfits, isPremium: false),
-            ClosetItem(id: "pirate", name: "Pirate Outfit", category: .outfits, isPremium: false),
         ]
 
         // Define available hats
@@ -271,7 +270,6 @@ class ClosetManager {
             ClosetItem(id: "tophat", name: "Top Hat", category: .hats, isPremium: false),
             ClosetItem(id: "beanie", name: "Beanie", category: .hats, isPremium: false),
             ClosetItem(id: "cowboy", name: "Cowboy Hat", category: .hats, isPremium: false),
-            ClosetItem(id: "crown", name: "Crown", category: .hats, isPremium: false),
             ClosetItem(id: "propeller", name: "Propeller Cap", category: .hats, isPremium: false),
         ]
 
@@ -285,6 +283,7 @@ class ClosetManager {
         // Define available held items
         availableHeld = [
             ClosetItem(id: "coffee", name: "Coffee Mug", category: .held, isPremium: true),
+            ClosetItem(id: "beer", name: "Beer Mug", category: .held, isPremium: false),
             ClosetItem(id: "cigarette", name: "Cigarette", category: .held, isPremium: false),
             ClosetItem(id: "headphones", name: "Headphones", category: .held, isPremium: false),
         ]

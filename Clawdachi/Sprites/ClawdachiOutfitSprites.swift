@@ -27,6 +27,17 @@ class ClawdachiOutfitSprites {
     private static let coffeeHighlight = PixelColor(r: 139, g: 90, b: 43)    // Coffee highlight
     private static let steamWhite = PixelColor(r: 255, g: 255, b: 255, a: 180) // Steam wisp
 
+    // MARK: - Beer Mug Colors
+
+    private static let beerGold = PixelColor(r: 255, g: 195, b: 50)           // Golden beer
+    private static let beerAmber = PixelColor(r: 230, g: 160, b: 30)          // Darker amber
+    private static let beerLight = PixelColor(r: 255, g: 220, b: 100)         // Beer highlight
+    private static let foamWhite = PixelColor(r: 255, g: 253, b: 245)         // Foam main
+    private static let foamCream = PixelColor(r: 250, g: 245, b: 230)         // Foam shadow
+    private static let glassLight = PixelColor(r: 230, g: 240, b: 245)        // Glass highlight
+    private static let glassMid = PixelColor(r: 200, g: 215, b: 225)          // Glass body
+    private static let glassDark = PixelColor(r: 160, g: 175, b: 185)         // Glass shadow
+
     // MARK: - Cigarette Colors
 
     private static let cigarettePaper = PixelColor(r: 245, g: 240, b: 230)    // Off-white paper
@@ -291,15 +302,6 @@ class ClawdachiOutfitSprites {
     private static let beanieDark = PixelColor(r: 50, g: 100, b: 140)      // Shadow
     private static let beanieRib = PixelColor(r: 60, g: 115, b: 160)       // Ribbed cuff
 
-    // MARK: - Crown Colors
-
-    private static let crownGold = PixelColor(r: 255, g: 200, b: 50)       // Main gold
-    private static let crownLight = PixelColor(r: 255, g: 230, b: 120)     // Gold highlight
-    private static let crownDark = PixelColor(r: 180, g: 140, b: 30)       // Gold shadow
-    private static let crownRed = PixelColor(r: 180, g: 30, b: 50)         // Ruby jewel
-    private static let crownBlue = PixelColor(r: 40, g: 80, b: 180)        // Sapphire jewel
-    private static let crownWhite = PixelColor(r: 255, g: 255, b: 255)     // Jewel shine
-
     // MARK: - Propeller Cap Colors
 
     private static let propCapRed = PixelColor(r: 220, g: 50, b: 50)       // Red panel
@@ -310,20 +312,6 @@ class ClawdachiOutfitSprites {
     private static let propBlade = PixelColor(r: 180, g: 180, b: 190)      // Propeller blade
     private static let propBladeLight = PixelColor(r: 220, g: 220, b: 230) // Blade highlight
     private static let propHub = PixelColor(r: 100, g: 100, b: 110)        // Center hub
-
-    // MARK: - Pirate Outfit Colors
-
-    private static let pirateRed = PixelColor(r: 180, g: 40, b: 40)         // Bandana red
-    private static let pirateRedDark = PixelColor(r: 130, g: 25, b: 25)     // Dark red
-    private static let pirateRedLight = PixelColor(r: 220, g: 70, b: 70)    // Light red
-    private static let pirateShirt = PixelColor(r: 245, g: 235, b: 220)     // Cream shirt
-    private static let pirateShirtDark = PixelColor(r: 200, g: 190, b: 175) // Shirt shadow
-    private static let pirateShirtLight = PixelColor(r: 255, g: 250, b: 245) // Shirt highlight
-    private static let pirateBelt = PixelColor(r: 80, g: 50, b: 30)         // Brown belt
-    private static let pirateBeltDark = PixelColor(r: 50, g: 30, b: 15)     // Belt shadow
-    private static let pirateBuckle = PixelColor(r: 255, g: 200, b: 50)     // Gold buckle
-    private static let pirateVest = PixelColor(r: 40, g: 35, b: 30)         // Black vest
-    private static let pirateVestLight = PixelColor(r: 60, g: 55, b: 50)    // Vest highlight
 
     // MARK: - Cowboy Hat
 
@@ -622,102 +610,6 @@ class ClawdachiOutfitSprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
 
-    // MARK: - Crown
-
-    /// Generates a crown texture (32x32) - royal gold crown with jewels
-    static func generateCrownTexture() -> SKTexture {
-        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
-
-        let g = crownGold
-        let l = crownLight
-        let d = crownDark
-        let r = crownRed
-        let b = crownBlue
-        let w = crownWhite
-
-        // === BASE BAND (rows 22-23) ===
-        // Row 22 - bottom of crown
-        for col in 8...23 { pixels[22][col] = d }
-
-        // Row 23 - band with center jewel
-        for col in 8...23 { pixels[23][col] = g }
-        pixels[23][8] = d
-        pixels[23][9] = d
-        pixels[23][22] = l
-        pixels[23][23] = l
-        // Center ruby
-        pixels[23][15] = r
-        pixels[23][16] = r
-
-        // === CROWN BODY (rows 24-25) ===
-        // Row 24
-        for col in 9...22 { pixels[24][col] = g }
-        pixels[24][9] = d
-        pixels[24][21] = l
-        pixels[24][22] = l
-        // Side sapphires
-        pixels[24][11] = b
-        pixels[24][20] = b
-
-        // Row 25
-        for col in 9...22 { pixels[25][col] = g }
-        pixels[25][9] = d
-        pixels[25][21] = l
-        pixels[25][22] = l
-
-        // === SPIRES (rows 26-29) - 5 pointed peaks ===
-        // Row 26 - base of spires
-        pixels[26][9] = d    // Left spire
-        pixels[26][10] = g
-        pixels[26][12] = g   // Left-mid spire
-        pixels[26][13] = g
-        pixels[26][15] = g   // Center spire
-        pixels[26][16] = g
-        pixels[26][18] = g   // Right-mid spire
-        pixels[26][19] = g
-        pixels[26][21] = g   // Right spire
-        pixels[26][22] = l
-
-        // Row 27
-        pixels[27][9] = d
-        pixels[27][10] = g
-        pixels[27][12] = g
-        pixels[27][13] = l
-        pixels[27][15] = g
-        pixels[27][16] = l
-        pixels[27][18] = g
-        pixels[27][19] = l
-        pixels[27][21] = l
-        pixels[27][22] = l
-
-        // Row 28 - tips forming
-        pixels[28][9] = g
-        pixels[28][10] = l
-        pixels[28][12] = l
-        pixels[28][15] = g
-        pixels[28][16] = l
-        pixels[28][19] = l
-        pixels[28][21] = l
-
-        // Row 29 - top points
-        pixels[29][9] = l    // Left tip
-        pixels[29][12] = l   // Left-mid tip
-        pixels[29][15] = l   // Center tip (tallest)
-        pixels[29][16] = l
-        pixels[29][19] = l   // Right-mid tip
-        pixels[29][22] = l   // Right tip
-
-        // Row 30 - center spire extends higher
-        pixels[30][15] = l
-        pixels[30][16] = l
-
-        // === JEWEL HIGHLIGHTS ===
-        pixels[23][15] = w  // Ruby shine
-        pixels[24][11] = w  // Left sapphire shine
-
-        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
-    }
-
     // MARK: - Propeller Cap
 
     /// Generates a propeller cap texture (32x32) - colorful beanie with spinning propeller
@@ -813,114 +705,6 @@ class ClawdachiOutfitSprites {
         // Hub top
         pixels[29][15] = hub
         pixels[29][16] = hub
-
-        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
-    }
-
-    // MARK: - Pirate Outfit
-
-    /// Generates pirate outfit with bandana, vest, and belt
-    static func generatePirateTexture() -> SKTexture {
-        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
-
-        let r = pirateRed
-        let rd = pirateRedDark
-        let rl = pirateRedLight
-        let s = pirateShirt
-        let sd = pirateShirtDark
-        let sl = pirateShirtLight
-        let v = pirateVest
-        let vl = pirateVestLight
-        let b = pirateBelt
-        let bd = pirateBeltDark
-        let bu = pirateBuckle
-
-        // === RED BANDANA (rows 22-25) ===
-        // Row 25 - top knot
-        pixels[25][18] = rd
-        pixels[25][19] = r
-        pixels[25][20] = r
-        pixels[25][21] = rd
-
-        // Row 24 - bandana top with knot
-        for col in 8...23 { pixels[24][col] = r }
-        pixels[24][8] = rd
-        pixels[24][9] = rd
-        pixels[24][22] = rl
-        pixels[24][23] = rl
-        // Knot tails
-        pixels[24][24] = rd
-        pixels[24][25] = r
-
-        // Row 23 - main bandana
-        for col in 6...25 { pixels[23][col] = r }
-        pixels[23][6] = rd
-        pixels[23][7] = rd
-        pixels[23][24] = rl
-        pixels[23][25] = rl
-        // Tail hanging down
-        pixels[23][26] = r
-        pixels[23][27] = rd
-
-        // Row 22 - bandana bottom edge
-        for col in 5...26 { pixels[22][col] = rd }
-        // Tail continues
-        pixels[22][27] = r
-        pixels[22][28] = rd
-
-        // === VEST AND SHIRT (rows 10-21) ===
-        for row in 10...21 {
-            // Left vest edge
-            pixels[row][4] = bd
-            pixels[row][5] = v
-            pixels[row][6] = v
-            pixels[row][7] = vl  // Vest inner edge
-
-            // Shirt showing in middle (face opening area)
-            // Leave cols 8-23 clear for face
-
-            // Right vest edge
-            pixels[row][24] = vl  // Vest inner edge
-            pixels[row][25] = v
-            pixels[row][26] = v
-            pixels[row][27] = bd
-        }
-
-        // === BELT (rows 8-9) ===
-        // Row 9 - belt top
-        for col in 5...26 { pixels[9][col] = b }
-        pixels[9][5] = bd
-        pixels[9][6] = bd
-        pixels[9][25] = b
-        pixels[9][26] = b
-        // Gold buckle
-        pixels[9][14] = bu
-        pixels[9][15] = bu
-        pixels[9][16] = bu
-        pixels[9][17] = bu
-
-        // Row 8 - belt bottom
-        for col in 5...26 { pixels[8][col] = bd }
-        // Buckle continues
-        pixels[8][14] = bu
-        pixels[8][15] = bu
-        pixels[8][16] = bu
-        pixels[8][17] = bu
-
-        // Row 7 - shirt bottom peeking below belt
-        for col in 6...25 { pixels[7][col] = sd }
-        pixels[7][6] = bd
-        pixels[7][25] = bd
-
-        // === SHIRT V-NECK DETAIL (visible in face area) ===
-        // Shirt collar peeking at top of opening
-        pixels[21][8] = sl
-        pixels[21][9] = s
-        pixels[21][22] = s
-        pixels[21][23] = sl
-
-        pixels[20][8] = s
-        pixels[20][23] = s
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
@@ -1331,6 +1115,115 @@ class ClawdachiOutfitSprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
 
+    // MARK: - Beer Mug
+
+    /// Generates a beer mug held item texture (32x32 to match body)
+    /// Positioned on the right side as if held in hand
+    static func generateBeerMugTexture() -> SKTexture {
+        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
+
+        let gl = glassLight
+        let gm = glassMid
+        let gd = glassDark
+        let bg = beerGold
+        let ba = beerAmber
+        let bl = beerLight
+        let fw = foamWhite
+        let fc = foamCream
+
+        // Beer mug positioned on right side (similar to coffee mug)
+        // x: 24-30, y: 8-17
+
+        // Foam top (row 17) - bubbly
+        pixels[17][25] = fw
+        pixels[17][26] = fw
+        pixels[17][27] = fw
+
+        // Foam layer (row 16) - main foam head
+        pixels[16][24] = gd
+        pixels[16][25] = fw
+        pixels[16][26] = fw
+        pixels[16][27] = fw
+        pixels[16][28] = fc
+        pixels[16][29] = gd
+
+        // Foam bottom (row 15)
+        pixels[15][24] = gd
+        pixels[15][25] = fc
+        pixels[15][26] = fw
+        pixels[15][27] = fc
+        pixels[15][28] = fc
+        pixels[15][29] = gd
+
+        // Beer surface (row 14) - with handle start
+        pixels[14][24] = gd
+        pixels[14][25] = bl
+        pixels[14][26] = bg
+        pixels[14][27] = bg
+        pixels[14][28] = ba
+        pixels[14][29] = gd
+        // Handle
+        pixels[14][30] = gd
+        pixels[14][31] = gm
+
+        // Beer body upper (row 13) - with handle
+        pixels[13][24] = gd
+        pixels[13][25] = bl
+        pixels[13][26] = bg
+        pixels[13][27] = bg
+        pixels[13][28] = ba
+        pixels[13][29] = gd
+        // Handle hole
+        pixels[13][30] = PixelColor.clear
+        pixels[13][31] = gm
+
+        // Beer body middle (row 12) - with handle
+        pixels[12][24] = gd
+        pixels[12][25] = gl
+        pixels[12][26] = bg
+        pixels[12][27] = bg
+        pixels[12][28] = ba
+        pixels[12][29] = gd
+        // Handle hole
+        pixels[12][30] = PixelColor.clear
+        pixels[12][31] = gm
+
+        // Beer body (row 11) - with handle end
+        pixels[11][24] = gd
+        pixels[11][25] = gl
+        pixels[11][26] = bg
+        pixels[11][27] = ba
+        pixels[11][28] = ba
+        pixels[11][29] = gd
+        // Handle
+        pixels[11][30] = gd
+        pixels[11][31] = gm
+
+        // Glass lower (row 10)
+        pixels[10][24] = gd
+        pixels[10][25] = gl
+        pixels[10][26] = gm
+        pixels[10][27] = gm
+        pixels[10][28] = gd
+        pixels[10][29] = gd
+
+        // Glass base (row 9)
+        pixels[9][24] = gd
+        pixels[9][25] = gm
+        pixels[9][26] = gm
+        pixels[9][27] = gm
+        pixels[9][28] = gd
+        pixels[9][29] = gd
+
+        // Glass bottom (row 8)
+        pixels[8][25] = gd
+        pixels[8][26] = gd
+        pixels[8][27] = gd
+        pixels[8][28] = gd
+
+        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
+    }
+
     // MARK: - Cigarette
 
     /// Generates a cigarette held item texture (32x32 to match body)
@@ -1388,8 +1281,6 @@ class ClawdachiOutfitSprites {
             return generateBikiniTexture()
         case "astronaut":
             return generateAstronautTexture()
-        case "pirate":
-            return generatePirateTexture()
         default:
             return nil
         }
@@ -1406,8 +1297,6 @@ class ClawdachiOutfitSprites {
             return generateTopHatTexture()
         case "beanie":
             return generateBeanieTexture()
-        case "crown":
-            return generateCrownTexture()
         case "propeller":
             return generatePropellerCapTexture()
         default:
@@ -1438,6 +1327,8 @@ class ClawdachiOutfitSprites {
         switch itemId {
         case "coffee":
             return generateCoffeeMugTexture()
+        case "beer":
+            return generateBeerMugTexture()
         case "cigarette":
             return generateCigaretteTexture()
         case "headphones":

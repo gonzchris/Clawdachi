@@ -311,6 +311,45 @@ enum ClaudePlanningConstants {
     static let cloudScaleFactor: CGFloat = 1.2
 }
 
+// MARK: - Confetti Constants
+
+/// Constants for confetti pop animation
+enum ConfettiConstants {
+    /// Number of confetti pieces to spawn
+    static let confettiCount = 25
+
+    /// Spawn position (lower, near sprite body)
+    static let spawnPosition = CGPoint(x: 0, y: 5)
+
+    /// Horizontal spread radius for initial spawn
+    static let spawnSpreadX: CGFloat = 3
+
+    /// How high confetti shoots up
+    static let launchHeight: CGFloat = 18
+
+    /// Horizontal spread during launch
+    static let launchSpreadX: CGFloat = 10
+
+    /// Launch duration (shooting up)
+    static let launchDuration: TimeInterval = 0.25
+
+    /// Fall duration (floating down gently)
+    static let fallDuration: TimeInterval = 1.8
+
+    /// Fall distance (how far down confetti travels)
+    static let fallDistance: CGFloat = 32
+
+    /// Rotation speed range during fall
+    static let rotationMin: CGFloat = 0.8
+    static let rotationMax: CGFloat = 2.0
+
+    /// Initial scale for pop-in
+    static let initialScale: CGFloat = 0.3
+
+    /// Target scale after pop
+    static let targetScale: CGFloat = 1.0
+}
+
 // MARK: - Particle Constants
 
 /// Constants for particle effects (notes, hearts, sweat, etc.)

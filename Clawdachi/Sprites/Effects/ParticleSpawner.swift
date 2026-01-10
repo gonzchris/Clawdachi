@@ -694,4 +694,134 @@ enum ParticleSpawner {
 
         return smoke
     }
+
+    // MARK: - Confetti Pop
+
+    /// Spawn a burst of confetti that shoots up from behind and floats down gently with swaying
+    /// - Parameters:
+    ///   - textures: Array of confetti textures with sizes
+    ///   - parent: Parent node to add particles to
+    static func spawnConfettiBurst(
+        textures: [(texture: SKTexture, size: CGSize)],
+        parent: SKNode
+    ) {
+        for i in 0..<ConfettiConstants.confettiCount {
+            spawnConfettiPiece(
+                texture: textures.randomElement()!,
+                index: i,
+                parent: parent
+            )
+        }
+    }
+
+    /// Spawn a single confetti piece with natural arc motion
+    private static func spawnConfettiPiece(
+        texture: (texture: SKTexture, size: CGSize),
+        index: Int,
+        parent: SKNode
+    ) {
+        let particle = ParticlePool.shared.acquire()
+        particle.texture = texture.texture
+        particle.size = texture.size
+
+        // Start position - lower, near sprite body, behind sprite
+        let startX = CGFloat.random(in: -ConfettiConstants.spawnSpreadX...ConfettiConstants.spawnSpreadX)
+        particle.position = CGPoint(
+            x: ConfettiConstants.spawnPosition.x + startX,
+            y: ConfettiConstants.spawnPosition.y
+        )
+        particle.alpha = 0
+        particle.zPosition = SpriteZPositions.body - 1  // Start BEHIND the sprite
+        particle.setScale(ConfettiConstants.initialScale)
+
+        // Random initial rotation
+        particle.zRotation = CGFloat.random(in: 0...(2 * .pi))
+        parent.addChild(particle)
+
+        // Stagger spawn for burst effect
+        let spawnDelay = Double(index) * 0.012
+
+        // Randomize trajectory for each piece
+        let launchX = CGFloat.random(in: -ConfettiConstants.launchSpreadX...ConfettiConstants.launchSpreadX)
+        let peakHeight = ConfettiConstants.launchHeight + CGFloat.random(in: -4...4)
+        let totalDuration = ConfettiConstants.launchDuration + ConfettiConstants.fallDuration
+
+        // Drift parameters - gentle random wandering instead of strict sway
+        let driftDirection = CGFloat.random(in: -1...1)  // Overall drift tendency
+        let driftAmount = CGFloat.random(in: 2...5)
+
+        // Create smooth arc motion using customAction for natural physics feel
+        let arcMotion = SKAction.customAction(withDuration: totalDuration) { node, elapsed in
+            let progress = CGFloat(elapsed) / CGFloat(totalDuration)
+
+            // Parabolic arc for Y with natural gravity feel
+            let peakTime: CGFloat = 0.2  // Peak earlier for snappier pop
+
+            let yOffset: CGFloat
+            if progress < peakTime {
+                // Rising phase - quick burst up
+                let riseProgress = progress / peakTime
+                let eased = 1 - (1 - riseProgress) * (1 - riseProgress)
+                yOffset = peakHeight * eased
+            } else {
+                // Falling phase - gentle gravity, not linear
+                let fallProgress = (progress - peakTime) / (1 - peakTime)
+                let fallDistance = ConfettiConstants.fallDistance
+                // Soft ease-in for gentle floating feel
+                let easedFall = fallProgress * fallProgress * 0.3 + fallProgress * 0.7
+                yOffset = peakHeight - (fallDistance * easedFall)
+            }
+
+            // X motion: burst out then gentle drift (no mechanical sway)
+            let burstProgress = min(1.0, progress * 4)  // Burst completes by 25%
+            let burstX = launchX * burstProgress
+
+            // Gentle drift that increases over time
+            let driftProgress = max(0, (progress - 0.2) / 0.8)  // Start drifting after burst
+            let drift = driftDirection * driftAmount * driftProgress
+
+            node.position = CGPoint(
+                x: ConfettiConstants.spawnPosition.x + startX + burstX + drift,
+                y: ConfettiConstants.spawnPosition.y + yOffset
+            )
+        }
+
+        // Bring to front partway through (after initial burst)
+        let bringToFront = SKAction.sequence([
+            SKAction.wait(forDuration: totalDuration * 0.12),
+            SKAction.run { particle.zPosition = SpriteZPositions.effects + 5 }
+        ])
+
+        // Gentle tumbling rotation
+        let rotationSpeed = CGFloat.random(in: ConfettiConstants.rotationMin...ConfettiConstants.rotationMax)
+        let rotationDirection: CGFloat = Bool.random() ? 1 : -1
+        let rotate = SKAction.rotate(byAngle: rotationSpeed * rotationDirection * CGFloat(totalDuration), duration: totalDuration)
+
+        // Fade in quickly at start
+        let fadeIn = SKAction.fadeIn(withDuration: 0.05)
+        let scaleUp = SKAction.scale(to: ConfettiConstants.targetScale, duration: 0.06)
+        let popIn = SKAction.group([fadeIn, scaleUp])
+
+        // Fade out near end
+        let waitBeforeFade = SKAction.wait(forDuration: totalDuration * 0.7)
+        let fadeOut = SKAction.fadeOut(withDuration: totalDuration * 0.3)
+        let fadeSequence = SKAction.sequence([waitBeforeFade, fadeOut])
+
+        // Combine arc motion with rotation and fade
+        let animation = SKAction.group([arcMotion, rotate, fadeSequence, bringToFront])
+
+        let fullSequence = SKAction.sequence([
+            SKAction.wait(forDuration: spawnDelay),
+            popIn,
+            animation,
+            SKAction.run { [weak particle] in
+                guard let particle = particle else { return }
+                DispatchQueue.main.async {
+                    ParticlePool.shared.release(particle)
+                }
+            }
+        ])
+
+        particle.run(fullSequence)
+    }
 }

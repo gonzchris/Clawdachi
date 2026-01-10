@@ -71,6 +71,11 @@ extension ClawdachiSprite {
         ClawdachiFaceSprites.generatePartyBlowerExtendedTexture()
     }()
 
+    /// Cached confetti textures for party celebration
+    private static var confettiTextures: [(texture: SKTexture, size: CGSize)] = {
+        ClawdachiFaceSprites.generateAllConfettiTextures()
+    }()
+
     /// Cached texture for gear (thinking indicator)
     private static var gearTexture: SKTexture = {
         ClawdachiFaceSprites.generateGearTexture()
@@ -1160,15 +1165,37 @@ extension ClawdachiSprite {
         childNode(withName: Self.partyHatName)?.removeFromParent()
         childNode(withName: Self.partyBlowerName)?.removeFromParent()
 
-        // Create party hat
-        let hat = SKSpriteNode(texture: Self.partyHatTexture)
-        hat.name = Self.partyHatName
-        hat.size = CGSize(width: 7, height: 9)
-        hat.position = CGPoint(x: 0, y: 12)  // On top of head
-        hat.alpha = 0
-        hat.zPosition = SpriteZPositions.effects + 1
-        hat.setScale(0.3)
-        addChild(hat)
+        // Only show party hat if user doesn't have a hat equipped
+        let hasEquippedHat = ClosetManager.shared.equippedHat != nil
+
+        if !hasEquippedHat {
+            // Create party hat
+            let hat = SKSpriteNode(texture: Self.partyHatTexture)
+            hat.name = Self.partyHatName
+            hat.size = CGSize(width: 7, height: 9)
+            hat.position = CGPoint(x: 0, y: 12)  // On top of head
+            hat.alpha = 0
+            hat.zPosition = SpriteZPositions.effects + 1
+            hat.setScale(0.3)
+            addChild(hat)
+
+            // Pop in hat animation
+            let hatPopIn = SKAction.group([
+                SKAction.fadeIn(withDuration: 0.15),
+                SKAction.scale(to: 1.2, duration: 0.15)
+            ])
+            let hatSettle = SKAction.scale(to: 1.0, duration: 0.1)
+            hatSettle.timingMode = .easeOut
+
+            // Gentle hat wobble while celebrating
+            let hatWobbleLeft = SKAction.rotate(byAngle: 0.08, duration: 0.4)
+            let hatWobbleRight = SKAction.rotate(byAngle: -0.08, duration: 0.4)
+            hatWobbleLeft.timingMode = .easeInEaseOut
+            hatWobbleRight.timingMode = .easeInEaseOut
+            let hatWobbleLoop = SKAction.repeatForever(SKAction.sequence([hatWobbleLeft, hatWobbleRight]))
+
+            hat.run(SKAction.sequence([hatPopIn, hatSettle, hatWobbleLoop]))
+        }
 
         // Create party blower (starts retracted, positioned at side of mouth like whistle)
         let blower = SKSpriteNode(texture: Self.partyBlowerRetractedTexture)
@@ -1181,22 +1208,14 @@ extension ClawdachiSprite {
         blower.setScale(0.3)
         addChild(blower)
 
-        // Pop in hat animation
-        let hatPopIn = SKAction.group([
-            SKAction.fadeIn(withDuration: 0.15),
-            SKAction.scale(to: 1.2, duration: 0.15)
-        ])
-        let hatSettle = SKAction.scale(to: 1.0, duration: 0.1)
-        hatSettle.timingMode = .easeOut
-
-        // Gentle hat wobble while celebrating
-        let hatWobbleLeft = SKAction.rotate(byAngle: 0.08, duration: 0.4)
-        let hatWobbleRight = SKAction.rotate(byAngle: -0.08, duration: 0.4)
-        hatWobbleLeft.timingMode = .easeInEaseOut
-        hatWobbleRight.timingMode = .easeInEaseOut
-        let hatWobbleLoop = SKAction.repeatForever(SKAction.sequence([hatWobbleLeft, hatWobbleRight]))
-
-        hat.run(SKAction.sequence([hatPopIn, hatSettle, hatWobbleLoop]))
+        // Spawn confetti burst once when celebration starts
+        run(SKAction.sequence([
+            SKAction.wait(forDuration: 0.2),
+            SKAction.run { [weak self] in
+                guard let self = self else { return }
+                ParticleSpawner.spawnConfettiBurst(textures: Self.confettiTextures, parent: self)
+            }
+        ]))
 
         // Pop in blower animation
         let blowerPopIn = SKAction.group([

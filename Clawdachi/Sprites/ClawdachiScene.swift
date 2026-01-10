@@ -110,7 +110,7 @@ class ClawdachiScene: SKScene {
         }
         claudeStatusHandler.onShowCompletion = { [weak self] in
             self?.clawdachi.showPartyCelebration()
-            self?.showChatBubble(ClawdachiMessages.randomCompletionMessage(), duration: 4.0, verticalOffset: ChatBubbleConstants.celebrationVerticalOffset, horizontalOffset: ChatBubbleConstants.celebrationHorizontalOffset)
+            self?.showChatBubble(ClawdachiMessages.randomCompletionMessage(), duration: nil)
         }
 
         claudeMonitor.onStatusChanged = { [weak self] isActive, status, sessionId in
@@ -139,6 +139,9 @@ class ClawdachiScene: SKScene {
         switch status {
         case "planning":
             clawdachi.dismissQuestionMark()
+            if clawdachi.isPartyCelebrationVisible {
+                ChatBubbleManager.shared.dismissAll()
+            }
             clawdachi.dismissPartyCelebration()
             if !clawdachi.isClaudePlanning {
                 clawdachi.stopClaudeThinking()
@@ -148,6 +151,9 @@ class ClawdachiScene: SKScene {
         case "thinking", "tools":
             clawdachi.dismissLightbulb()
             clawdachi.dismissQuestionMark()
+            if clawdachi.isPartyCelebrationVisible {
+                ChatBubbleManager.shared.dismissAll()
+            }
             clawdachi.dismissPartyCelebration()
             let wasPlanning = clawdachi.isClaudePlanning
             if clawdachi.isClaudePlanning {
@@ -164,6 +170,9 @@ class ClawdachiScene: SKScene {
             clawdachi.stopClaudeThinking()
             clawdachi.stopClaudePlanning()
             clawdachi.stopDancing()
+            if clawdachi.isPartyCelebrationVisible {
+                ChatBubbleManager.shared.dismissAll()
+            }
             clawdachi.dismissPartyCelebration()
             clawdachi.showQuestionMark()
         case "idle":
@@ -296,6 +305,9 @@ class ClawdachiScene: SKScene {
             if isSleeping {
                 clawdachi.dismissLightbulb()
                 clawdachi.dismissQuestionMark()
+                if clawdachi.isPartyCelebrationVisible {
+                    ChatBubbleManager.shared.dismissAll()
+                }
                 clawdachi.dismissPartyCelebration()
                 isSleeping = false
                 clawdachi.wakeUp { [weak self] in
@@ -328,6 +340,7 @@ class ClawdachiScene: SKScene {
                 }
             } else if hadPartyCelebration {
                 // Click was to dismiss party celebration - resume idle/dancing after fade completes
+                ChatBubbleManager.shared.dismissAll()
                 clawdachi.dismissPartyCelebration { [weak self] in
                     guard let self = self else { return }
                     self.clawdachi.resumeIdleAnimations()
@@ -357,6 +370,9 @@ class ClawdachiScene: SKScene {
         let hadOverlay = clawdachi.isLightbulbVisible || clawdachi.isQuestionMarkVisible || clawdachi.isPartyCelebrationVisible
         clawdachi.dismissLightbulb()
         clawdachi.dismissQuestionMark()
+        if clawdachi.isPartyCelebrationVisible {
+            ChatBubbleManager.shared.dismissAll()
+        }
         clawdachi.dismissPartyCelebration()
         if hadOverlay {
             clawdachi.resumeIdleAnimations()
@@ -745,7 +761,20 @@ class ClawdachiScene: SKScene {
     ///   - horizontalOffset: Custom horizontal offset (nil = use default, positive = right)
     func showChatBubble(_ message: String, duration: TimeInterval? = 5.0, verticalOffset: CGFloat? = nil, horizontalOffset: CGFloat? = nil) {
         guard let window = view?.window else { return }
-        ChatBubbleWindow.show(message: message, relativeTo: window, duration: duration, verticalOffset: verticalOffset, horizontalOffset: horizontalOffset)
+
+        // Calculate dynamic vertical offset based on hat/celebration state
+        let effectiveVerticalOffset: CGFloat
+        if let customOffset = verticalOffset {
+            effectiveVerticalOffset = customOffset
+        } else {
+            let isCelebrating = clawdachi.isPartyCelebrationVisible || clawdachi.isClaudeCelebrating
+            let hasHat = ClosetManager.shared.equippedHat != nil
+            effectiveVerticalOffset = (isCelebrating || hasHat)
+                ? ChatBubbleConstants.verticalOffsetWithHat
+                : ChatBubbleConstants.verticalOffsetNoHat
+        }
+
+        ChatBubbleWindow.show(message: message, relativeTo: window, duration: duration, verticalOffset: effectiveVerticalOffset, horizontalOffset: horizontalOffset)
 
         // Trigger speaking animation on the sprite
         clawdachi.startSpeaking(duration: min(duration ?? 2.0, 2.5))
@@ -835,13 +864,16 @@ class ClawdachiScene: SKScene {
         clawdachi.stopClaudePlanning()
         clawdachi.dismissQuestionMark()
         clawdachi.showPartyCelebration()
-        showChatBubble(ClawdachiMessages.randomCompletionMessage(), duration: 4.0, verticalOffset: ChatBubbleConstants.celebrationVerticalOffset, horizontalOffset: ChatBubbleConstants.celebrationHorizontalOffset)
+        showChatBubble(ClawdachiMessages.randomCompletionMessage(), duration: nil)
     }
 
     func debugClearClaudeStates() {
         clawdachi.stopClaudeThinking()
         clawdachi.stopClaudePlanning()
         clawdachi.dismissQuestionMark()
+        if clawdachi.isPartyCelebrationVisible {
+            ChatBubbleManager.shared.dismissAll()
+        }
         clawdachi.dismissPartyCelebration()
         clawdachi.dismissLightbulb()
         clawdachi.resumeIdleAnimations()
@@ -861,6 +893,9 @@ class ClawdachiScene: SKScene {
         clawdachi.stopClaudeThinking()
         clawdachi.stopClaudePlanning()
         clawdachi.dismissQuestionMark()
+        if clawdachi.isPartyCelebrationVisible {
+            ChatBubbleManager.shared.dismissAll()
+        }
         clawdachi.dismissPartyCelebration()
         claudeStatusHandler.clearTracking()
         isSleeping = true

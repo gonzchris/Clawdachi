@@ -961,6 +961,82 @@ class ClawdachiFaceSprites {
         return PixelArtGenerator.textureFromPixels(pixels, width: 5, height: 6)
     }
 
+    // MARK: - Confetti Textures
+
+    /// Confetti color palette - festive party colors
+    private enum ConfettiColors {
+        static let red = NSColor(red: 230/255, green: 70/255, blue: 70/255, alpha: 1.0)
+        static let blue = NSColor(red: 70/255, green: 130/255, blue: 230/255, alpha: 1.0)
+        static let green = NSColor(red: 70/255, green: 200/255, blue: 100/255, alpha: 1.0)
+        static let yellow = NSColor(red: 255/255, green: 220/255, blue: 80/255, alpha: 1.0)
+        static let purple = NSColor(red: 180/255, green: 100/255, blue: 220/255, alpha: 1.0)
+        static let pink = NSColor(red: 255/255, green: 150/255, blue: 180/255, alpha: 1.0)
+        static let orange = NSColor(red: 255/255, green: 160/255, blue: 60/255, alpha: 1.0)
+        static let cyan = NSColor(red: 80/255, green: 220/255, blue: 230/255, alpha: 1.0)
+
+        static let allColors: [NSColor] = [red, blue, green, yellow, purple, pink, orange, cyan]
+    }
+
+    /// Generates a small square confetti piece (2x2 pixels)
+    /// - Parameter colorIndex: Index into the confetti color array (0-7)
+    static func generateConfettiSquare(colorIndex: Int) -> SKTexture {
+        let color = ConfettiColors.allColors[colorIndex % ConfettiColors.allColors.count]
+        let size = CGSize(width: 8, height: 8)  // 2x2 at 4px per pixel
+
+        let image = NSImage(size: size, flipped: false) { rect in
+            color.setFill()
+            rect.fill()
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create confetti square image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .nearest
+        return texture
+    }
+
+    /// Generates a rectangular confetti piece (3x2 pixels)
+    /// - Parameter colorIndex: Index into the confetti color array (0-7)
+    static func generateConfettiRect(colorIndex: Int) -> SKTexture {
+        let color = ConfettiColors.allColors[colorIndex % ConfettiColors.allColors.count]
+        let size = CGSize(width: 12, height: 8)  // 3x2 at 4px per pixel
+
+        let image = NSImage(size: size, flipped: false) { rect in
+            color.setFill()
+            rect.fill()
+            return true
+        }
+
+        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            fatalError("Failed to create confetti rect image")
+        }
+
+        let texture = SKTexture(cgImage: cgImage)
+        texture.filteringMode = .nearest
+        return texture
+    }
+
+    /// Pre-generates all confetti textures for performance
+    /// Returns array of (texture, size) tuples for both squares and rectangles
+    static func generateAllConfettiTextures() -> [(texture: SKTexture, size: CGSize)] {
+        var textures: [(texture: SKTexture, size: CGSize)] = []
+
+        // Generate squares (2x2 visual size)
+        for i in 0..<ConfettiColors.allColors.count {
+            textures.append((generateConfettiSquare(colorIndex: i), CGSize(width: 2, height: 2)))
+        }
+
+        // Generate rectangles (3x2 visual size)
+        for i in 0..<ConfettiColors.allColors.count {
+            textures.append((generateConfettiRect(colorIndex: i), CGSize(width: 3, height: 2)))
+        }
+
+        return textures
+    }
+
     // MARK: - Gear Texture (Thinking indicator)
 
     /// Generates a pixel-art gear/cog for thinking animation
