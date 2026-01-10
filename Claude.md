@@ -179,8 +179,7 @@ Clawdachi/
 │   ├── ClaudeStatusHandler.swift      # Claude status change processing
 │   ├── MusicPlaybackMonitor.swift     # Spotify/Apple Music detection via AppleScript
 │   ├── PollingService.swift           # Shared polling infrastructure
-│   ├── SoundManager.swift             # Sound notification playback
-│   └── TerminalFocusMonitor.swift     # Terminal/app focus tracking
+│   └── SoundManager.swift             # Sound notification playback
 ├── UI/
 │   ├── ChatBubbleManager.swift        # Manages stacking bubble queue (max 4)
 │   ├── ChatBubbleWindow.swift         # Individual bubble NSWindow
