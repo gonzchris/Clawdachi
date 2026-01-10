@@ -1402,8 +1402,6 @@ class ClawdachiOutfitSprites {
         switch hatId {
         case "cowboy":
             return generateCowboyHatTexture()
-        case "headphones":
-            return generateHeadphonesTexture()
         case "tophat":
             return generateTopHatTexture()
         case "beanie":
@@ -1442,6 +1440,8 @@ class ClawdachiOutfitSprites {
             return generateCoffeeMugTexture()
         case "cigarette":
             return generateCigaretteTexture()
+        case "headphones":
+            return generateHeadphonesTexture()
         default:
             return nil
         }

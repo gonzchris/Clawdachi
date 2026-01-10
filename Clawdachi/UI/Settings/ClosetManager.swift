@@ -24,7 +24,7 @@ enum ClosetCategory: String, CaseIterable {
         case .outfits: return "OUTFITS"
         case .hats: return "HATS"
         case .glasses: return "GLASSES"
-        case .held: return "HELD"
+        case .held: return "ITEMS"
         }
     }
 }
@@ -273,7 +273,6 @@ class ClosetManager {
             ClosetItem(id: "cowboy", name: "Cowboy Hat", category: .hats, isPremium: false),
             ClosetItem(id: "crown", name: "Crown", category: .hats, isPremium: false),
             ClosetItem(id: "propeller", name: "Propeller Cap", category: .hats, isPremium: false),
-            ClosetItem(id: "headphones", name: "Headphones", category: .hats, isPremium: false),
         ]
 
         // Define available glasses
@@ -287,6 +286,7 @@ class ClosetManager {
         availableHeld = [
             ClosetItem(id: "coffee", name: "Coffee Mug", category: .held, isPremium: true),
             ClosetItem(id: "cigarette", name: "Cigarette", category: .held, isPremium: false),
+            ClosetItem(id: "headphones", name: "Headphones", category: .held, isPremium: false),
         ]
 
         // Set default theme

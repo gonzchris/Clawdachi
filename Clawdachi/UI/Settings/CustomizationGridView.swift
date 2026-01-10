@@ -675,7 +675,7 @@ extension ClosetCategory {
         case .outfits: return "Outfits"
         case .hats: return "Hats"
         case .glasses: return "Glasses"
-        case .held: return "Held"
+        case .held: return "Items"
         }
     }
 }
