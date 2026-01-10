@@ -160,7 +160,6 @@ class SettingsContentView: NSView {
         generalView.isHidden = true
         soundView.isHidden = true
         aboutView.isHidden = true
-        aboutView.stopAnimation()
 
         // Show selected section and start its animation
         switch section {
@@ -176,7 +175,6 @@ class SettingsContentView: NSView {
             soundView.isHidden = false
         case .about:
             aboutView.isHidden = false
-            aboutView.startAnimation()
         }
 
         needsDisplay = true
@@ -404,14 +402,11 @@ class SettingsContentView: NSView {
     func startPreviewAnimation() {
         if currentSection == .customize {
             customizationView.startAnimation()
-        } else if currentSection == .about {
-            aboutView.startAnimation()
         }
     }
 
     func stopPreviewAnimation() {
         customizationView.stopAnimation()
-        aboutView.stopAnimation()
     }
 
     // MARK: - Refresh

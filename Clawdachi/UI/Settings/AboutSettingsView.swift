@@ -2,11 +2,10 @@
 //  AboutSettingsView.swift
 //  Clawdachi
 //
-//  About section with app info, animated sprite, and credits
+//  About section with app info and links
 //
 
 import AppKit
-import SpriteKit
 
 /// About section with version info, credits, and links
 class AboutSettingsView: NSView {
@@ -17,11 +16,10 @@ class AboutSettingsView: NSView {
 
     private var appNameLabel: NSTextField!
     private var versionLabel: NSTextField!
-    private var spriteImageView: NSImageView!
-    private var spriteContainer: NSView!
     private var descriptionLabel: NSTextField!
-    private var followButton: SettingsButton!
-    private var updateTimer: Timer?
+    private var websiteButton: SettingsButton!
+    private var clawdachiButton: SettingsButton!
+    private var twitterButton: SettingsButton!
 
     // MARK: - Initialization
 
@@ -40,10 +38,8 @@ class AboutSettingsView: NSView {
 
         setupAsciiArt()
         setupVersion()
-        setupSpritePreview()
         setupDescription()
-        setupFollowButton()
-        setupCredits()
+        setupLinks()
     }
 
     override var isFlipped: Bool { true }
@@ -77,78 +73,53 @@ class AboutSettingsView: NSView {
         addSubview(versionLabel)
     }
 
-    private func setupSpritePreview() {
-        let spriteSize: CGFloat = 80
-        let centerX: CGFloat = 20
-
-        // Container with border
-        spriteContainer = NSView(frame: NSRect(x: centerX, y: 88, width: spriteSize, height: spriteSize))
-        spriteContainer.wantsLayer = true
-        spriteContainer.layer?.backgroundColor = C.cellBackgroundColor.cgColor
-        spriteContainer.layer?.cornerRadius = 6
-        spriteContainer.layer?.borderWidth = 2
-        spriteContainer.layer?.borderColor = C.frameColor.cgColor
-        addSubview(spriteContainer)
-
-        // Image view for sprite
-        spriteImageView = NSImageView(frame: NSRect(x: 0, y: 0, width: spriteSize, height: spriteSize))
-        spriteImageView.imageScaling = .scaleProportionallyUpOrDown
-        spriteImageView.imageAlignment = .alignCenter
-        spriteContainer.addSubview(spriteImageView)
-    }
-
     private func setupDescription() {
         descriptionLabel = NSTextField(labelWithString: "A desktop companion for Claude Code")
-        descriptionLabel.frame = NSRect(x: 20, y: 176, width: 250, height: 20)
+        descriptionLabel.frame = NSRect(x: 20, y: 100, width: 250, height: 20)
         descriptionLabel.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
         descriptionLabel.textColor = C.textColor
         addSubview(descriptionLabel)
     }
 
-    private func setupFollowButton() {
-        let buttonFrame = NSRect(x: 20, y: 206, width: 150, height: 24)
-        followButton = SettingsButton(frame: buttonFrame, title: "𝕏  @clawdachi")
-        followButton.target = self
-        followButton.action = #selector(followClicked)
-        addSubview(followButton)
-    }
+    private func setupLinks() {
+        // Website button
+        let websiteFrame = NSRect(x: 20, y: 130, width: 150, height: 24)
+        websiteButton = SettingsButton(frame: websiteFrame, title: "clawdachi.app")
+        websiteButton.target = self
+        websiteButton.action = #selector(websiteClicked)
+        addSubview(websiteButton)
 
-    private func setupCredits() {
-        // Credits section removed
-    }
+        // Clawdachi Twitter button
+        let clawdachiFrame = NSRect(x: 20, y: 160, width: 150, height: 24)
+        clawdachiButton = SettingsButton(frame: clawdachiFrame, title: "𝕏  @clawdachi")
+        clawdachiButton.target = self
+        clawdachiButton.action = #selector(clawdachiClicked)
+        addSubview(clawdachiButton)
 
-    // MARK: - Animation
-
-    func startAnimation() {
-        updateTimer?.invalidate()
-        updateTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 20.0, repeats: true) { [weak self] _ in
-            self?.updateSprite()
-        }
-        updateSprite()
-    }
-
-    func stopAnimation() {
-        updateTimer?.invalidate()
-        updateTimer = nil
-    }
-
-    private func updateSprite() {
-        guard let mainScene = ClawdachiScene.shared,
-              let skView = mainScene.view else { return }
-
-        if let texture = skView.texture(from: mainScene) {
-            let cgImage = texture.cgImage()
-            let pixelWidth = cgImage.width
-            let pixelHeight = cgImage.height
-            let nsImage = NSImage(cgImage: cgImage, size: NSSize(width: pixelWidth, height: pixelHeight))
-            spriteImageView.image = nsImage
-        }
+        // Chris Twitter button
+        let twitterFrame = NSRect(x: 20, y: 190, width: 150, height: 24)
+        twitterButton = SettingsButton(frame: twitterFrame, title: "𝕏  @chrisgonzalez")
+        twitterButton.target = self
+        twitterButton.action = #selector(twitterClicked)
+        addSubview(twitterButton)
     }
 
     // MARK: - Actions
 
-    @objc private func followClicked() {
+    @objc private func websiteClicked() {
+        if let url = URL(string: "https://clawdachi.app") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    @objc private func clawdachiClicked() {
         if let url = URL(string: "https://x.com/clawdachi") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    @objc private func twitterClicked() {
+        if let url = URL(string: "https://x.com/chrisgonzalez") {
             NSWorkspace.shared.open(url)
         }
     }
