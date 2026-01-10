@@ -161,7 +161,7 @@ class ClaudeSettingsView: NSView {
     }
 
     private func setupToggles() {
-        notifyCheckbox = NSButton(checkboxWithTitle: "Notify when switching sessions", target: self, action: #selector(checkboxChanged(_:)))
+        notifyCheckbox = NSButton(checkboxWithTitle: "Notify when auto-switching sessions", target: self, action: #selector(checkboxChanged(_:)))
         notifyCheckbox.frame = NSRect(x: 20, y: 280, width: 280, height: 24)
         styleCheckbox(notifyCheckbox)
         addSubview(notifyCheckbox)
@@ -234,6 +234,10 @@ class ClaudeSettingsView: NSView {
         let isSpecificMode = specificRadio.state == .on
         sessionsTableView.isEnabled = isSpecificMode
         sessionsLabel.textColor = isSpecificMode ? C.textColor : C.textDimColor
+
+        // Notify checkbox only enabled for Any Active mode
+        let isAnyActiveMode = anyActiveRadio.state == .on
+        notifyCheckbox.isEnabled = isAnyActiveMode
     }
 
     // MARK: - Actions
