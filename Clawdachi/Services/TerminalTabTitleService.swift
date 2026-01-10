@@ -69,6 +69,16 @@ class TerminalTabTitleService {
             }
         }
 
+        // Batch fetch from Ghostty if running
+        if runningApps.contains("com.mitchellh.ghostty") {
+            let ghosttyTitles = fetchAllGhosttyTitles()
+            for (tty, title) in ghosttyTitles {
+                results[tty] = title
+                titleCache[tty] = title
+                lastFetchTime[tty] = Date()
+            }
+        }
+
         return results
     }
 
@@ -87,6 +97,13 @@ class TerminalTabTitleService {
         // Try iTerm2 if running
         if runningApps.contains("com.googlecode.iterm2") {
             if let title = fetchITerm2Title(for: tty), !title.isEmpty {
+                return title
+            }
+        }
+
+        // Try Ghostty if running
+        if runningApps.contains("com.mitchellh.ghostty") {
+            if let title = fetchGhosttyTitle(for: tty), !title.isEmpty {
                 return title
             }
         }
@@ -194,6 +211,81 @@ class TerminalTabTitleService {
 
         guard let result = AppleScriptExecutor.run(script) else { return [:] }
         return parseTTYTitlePairs(result)
+    }
+
+    // MARK: - Ghostty
+
+    private func fetchGhosttyTitle(for tty: String) -> String? {
+        // Ghostty doesn't expose TTY via AppleScript, so we use window titles
+        // and try to match based on the Claude task marker (✳)
+        let script = """
+        tell application "System Events"
+            tell process "Ghostty"
+                set windowNames to name of every window
+                return windowNames as text
+            end tell
+        end tell
+        """
+        guard let result = AppleScriptExecutor.run(script) else { return nil }
+        return parseGhosttyWindowTitle(result)
+    }
+
+    private func fetchAllGhosttyTitles() -> [String: String] {
+        // For Ghostty, we can't match by TTY, so we return titles keyed by a synthetic ID
+        // The caller will need to handle this specially
+        let script = """
+        set output to ""
+        tell application "System Events"
+            tell process "Ghostty"
+                repeat with w in windows
+                    set winName to name of w
+                    set output to output & winName & "\\n"
+                end repeat
+            end tell
+        end tell
+        return output
+        """
+
+        guard let result = AppleScriptExecutor.run(script) else { return [:] }
+
+        // Parse window titles and look for Claude markers
+        var results: [String: String] = [:]
+        for line in result.components(separatedBy: "\n") {
+            let title = line.trimmingCharacters(in: .whitespaces)
+            guard !title.isEmpty else { continue }
+
+            // Try to parse Claude task from window title
+            if let parsed = parseGhosttyWindowTitle(title), !parsed.isEmpty {
+                // Use the full title as a synthetic key since we don't have TTY
+                // Sessions will be matched by content similarity
+                results["ghostty:\(title)"] = parsed
+            }
+        }
+
+        return results
+    }
+
+    /// Parse Ghostty window title to extract Claude task name
+    /// Ghostty window titles typically show: "command — directory" or custom title
+    private func parseGhosttyWindowTitle(_ title: String) -> String? {
+        // Look for the ✳ marker which indicates Claude is active
+        if let starRange = title.range(of: "✳ ") {
+            let afterStar = title[starRange.upperBound...]
+            // Find the next " — " to get just the task name
+            if let dashRange = afterStar.range(of: " — ") {
+                let taskName = String(afterStar[..<dashRange.lowerBound])
+                return taskName.trimmingCharacters(in: .whitespaces)
+            }
+            return String(afterStar).trimmingCharacters(in: .whitespaces)
+        }
+
+        // No ✳ marker - check if it looks like a Claude session
+        // Ghostty often shows "claude — /path/to/dir" or similar
+        if title.lowercased().contains("claude") {
+            return nil  // Has Claude but no active task
+        }
+
+        return nil
     }
 
     // MARK: - Parsing
