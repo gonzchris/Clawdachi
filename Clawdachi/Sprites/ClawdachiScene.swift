@@ -18,7 +18,6 @@ class ClawdachiScene: SKScene {
     private var isSleeping = false
     private var musicMonitor: MusicPlaybackMonitor!
     private var claudeMonitor: ClaudeSessionMonitor!
-    private var terminalFocusMonitor: TerminalFocusMonitor!
     private var claudeStatusHandler: ClaudeStatusHandler!
 
     // MARK: - Initialization
@@ -127,11 +126,6 @@ class ClawdachiScene: SKScene {
             self.showChatBubble("> watching \(session.displayName)", duration: 2.5)
         }
 
-        // Set up terminal focus monitor (used when in followFocusedTab mode)
-        terminalFocusMonitor = TerminalFocusMonitor()
-        terminalFocusMonitor.onFocusedTTYChanged = { [weak self] tty in
-            self?.claudeMonitor.updateFocusedTTY(tty)
-        }
     }
 
     /// Update sprite animations to reflect the current session's status
@@ -464,16 +458,6 @@ class ClawdachiScene: SKScene {
         anyActiveItem.state = (currentMode == .anyActive) ? .on : .off
         menu.addItem(anyActiveItem)
 
-        // "Follow Focused Tab" option (original TTY-based behavior)
-        let followFocusedItem = NSMenuItem(
-            title: "Follow Focused Tab",
-            action: #selector(selectFollowFocusedMode),
-            keyEquivalent: ""
-        )
-        followFocusedItem.target = self
-        followFocusedItem.state = (currentMode == .followFocusedTab) ? .on : .off
-        menu.addItem(followFocusedItem)
-
         // Separator if there are sessions
         if !sessions.isEmpty {
             menu.addItem(NSMenuItem.separator())
@@ -538,11 +522,6 @@ class ClawdachiScene: SKScene {
         saveSelectionMode(.anyActive)
     }
 
-    @objc private func selectFollowFocusedMode() {
-        claudeMonitor.selectionMode = .followFocusedTab
-        saveSelectionMode(.followFocusedTab)
-    }
-
     @objc private func selectSpecificInstance(_ sender: NSMenuItem) {
         guard let sessionId = sender.representedObject as? String else { return }
         claudeMonitor.selectionMode = .specific(sessionId)
@@ -555,9 +534,6 @@ class ClawdachiScene: SKScene {
         case .anyActive:
             defaults.set("anyActive", forKey: "clawdachi.monitoring.mode")
             defaults.removeObject(forKey: "clawdachi.monitoring.instanceId")
-        case .followFocusedTab:
-            defaults.set("followFocusedTab", forKey: "clawdachi.monitoring.mode")
-            defaults.removeObject(forKey: "clawdachi.monitoring.instanceId")
         case .specific(let id):
             defaults.set("specific", forKey: "clawdachi.monitoring.mode")
             defaults.set(id, forKey: "clawdachi.monitoring.instanceId")
@@ -569,10 +545,9 @@ class ClawdachiScene: SKScene {
         let mode = defaults.string(forKey: "clawdachi.monitoring.mode")
 
         switch mode {
-        case "anyActive":
+        case "anyActive", "followFocusedTab":
+            // Migrate followFocusedTab to anyActive
             return .anyActive
-        case "followFocusedTab":
-            return .followFocusedTab
         case "specific":
             if let id = defaults.string(forKey: "clawdachi.monitoring.instanceId") {
                 return .specific(id)

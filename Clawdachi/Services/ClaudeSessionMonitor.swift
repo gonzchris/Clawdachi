@@ -64,8 +64,6 @@ struct SessionInfo: Equatable {
 enum SessionSelectionMode: Equatable {
     /// Monitor whichever session is most actively working (recommended default)
     case anyActive
-    /// Follow the focused terminal tab (original behavior)
-    case followFocusedTab
     /// Monitor a specific session by ID
     case specific(String)
 }
@@ -96,24 +94,10 @@ class ClaudeSessionMonitor: PollingService {
         }
     }
 
-    /// The TTY of the currently focused terminal (nil if not a terminal or unknown)
-    private(set) var focusedTTY: String?
-
     /// For hysteresis in anyActive mode - prevents flickering between equal-priority sessions
     private var lastMonitoredSessionId: String?
     private var lastMonitoredTime: Date?
     private let stickinessInterval: TimeInterval = 5.0
-
-    /// Update focused TTY (used when in followFocusedTab mode)
-    /// - Parameter tty: The TTY device of the focused terminal (e.g., "/dev/ttys003")
-    func updateFocusedTTY(_ tty: String?) {
-        focusedTTY = tty
-
-        // Only trigger re-check if we're in followFocusedTab mode
-        if case .followFocusedTab = selectionMode {
-            checkSessionStatus()
-        }
-    }
 
     /// Callback when session status changes (isActive, status, sessionId)
     var onStatusChanged: ((Bool, String?, String?) -> Void)?
@@ -385,10 +369,6 @@ class ClaudeSessionMonitor: PollingService {
         switch selectionMode {
         case .specific(let sessionId):
             return sessions.first { $0.id == sessionId }
-
-        case .followFocusedTab:
-            guard let tty = focusedTTY else { return nil }
-            return sessions.first { $0.tty == tty }
 
         case .anyActive:
             return selectMostActiveSession(from: sessions)

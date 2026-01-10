@@ -17,7 +17,6 @@ class ClaudeSettingsView: NSView {
     private var titleLabel: NSTextField!
     private var modeLabel: NSTextField!
     private var anyActiveRadio: NSButton!
-    private var followTabRadio: NSButton!
     private var specificRadio: NSButton!
 
     private var sessionsLabel: NSTextField!
@@ -83,14 +82,9 @@ class ClaudeSettingsView: NSView {
         anyActiveRadio.tag = 0
         addSubview(anyActiveRadio)
 
-        followTabRadio = createRadioButton(title: "Follow Focused Terminal", y: 94)
-        followTabRadio.action = #selector(modeChanged(_:))
-        followTabRadio.tag = 1
-        addSubview(followTabRadio)
-
-        specificRadio = createRadioButton(title: "Specific Instance", y: 116)
+        specificRadio = createRadioButton(title: "Specific Instance", y: 94)
         specificRadio.action = #selector(modeChanged(_:))
-        specificRadio.tag = 2
+        specificRadio.tag = 1
         addSubview(specificRadio)
     }
 
@@ -206,8 +200,6 @@ class ClaudeSettingsView: NSView {
         switch mode {
         case .anyActive:
             anyActiveRadio.state = .on
-        case .followFocusedTab:
-            followTabRadio.state = .on
         case .specific(let sessionId):
             specificRadio.state = .on
             selectedSpecificSessionId = sessionId
@@ -245,7 +237,6 @@ class ClaudeSettingsView: NSView {
     @objc private func modeChanged(_ sender: NSButton) {
         // Ensure only one radio is selected
         anyActiveRadio.state = sender == anyActiveRadio ? .on : .off
-        followTabRadio.state = sender == followTabRadio ? .on : .off
         specificRadio.state = sender == specificRadio ? .on : .off
 
         // Update mode
@@ -254,9 +245,6 @@ class ClaudeSettingsView: NSView {
             ClaudeSessionMonitor.shared.selectionMode = .anyActive
             SettingsManager.shared.sessionSelectionMode = "anyActive"
         case 1:
-            ClaudeSessionMonitor.shared.selectionMode = .followFocusedTab
-            SettingsManager.shared.sessionSelectionMode = "followFocusedTab"
-        case 2:
             if let sessionId = selectedSpecificSessionId ?? sessions.first?.id {
                 ClaudeSessionMonitor.shared.selectionMode = .specific(sessionId)
                 SettingsManager.shared.sessionSelectionMode = "specific:\(sessionId)"
@@ -279,7 +267,6 @@ class ClaudeSettingsView: NSView {
         // If not already in specific mode, switch to it
         if specificRadio.state != .on {
             anyActiveRadio.state = .off
-            followTabRadio.state = .off
             specificRadio.state = .on
             updateSessionsListEnabled()
         }
@@ -332,7 +319,7 @@ extension ClaudeSettingsView: NSTableViewDelegate {
         switch ClaudeSessionMonitor.shared.selectionMode {
         case .specific(let id):
             isMonitored = session.id == id
-        case .anyActive, .followFocusedTab:
+        case .anyActive:
             isMonitored = session.id == ClaudeSessionMonitor.shared.currentSessionId
         }
 

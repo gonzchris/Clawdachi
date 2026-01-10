@@ -162,7 +162,7 @@ class MenuBarController {
                 switch currentMode {
                 case .specific(let id):
                     isMonitored = session.id == id
-                case .anyActive, .followFocusedTab:
+                case .anyActive:
                     isMonitored = session.id == monitor.currentSessionId
                 }
                 item.state = isMonitored ? .on : .off
@@ -183,12 +183,6 @@ class MenuBarController {
         anyActiveItem.state = (currentMode == .anyActive) ? .on : .off
         anyActiveItem.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: nil)
         modeSubmenu.addItem(anyActiveItem)
-
-        let followTabItem = NSMenuItem(title: "Follow Focused Tab", action: #selector(selectFollowTab), keyEquivalent: "")
-        followTabItem.target = self
-        followTabItem.state = (currentMode == .followFocusedTab) ? .on : .off
-        followTabItem.image = NSImage(systemSymbolName: "rectangle.on.rectangle", accessibilityDescription: nil)
-        modeSubmenu.addItem(followTabItem)
 
         modeItem.submenu = modeSubmenu
         menu.addItem(modeItem)
@@ -252,12 +246,6 @@ class MenuBarController {
     @objc private func selectAnyActive() {
         ClaudeSessionMonitor.shared.selectionMode = .anyActive
         SettingsManager.shared.sessionSelectionMode = "anyActive"
-        rebuildMenu()
-    }
-
-    @objc private func selectFollowTab() {
-        ClaudeSessionMonitor.shared.selectionMode = .followFocusedTab
-        SettingsManager.shared.sessionSelectionMode = "followFocusedTab"
         rebuildMenu()
     }
 
