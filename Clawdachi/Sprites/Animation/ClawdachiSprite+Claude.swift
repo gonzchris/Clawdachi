@@ -1173,7 +1173,7 @@ extension ClawdachiSprite {
             let hat = SKSpriteNode(texture: Self.partyHatTexture)
             hat.name = Self.partyHatName
             hat.size = CGSize(width: 7, height: 9)
-            hat.position = CGPoint(x: 0, y: 12)  // On top of head
+            hat.position = SpritePositions.partyHat
             hat.alpha = 0
             hat.zPosition = SpriteZPositions.effects + 1
             hat.setScale(0.3)

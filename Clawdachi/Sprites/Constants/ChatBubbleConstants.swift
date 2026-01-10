@@ -97,8 +97,8 @@ enum ChatBubbleConstants {
     static let horizontalOffset: CGFloat = 0
 
     /// Vertical offset when no hat is equipped (closer to head)
-    static let verticalOffsetNoHat: CGFloat = 100
+    static let verticalOffsetNoHat: CGFloat = 52
 
     /// Vertical offset when hat is equipped or celebrating (clears tallest hats)
-    static let verticalOffsetWithHat: CGFloat = 92
+    static let verticalOffsetWithHat: CGFloat = 100
 }

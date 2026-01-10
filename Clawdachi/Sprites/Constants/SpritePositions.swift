@@ -64,7 +64,7 @@ enum SpritePositions {
     static let questionMark = CGPoint(x: 0, y: 14)
 
     /// Party hat position above head (celebration mode)
-    static let partyHat = CGPoint(x: 0, y: 12)
+    static let partyHat = CGPoint(x: 0, y: 11)
 
     /// Party blower position near mouth
     static let partyBlower = CGPoint(x: 3, y: -4)
