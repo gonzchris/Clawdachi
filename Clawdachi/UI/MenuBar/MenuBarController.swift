@@ -173,22 +173,6 @@ class MenuBarController {
 
         menu.addItem(NSMenuItem.separator())
 
-        // Mode submenu
-        let modeItem = NSMenuItem(title: "Mode", action: nil, keyEquivalent: "")
-        modeItem.image = NSImage(systemSymbolName: "arrow.triangle.branch", accessibilityDescription: nil)
-        let modeSubmenu = NSMenu()
-
-        let anyActiveItem = NSMenuItem(title: "Any Active", action: #selector(selectAnyActive), keyEquivalent: "")
-        anyActiveItem.target = self
-        anyActiveItem.state = (currentMode == .anyActive) ? .on : .off
-        anyActiveItem.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: nil)
-        modeSubmenu.addItem(anyActiveItem)
-
-        modeItem.submenu = modeSubmenu
-        menu.addItem(modeItem)
-
-        menu.addItem(NSMenuItem.separator())
-
         // Preferences
         let settingsItem = NSMenuItem(title: "Preferences...", action: #selector(openSettings), keyEquivalent: "")
         settingsItem.target = self
@@ -240,12 +224,6 @@ class MenuBarController {
         guard let sessionId = sender.representedObject as? String else { return }
         ClaudeSessionMonitor.shared.selectionMode = .specific(sessionId)
         SettingsManager.shared.sessionSelectionMode = "specific:\(sessionId)"
-        rebuildMenu()
-    }
-
-    @objc private func selectAnyActive() {
-        ClaudeSessionMonitor.shared.selectionMode = .anyActive
-        SettingsManager.shared.sessionSelectionMode = "anyActive"
         rebuildMenu()
     }
 
