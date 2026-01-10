@@ -27,9 +27,86 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Apply dock icon visibility setting
         SettingsManager.shared.applyDockIconSetting()
 
-        // Set up Claude Code integration on first launch
+        // Initialize menu bar controller (will show icon if enabled in settings)
+        _ = MenuBarController.shared
+
+        // Request notification permissions for recording feedback
+        requestNotificationPermissions()
+
+        // Check if onboarding is needed
+        if OnboardingManager.needsOnboarding {
+            showOnboarding()
+        } else {
+            // Normal launch - set up Claude integration and show sprite
+            ClaudeIntegrationSetup.setupIfNeeded()
+            setupMainWindow()
+            restoreWindowPosition()
+            window.orderFront(nil)
+
+            // Set up keyboard shortcut for recording
+            setupRecordingShortcut()
+
+            // Show time-of-day greeting after short delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.scene?.showChatBubble(ClawdachiMessages.greetingForCurrentTime(), duration: 4.0)
+            }
+        }
+    }
+
+    // MARK: - Onboarding
+
+    private func showOnboarding() {
+        // Set up completion handler
+        OnboardingWindow.shared.onComplete = { [weak self] position in
+            self?.launchAfterOnboarding(at: position)
+        }
+
+        // Show onboarding window
+        OnboardingWindow.shared.show()
+    }
+
+    /// Called after onboarding completes to launch the main app
+    private func launchAfterOnboarding(at position: CGPoint) {
+        // Set up Claude integration (always enabled)
         ClaudeIntegrationSetup.setupIfNeeded()
 
+        // Set up the main window
+        setupMainWindow()
+
+        // Position at the specified location (bottom-left corner from jump animation)
+        window.setFrameOrigin(position)
+
+        // Keep window hidden for now - showSpriteAfterJump will reveal it
+        window.alphaValue = 0
+        window.orderFront(nil)
+
+        // Set up keyboard shortcuts
+        setupRecordingShortcut()
+
+        // TEMP: Show sprite immediately for debugging
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.showSpriteAfterJump()
+        }
+    }
+
+    /// Called by OnboardingWindow after jump animation completes
+    func showSpriteAfterJump() {
+        guard let window = window else { return }
+
+        // Ensure window is visible
+        window.alphaValue = 1.0
+        window.orderFront(nil)
+        window.makeKeyAndOrderFront(nil)
+
+        // Show welcome message
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.scene?.showChatBubble("> i'm free!", duration: 4.0)
+        }
+    }
+
+    // MARK: - Main Window Setup
+
+    private func setupMainWindow() {
         // Create borderless window (48x64 scene at 6x scale = 288x384)
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 288, height: 384),
@@ -60,10 +137,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Set up debug menu
         DebugMenuController.shared.setupDebugMenu(scene: scene!)
 
-        // Restore saved position or center window
-        restoreWindowPosition()
-        window.orderFront(nil)  // Don't try to become key (borderless windows can't)
-
         // Observe window movement to save position
         NotificationCenter.default.addObserver(
             self,
@@ -74,15 +147,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Set up animation recorder
         animationRecorder = AnimationRecorder(scene: scene!, view: skView)
-
-        // Set up keyboard shortcut for recording (Cmd+Shift+R)
-        setupRecordingShortcut()
-
-        // Initialize menu bar controller (will show icon if enabled in settings)
-        _ = MenuBarController.shared
-
-        // Request notification permissions for recording feedback
-        requestNotificationPermissions()
     }
 
     private func setupRecordingShortcut() {
@@ -200,7 +264,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        return true
+        // Don't terminate during onboarding transition (window is nil until main window is created)
+        return window != nil
     }
 
     func applicationWillTerminate(_ notification: Notification) {

@@ -261,10 +261,10 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Clawdachi needs access to check if music is playing so it can dance along!";
+				INFOPLIST_KEY_CFBundleDisplayName = Clawdachi;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Clawdachi needs access to check if music is playing so it can dance along.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Clawdachi needs microphone access for voice-to-text input.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Clawdachi uses speech recognition to transcribe your voice into text.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -298,10 +298,10 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Clawdachi needs access to check if music is playing so it can dance along!";
+				INFOPLIST_KEY_CFBundleDisplayName = Clawdachi;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "Clawdachi needs access to check if music is playing so it can dance along.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Clawdachi needs microphone access for voice-to-text input.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Clawdachi uses speech recognition to transcribe your voice into text.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

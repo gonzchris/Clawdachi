@@ -58,11 +58,6 @@ class ClawdachiScene: SKScene {
             name: .closetItemChanged,
             object: nil
         )
-
-        // Show time-of-day greeting after a brief delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            self?.showChatBubble(ClawdachiMessages.greetingForCurrentTime(), duration: 4.0)
-        }
     }
 
     private func setupMusicMonitor() {

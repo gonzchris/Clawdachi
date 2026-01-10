@@ -122,6 +122,12 @@ class DebugMenuController {
         chatItem.submenu = chatSubmenu
         debugMenu.addItem(chatItem)
 
+        debugMenu.addItem(NSMenuItem.separator())
+
+        // -- Onboarding --
+        debugMenu.addItem(createItem("Show Onboarding", action: #selector(showOnboarding)))
+        debugMenu.addItem(createItem("Reset Onboarding", action: #selector(resetOnboarding)))
+
         // Add to menu bar
         let debugMenuItem = NSMenuItem(title: "Debug", action: nil, keyEquivalent: "")
         debugMenuItem.submenu = debugMenu
@@ -246,5 +252,16 @@ class DebugMenuController {
 
     @objc private func testGreetingLateNight() {
         scene?.showChatBubble(ClawdachiMessages.greetingLateNight, duration: 4.0)
+    }
+
+    // MARK: - Onboarding Actions
+
+    @objc private func showOnboarding() {
+        OnboardingWindow.shared.show()
+    }
+
+    @objc private func resetOnboarding() {
+        OnboardingManager.reset()
+        scene?.showChatBubble("onboarding reset!", duration: 3.0)
     }
 }

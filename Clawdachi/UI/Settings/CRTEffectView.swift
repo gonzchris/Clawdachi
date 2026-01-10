@@ -27,6 +27,20 @@ class CRTEffectView: NSView {
     private var flickerTimer: Timer?
     private var currentFlickerAlpha: CGFloat = 0.0
 
+    // Power-on animation state
+    private var isPoweringOn: Bool = false
+    private var powerOnProgress: CGFloat = 0.0
+    private var powerOnPhase: PowerOnPhase = .idle
+    private var powerOnCompletion: (() -> Void)?
+
+    private enum PowerOnPhase {
+        case idle
+        case flash       // Brief bright flash
+        case scanline    // Horizontal line expands
+        case brighten    // Screen fades in
+        case complete
+    }
+
     // MARK: - Initialization
 
     override init(frame frameRect: NSRect) {
@@ -53,6 +67,12 @@ class CRTEffectView: NSView {
         guard let context = NSGraphicsContext.current?.cgContext else { return }
 
         let bounds = self.bounds
+
+        // Draw power-on animation (takes over entire screen during animation)
+        if isPoweringOn {
+            drawPowerOn(in: bounds, context: context)
+            return  // Don't draw other effects during power-on
+        }
 
         // Draw scanlines
         drawScanlines(in: bounds, context: context)
@@ -156,6 +176,138 @@ class CRTEffectView: NSView {
             currentFlickerAlpha = 0
         }
         needsDisplay = true
+    }
+
+    // MARK: - Power On Animation
+
+    /// Play CRT power-on animation (call before showing content)
+    func playPowerOnAnimation(completion: (() -> Void)? = nil) {
+        guard !isPoweringOn else { return }
+
+        isPoweringOn = true
+        powerOnPhase = .scanline  // Skip flash, go straight to scanline
+        powerOnProgress = 0.0
+        powerOnCompletion = completion
+
+        // Start animation loop
+        animatePowerOn()
+    }
+
+    private func animatePowerOn() {
+        switch powerOnPhase {
+        case .idle, .complete:
+            return
+
+        case .flash:
+            // Quick bright flash (0.05s)
+            powerOnProgress = 1.0
+            needsDisplay = true
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                self?.powerOnPhase = .scanline
+                self?.powerOnProgress = 0.0
+                self?.animatePowerOn()
+            }
+
+        case .scanline:
+            // Horizontal line expands from center (0.15s)
+            let duration: TimeInterval = 0.15
+            let steps = 15
+            let stepTime = duration / Double(steps)
+            var currentStep = 0
+
+            func animateStep() {
+                currentStep += 1
+                self.powerOnProgress = CGFloat(currentStep) / CGFloat(steps)
+                self.needsDisplay = true
+
+                if currentStep < steps {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + stepTime) {
+                        animateStep()
+                    }
+                } else {
+                    self.powerOnPhase = .brighten
+                    self.powerOnProgress = 0.0
+                    self.animatePowerOn()
+                }
+            }
+            animateStep()
+
+        case .brighten:
+            // Screen fades in (0.2s)
+            let duration: TimeInterval = 0.2
+            let steps = 20
+            let stepTime = duration / Double(steps)
+            var currentStep = 0
+
+            func animateStep() {
+                currentStep += 1
+                self.powerOnProgress = CGFloat(currentStep) / CGFloat(steps)
+                self.needsDisplay = true
+
+                if currentStep < steps {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + stepTime) {
+                        animateStep()
+                    }
+                } else {
+                    self.powerOnPhase = .complete
+                    self.isPoweringOn = false
+                    self.powerOnCompletion?()
+                }
+            }
+            animateStep()
+        }
+    }
+
+    private func drawPowerOn(in rect: NSRect, context: CGContext) {
+        context.saveGState()
+
+        switch powerOnPhase {
+        case .idle, .complete:
+            break
+
+        case .flash:
+            // Bright white flash
+            context.setFillColor(NSColor(white: 1, alpha: 0.8 * powerOnProgress).cgColor)
+            context.fill(rect)
+
+        case .scanline:
+            // Black screen with expanding horizontal line from center
+            // First fill with black
+            context.setFillColor(NSColor.black.cgColor)
+            context.fill(rect)
+
+            // Draw expanding bright line
+            let centerY = rect.midY
+            let lineHeight: CGFloat = 2 + (20 * powerOnProgress)  // Grows from 2 to 22
+            let lineWidth = rect.width * powerOnProgress
+
+            let lineRect = CGRect(
+                x: (rect.width - lineWidth) / 2,
+                y: centerY - lineHeight / 2,
+                width: lineWidth,
+                height: lineHeight
+            )
+
+            // Bright phosphor color (slight orange tint)
+            let phosphorColor = NSColor(red: 1.0, green: 0.95, blue: 0.9, alpha: 0.9)
+            context.setFillColor(phosphorColor.cgColor)
+            context.fill(lineRect)
+
+            // Add glow around the line
+            let glowColor = NSColor(red: 1.0, green: 0.6, blue: 0.2, alpha: 0.3)
+            context.setFillColor(glowColor.cgColor)
+            let glowRect = lineRect.insetBy(dx: -8, dy: -8)
+            context.fill(glowRect)
+
+        case .brighten:
+            // Black overlay fading out to reveal content
+            let alpha = 1.0 - powerOnProgress
+            context.setFillColor(NSColor(white: 0, alpha: alpha).cgColor)
+            context.fill(rect)
+        }
+
+        context.restoreGState()
     }
 
     // MARK: - Hit Testing

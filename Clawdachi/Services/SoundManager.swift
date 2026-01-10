@@ -12,6 +12,7 @@ final class SoundManager {
 
     private var questionSound: NSSound?
     private var completeSound: NSSound?
+    private var startupSound: NSSound?
 
     private init() {
         // Load sounds from bundle
@@ -20,6 +21,10 @@ final class SoundManager {
         }
         if let url = Bundle.main.url(forResource: "Complete_Notification", withExtension: "wav") {
             completeSound = NSSound(contentsOf: url, byReference: true)
+        }
+        if let url = Bundle.main.url(forResource: "Startup", withExtension: "wav") {
+            startupSound = NSSound(contentsOf: url, byReference: true)
+            startupSound?.volume = 0.5
         }
     }
 
@@ -33,5 +38,11 @@ final class SoundManager {
     func playCompleteSound() {
         completeSound?.stop()
         completeSound?.play()
+    }
+
+    /// Play startup sound during onboarding
+    func playStartupSound() {
+        startupSound?.stop()
+        startupSound?.play()
     }
 }
