@@ -399,13 +399,6 @@ class ClawdachiSprite: SKNode {
                 innerLeftLegNode.texture = ClawdachiBodySprites.generateWhiteLeftLegTexture()
                 innerRightLegNode.texture = ClawdachiBodySprites.generateWhiteRightLegTexture()
                 outerRightLegNode.texture = ClawdachiBodySprites.generateWhiteRightLegTexture()
-            } else if outfit.id == "wizard" {
-                leftArmNode.texture = ClawdachiBodySprites.generatePurpleLeftArmTexture()
-                rightArmNode.texture = ClawdachiBodySprites.generatePurpleRightArmTexture()
-                outerLeftLegNode.texture = ClawdachiBodySprites.generatePurpleLeftLegTexture()
-                innerLeftLegNode.texture = ClawdachiBodySprites.generatePurpleLeftLegTexture()
-                innerRightLegNode.texture = ClawdachiBodySprites.generatePurpleRightLegTexture()
-                outerRightLegNode.texture = ClawdachiBodySprites.generatePurpleRightLegTexture()
             } else if outfit.id == "pirate" {
                 leftArmNode.texture = ClawdachiBodySprites.generatePirateLeftArmTexture()
                 rightArmNode.texture = ClawdachiBodySprites.generatePirateRightArmTexture()

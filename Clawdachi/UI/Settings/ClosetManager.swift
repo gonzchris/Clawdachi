@@ -262,7 +262,6 @@ class ClosetManager {
         // Define available outfits
         availableOutfits = [
             ClosetItem(id: "bikini", name: "Bikini Mode", category: .outfits, isPremium: false),
-            ClosetItem(id: "wizard", name: "Wizard Robe", category: .outfits, isPremium: false),
             ClosetItem(id: "astronaut", name: "Astronaut Suit", category: .outfits, isPremium: false),
             ClosetItem(id: "pirate", name: "Pirate Outfit", category: .outfits, isPremium: false),
         ]

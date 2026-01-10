@@ -69,13 +69,12 @@ class ClawdachiOutfitSprites {
         let h = bikiniPinkLight
         let s = bikiniPinkDark
 
-        // Bikini top (rows 11-13, 1px narrower)
+        // Bikini top (rows 11-13)
         // The body spans x: 6-25 approximately (width ~20 pixels centered at 16)
 
         // Row 13 - top edge with highlight
-        pixels[13][8] = h
         pixels[13][9] = h
-        pixels[13][10] = p
+        pixels[13][10] = h
         pixels[13][11] = p
         pixels[13][12] = p
         pixels[13][13] = p
@@ -83,13 +82,11 @@ class ClawdachiOutfitSprites {
         pixels[13][18] = p
         pixels[13][19] = p
         pixels[13][20] = p
-        pixels[13][21] = p
+        pixels[13][21] = h
         pixels[13][22] = h
-        pixels[13][23] = h
 
         // Row 12 - main bikini top
-        pixels[12][7] = s
-        pixels[12][8] = p
+        pixels[12][8] = s
         pixels[12][9] = p
         pixels[12][10] = p
         pixels[12][11] = p
@@ -101,12 +98,10 @@ class ClawdachiOutfitSprites {
         pixels[12][20] = p
         pixels[12][21] = p
         pixels[12][22] = p
-        pixels[12][23] = p
-        pixels[12][24] = s
+        pixels[12][23] = s
 
         // Row 11 - bottom of top with shadow
-        pixels[11][8] = s
-        pixels[11][9] = p
+        pixels[11][9] = s
         pixels[11][10] = p
         pixels[11][11] = p
         pixels[11][12] = s
@@ -114,8 +109,7 @@ class ClawdachiOutfitSprites {
         pixels[11][19] = s
         pixels[11][20] = p
         pixels[11][21] = p
-        pixels[11][22] = p
-        pixels[11][23] = s
+        pixels[11][22] = s
 
         // Thin strap wrapping around (row 12, connecting cups and going to edges)
         // Center connection
@@ -124,33 +118,32 @@ class ClawdachiOutfitSprites {
         pixels[12][16] = p
         pixels[12][17] = s
         // Left side wrap (goes to edge of sprite body)
-        pixels[12][6] = s
-        pixels[12][5] = p
+        pixels[12][7] = s
+        pixels[12][6] = p
         // Right side wrap
-        pixels[12][25] = s
-        pixels[12][26] = p
+        pixels[12][24] = s
+        pixels[12][25] = p
 
         // Shoulder straps going up from cups
         // Left strap (from left cup up toward shoulder)
-        pixels[14][9] = p
-        pixels[15][8] = p
-        pixels[16][8] = p
-        pixels[17][7] = p
-        pixels[18][7] = p
-        pixels[19][6] = s
+        pixels[14][10] = p
+        pixels[15][9] = p
+        pixels[16][9] = p
+        pixels[17][8] = p
+        pixels[18][8] = p
+        pixels[19][7] = s
         // Right strap (from right cup up toward shoulder)
-        pixels[14][22] = p
-        pixels[15][23] = p
-        pixels[16][23] = p
-        pixels[17][24] = p
-        pixels[18][24] = p
-        pixels[19][25] = s
+        pixels[14][21] = p
+        pixels[15][22] = p
+        pixels[16][22] = p
+        pixels[17][23] = p
+        pixels[18][23] = p
+        pixels[19][24] = s
 
-        // Bikini bottom (rows 7-8, moved 1px down)
+        // Bikini bottom (rows 7-8)
 
         // Row 8 - top with waistband
-        pixels[8][8] = s
-        pixels[8][9] = p
+        pixels[8][9] = s
         pixels[8][10] = p
         pixels[8][11] = p
         pixels[8][12] = p
@@ -159,17 +152,15 @@ class ClawdachiOutfitSprites {
         pixels[8][15] = h
         pixels[8][16] = h
         pixels[8][17] = h
-        pixels[8][18] = h
+        pixels[8][18] = p
         pixels[8][19] = p
         pixels[8][20] = p
         pixels[8][21] = p
-        pixels[8][22] = p
-        pixels[8][23] = s
+        pixels[8][22] = s
 
         // Row 7 - bottom edge
-        pixels[7][9] = s
         pixels[7][10] = s
-        pixels[7][11] = p
+        pixels[7][11] = s
         pixels[7][12] = p
         pixels[7][13] = p
         pixels[7][14] = p
@@ -178,19 +169,18 @@ class ClawdachiOutfitSprites {
         pixels[7][17] = p
         pixels[7][18] = p
         pixels[7][19] = p
-        pixels[7][20] = p
+        pixels[7][20] = s
         pixels[7][21] = s
-        pixels[7][22] = s
 
         // Thin strap wrapping around sides (row 8, like the top)
         // Left side wrap
-        pixels[8][7] = s
+        pixels[8][8] = s
+        pixels[8][7] = p
         pixels[8][6] = p
-        pixels[8][5] = p
         // Right side wrap
-        pixels[8][24] = s
+        pixels[8][23] = s
+        pixels[8][24] = p
         pixels[8][25] = p
-        pixels[8][26] = p
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
@@ -320,15 +310,6 @@ class ClawdachiOutfitSprites {
     private static let propBlade = PixelColor(r: 180, g: 180, b: 190)      // Propeller blade
     private static let propBladeLight = PixelColor(r: 220, g: 220, b: 230) // Blade highlight
     private static let propHub = PixelColor(r: 100, g: 100, b: 110)        // Center hub
-
-    // MARK: - Wizard Robe Colors
-
-    private static let wizardPurple = PixelColor(r: 90, g: 50, b: 140)      // Main purple
-    private static let wizardPurpleLight = PixelColor(r: 130, g: 80, b: 180) // Purple highlight
-    private static let wizardPurpleDark = PixelColor(r: 55, g: 30, b: 90)   // Purple shadow
-    private static let wizardGold = PixelColor(r: 255, g: 200, b: 50)       // Gold trim
-    private static let wizardGoldDark = PixelColor(r: 180, g: 140, b: 30)   // Gold shadow
-    private static let wizardStar = PixelColor(r: 255, g: 255, b: 200)      // Star/sparkle
 
     // MARK: - Pirate Outfit Colors
 
@@ -832,148 +813,6 @@ class ClawdachiOutfitSprites {
         // Hub top
         pixels[29][15] = hub
         pixels[29][16] = hub
-
-        return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
-    }
-
-    // MARK: - Wizard Robe
-
-    /// Generates wizard robe covering entire body with pointed hat and face opening
-    static func generateWizardRobeTexture() -> SKTexture {
-        var pixels = Array(repeating: Array(repeating: PixelColor.clear, count: 32), count: 32)
-
-        let p = wizardPurple
-        let l = wizardPurpleLight
-        let d = wizardPurpleDark
-        let g = wizardGold
-        let gd = wizardGoldDark
-        let s = wizardStar
-
-        // === POINTED HAT (rows 25-31) ===
-        // Row 31 - very tip
-        pixels[31][15] = l
-        pixels[31][16] = l
-
-        // Row 30 - near tip
-        pixels[30][14] = p
-        pixels[30][15] = l
-        pixels[30][16] = l
-        pixels[30][17] = p
-
-        // Row 29
-        pixels[29][13] = d
-        pixels[29][14] = p
-        pixels[29][15] = p
-        pixels[29][16] = p
-        pixels[29][17] = l
-        pixels[29][18] = d
-
-        // Row 28
-        pixels[28][12] = d
-        pixels[28][13] = p
-        pixels[28][14] = p
-        pixels[28][15] = p
-        pixels[28][16] = p
-        pixels[28][17] = l
-        pixels[28][18] = l
-        pixels[28][19] = d
-        // Star on hat
-        pixels[28][14] = s
-
-        // Row 27
-        pixels[27][11] = d
-        pixels[27][12] = p
-        pixels[27][13] = p
-        pixels[27][14] = p
-        pixels[27][15] = p
-        pixels[27][16] = p
-        pixels[27][17] = p
-        pixels[27][18] = l
-        pixels[27][19] = l
-        pixels[27][20] = d
-
-        // Row 26 - wider part of hat
-        pixels[26][10] = d
-        pixels[26][11] = p
-        pixels[26][12] = p
-        pixels[26][13] = p
-        pixels[26][14] = p
-        pixels[26][15] = p
-        pixels[26][16] = p
-        pixels[26][17] = p
-        pixels[26][18] = l
-        pixels[26][19] = l
-        pixels[26][20] = l
-        pixels[26][21] = d
-        // Star on hat
-        pixels[26][17] = s
-
-        // Row 25 - hat meets brim
-        for col in 9...22 { pixels[25][col] = p }
-        pixels[25][9] = d
-        pixels[25][10] = d
-        pixels[25][21] = l
-        pixels[25][22] = l
-
-        // === HAT BRIM (rows 23-24) ===
-        // Row 24 - gold trim on brim
-        for col in 6...25 { pixels[24][col] = g }
-        pixels[24][6] = gd
-        pixels[24][7] = gd
-        pixels[24][24] = g
-        pixels[24][25] = g
-
-        // Row 23 - brim underside
-        for col in 5...26 { pixels[23][col] = d }
-        pixels[23][5] = d
-        pixels[23][26] = d
-
-        // === HOOD/ROBE BODY (rows 7-22) ===
-        // Row 22 - top of hood body
-        for col in 5...26 { pixels[22][col] = p }
-        pixels[22][5] = d
-        pixels[22][6] = d
-        pixels[22][25] = l
-        pixels[22][26] = l
-
-        // Rows 10-21 - main robe body with face opening
-        for row in 10...21 {
-            // Left side
-            pixels[row][4] = d
-            pixels[row][5] = p
-            pixels[row][6] = p
-            pixels[row][7] = d  // Edge of face opening
-            // Right side
-            pixels[row][24] = d  // Edge of face opening
-            pixels[row][25] = p
-            pixels[row][26] = l
-            pixels[row][27] = d
-        }
-
-        // Row 9 - gold collar trim
-        pixels[9][4] = gd
-        pixels[9][5] = g
-        pixels[9][6] = g
-        pixels[9][7] = gd
-        for col in 8...23 { pixels[9][col] = g }
-        pixels[9][24] = gd
-        pixels[9][25] = g
-        pixels[9][26] = g
-        pixels[9][27] = gd
-
-        // Rows 7-8 - bottom of robe
-        for col in 5...26 { pixels[8][col] = p }
-        pixels[8][5] = d
-        pixels[8][6] = d
-        pixels[8][25] = l
-        pixels[8][26] = l
-
-        for col in 6...25 { pixels[7][col] = d }
-
-        // === DECORATIVE STARS ON ROBE ===
-        pixels[19][5] = s
-        pixels[14][26] = s
-        pixels[11][5] = s
 
         return PixelArtGenerator.textureFromPixels(pixels, width: 32, height: 32)
     }
@@ -1549,8 +1388,6 @@ class ClawdachiOutfitSprites {
             return generateBikiniTexture()
         case "astronaut":
             return generateAstronautTexture()
-        case "wizard":
-            return generateWizardRobeTexture()
         case "pirate":
             return generatePirateTexture()
         default:
