@@ -647,7 +647,7 @@ class ClawdachiScene: SKScene {
     @objc private func launchClaudeInDirectory(_ sender: NSMenuItem) {
         guard let path = sender.representedObject as? URL else { return }
 
-        showChatBubble("launching claude...", duration: 2.0)
+        showChatBubble("> let's build", duration: 2.0)
 
         ClaudeLauncher.shared.launch(in: path) { [weak self] result in
             switch result {
@@ -682,7 +682,7 @@ class ClawdachiScene: SKScene {
             // Save last used location
             UserDefaults.standard.set(url.deletingLastPathComponent().path, forKey: "clawdachi.launch.lastBrowsedDirectory")
 
-            self?.showChatBubble("launching claude...", duration: 2.0)
+            self?.showChatBubble("> let's build", duration: 2.0)
 
             ClaudeLauncher.shared.launch(in: url) { [weak self] result in
                 switch result {
