@@ -15,13 +15,6 @@ class ClaudeIntegrationSetup {
     private static let setupVersionKey = "clawdachi.claude.setupVersion"
     private static let currentSetupVersion = 4  // Increment to force re-setup on updates
 
-    private static let hookScriptName = "claude-status.sh"
-    private static let clawdachiDir = ".clawdachi"
-    private static let hooksDir = "hooks"
-    private static let sessionsDir = "sessions"
-    private static let claudeDir = ".claude"
-    private static let settingsFile = "settings.json"
-
     // MARK: - Public API
 
     /// Sets up Claude Code integration if not already done
@@ -50,21 +43,12 @@ class ClaudeIntegrationSetup {
 
     private static func installHookScript() throws {
         let fileManager = FileManager.default
-        let homeDir = fileManager.homeDirectoryForCurrentUser
 
         // Create ~/.clawdachi/hooks/ directory
-        let hooksPath = homeDir
-            .appendingPathComponent(clawdachiDir)
-            .appendingPathComponent(hooksDir)
-
-        try fileManager.createDirectory(at: hooksPath, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: ClawdachiPaths.hooks, withIntermediateDirectories: true)
 
         // Create ~/.clawdachi/sessions/ directory
-        let sessionsPath = homeDir
-            .appendingPathComponent(clawdachiDir)
-            .appendingPathComponent(sessionsDir)
-
-        try fileManager.createDirectory(at: sessionsPath, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: ClawdachiPaths.sessions, withIntermediateDirectories: true)
 
         // Get script from app bundle
         guard let bundledScript = Bundle.main.url(forResource: "claude-status", withExtension: "sh") else {
@@ -72,7 +56,7 @@ class ClaudeIntegrationSetup {
         }
 
         // Copy to hooks directory (overwrite if exists)
-        let destinationPath = hooksPath.appendingPathComponent(hookScriptName)
+        let destinationPath = ClawdachiPaths.hookScript
 
         if fileManager.fileExists(atPath: destinationPath.path) {
             try fileManager.removeItem(at: destinationPath)
@@ -91,17 +75,14 @@ class ClaudeIntegrationSetup {
 
     private static func configureClaudeHooks() throws {
         let fileManager = FileManager.default
-        let homeDir = fileManager.homeDirectoryForCurrentUser
 
         // Check if ~/.claude/ exists (Claude Code installed)
-        let claudePath = homeDir.appendingPathComponent(claudeDir)
-
-        if !fileManager.fileExists(atPath: claudePath.path) {
+        if !fileManager.fileExists(atPath: ClawdachiPaths.claudeDir.path) {
             // Claude Code not installed - create the directory
-            try fileManager.createDirectory(at: claudePath, withIntermediateDirectories: true)
+            try fileManager.createDirectory(at: ClawdachiPaths.claudeDir, withIntermediateDirectories: true)
         }
 
-        let settingsPath = claudePath.appendingPathComponent(settingsFile)
+        let settingsPath = ClawdachiPaths.claudeSettings
 
         // Read existing settings or create empty
         var settings: [String: Any] = [:]

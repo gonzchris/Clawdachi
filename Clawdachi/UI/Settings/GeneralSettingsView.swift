@@ -18,6 +18,8 @@ class GeneralSettingsView: NSView {
     private var launchAtLoginCheckbox: NSButton!
     private var hideDockIconCheckbox: NSButton!
     private var showMenuBarCheckbox: NSButton!
+    private var terminalLabel: NSTextField!
+    private var terminalPopup: NSPopUpButton!
 
     // MARK: - Initialization
 
@@ -36,6 +38,7 @@ class GeneralSettingsView: NSView {
 
         setupTitle()
         setupCheckboxes()
+        setupTerminalSelector()
         loadSettings()
     }
 
@@ -71,6 +74,33 @@ class GeneralSettingsView: NSView {
         addSubview(showMenuBarCheckbox)
     }
 
+    private func setupTerminalSelector() {
+        // Label
+        terminalLabel = NSTextField(labelWithString: "Launch Claude Code in:")
+        terminalLabel.frame = NSRect(x: 20, y: 160, width: 180, height: 20)
+        terminalLabel.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
+        terminalLabel.textColor = C.textColor
+        addSubview(terminalLabel)
+
+        // Popup button
+        terminalPopup = NSPopUpButton(frame: NSRect(x: 20, y: 185, width: 150, height: 24), pullsDown: false)
+        terminalPopup.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
+        terminalPopup.target = self
+        terminalPopup.action = #selector(terminalChanged(_:))
+
+        // Add terminal options
+        for terminal in ClaudeLauncher.Terminal.allCases {
+            let isInstalled = ClaudeLauncher.shared.isTerminalInstalled(terminal)
+            let title = isInstalled ? terminal.displayName : "\(terminal.displayName) (not installed)"
+            terminalPopup.addItem(withTitle: title)
+            terminalPopup.lastItem?.tag = terminal.hashValue
+            terminalPopup.lastItem?.isEnabled = isInstalled
+            terminalPopup.lastItem?.representedObject = terminal
+        }
+
+        addSubview(terminalPopup)
+    }
+
     private func styleCheckbox(_ checkbox: NSButton) {
         checkbox.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
         checkbox.contentTintColor = C.accentColor
@@ -90,6 +120,16 @@ class GeneralSettingsView: NSView {
         launchAtLoginCheckbox.state = SettingsManager.shared.launchAtLogin ? .on : .off
         hideDockIconCheckbox.state = SettingsManager.shared.hideDockIcon ? .on : .off
         showMenuBarCheckbox.state = SettingsManager.shared.showMenuBarIcon ? .on : .off
+
+        // Select current terminal preference
+        let currentTerminal = ClaudeLauncher.shared.preferredTerminal
+        for (index, item) in terminalPopup.itemArray.enumerated() {
+            if let terminal = item.representedObject as? ClaudeLauncher.Terminal,
+               terminal == currentTerminal {
+                terminalPopup.selectItem(at: index)
+                break
+            }
+        }
     }
 
     @objc private func checkboxChanged(_ sender: NSButton) {
@@ -101,5 +141,13 @@ class GeneralSettingsView: NSView {
             SettingsManager.shared.showMenuBarIcon = (sender.state == .on)
             NotificationCenter.default.post(name: .menuBarIconSettingChanged, object: nil)
         }
+    }
+
+    @objc private func terminalChanged(_ sender: NSPopUpButton) {
+        guard let selectedItem = sender.selectedItem,
+              let terminal = selectedItem.representedObject as? ClaudeLauncher.Terminal else {
+            return
+        }
+        ClaudeLauncher.shared.preferredTerminal = terminal
     }
 }

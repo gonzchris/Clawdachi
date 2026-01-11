@@ -140,8 +140,7 @@ class ClaudeLauncher {
     /// - Parameter limit: Maximum number of directories to return (default 5)
     /// - Returns: Array of (displayName, path) tuples, most recent first
     func recentDirectories(limit: Int = 5) -> [(displayName: String, path: URL)] {
-        let sessionsPath = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".clawdachi/sessions")
+        let sessionsPath = ClawdachiPaths.sessions
 
         guard FileManager.default.fileExists(atPath: sessionsPath.path) else {
             return []

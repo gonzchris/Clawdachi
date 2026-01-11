@@ -135,8 +135,7 @@ class ClaudeSessionMonitor: PollingService {
 
     init() {
         monitorStartTime = Date().timeIntervalSince1970
-        sessionsPath = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".clawdachi/sessions")
+        sessionsPath = ClawdachiPaths.sessions
         startPolling()
     }
 
