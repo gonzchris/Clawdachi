@@ -44,6 +44,9 @@ class ClaudeHooksView: NSView {
     // Continue button
     private var continueButton: NSButton!
 
+    // Bottom bar
+    private var versionLabel: NSTextField!
+
     private var selectedTerminal: ClaudeLauncher.Terminal = .terminalApp
     private var demoTimer: Timer?
     private var currentDemoState: Int = 0
@@ -67,6 +70,7 @@ class ClaudeHooksView: NSView {
         setupReactionList()
         setupTerminalSelection()
         setupContinueButton()
+        setupVersionLabel()
 
         // Load saved terminal preference
         selectedTerminal = ClaudeLauncher.shared.preferredTerminal
@@ -77,10 +81,12 @@ class ClaudeHooksView: NSView {
 
     // MARK: - Header Section
 
+    private let topPadding: CGFloat = 20  // Extra top padding to push content down
+
     private func setupHeader() {
         // Main title
         titleLabel = NSTextField(labelWithString: "CLAWDACHI × CLAUDE CODE")
-        titleLabel.frame = NSRect(x: 0, y: C.panelPadding, width: bounds.width, height: 24)
+        titleLabel.frame = NSRect(x: 0, y: C.panelPadding + topPadding, width: bounds.width, height: 24)
         titleLabel.font = NSFont.monospacedSystemFont(ofSize: C.sectionFontSize + 2, weight: .bold)
         titleLabel.textColor = C.accentColor
         titleLabel.alignment = .center
@@ -88,7 +94,7 @@ class ClaudeHooksView: NSView {
 
         // Subtitle
         subtitleLabel = NSTextField(labelWithString: "Clawdachi tracks your Claude Code sessions and shows their status in real time.")
-        subtitleLabel.frame = NSRect(x: 0, y: C.panelPadding + 28, width: bounds.width, height: 18)
+        subtitleLabel.frame = NSRect(x: 0, y: C.panelPadding + topPadding + 28, width: bounds.width, height: 18)
         subtitleLabel.font = NSFont.monospacedSystemFont(ofSize: C.terminalFontSize, weight: .bold)
         subtitleLabel.textColor = C.textColor
         subtitleLabel.alignment = .center
@@ -98,11 +104,14 @@ class ClaudeHooksView: NSView {
     // MARK: - Animated Preview (Left Column)
 
     private func setupPreview() {
-        // Left column - centered in left half
-        let contentY: CGFloat = 95
+        let contentY: CGFloat = 95 + topPadding
         let previewSize: CGFloat = 120
-        let leftColumnCenterX: CGFloat = bounds.width * 0.32
-        let previewX = leftColumnCenterX - previewSize / 2
+
+        // Calculate center of the reaction list content to center sprite above it
+        // Reaction list: action (105) + arrow (20) + desc (250) = ~375px wide
+        // Center should align with the arrow position
+        let reactionListCenterX: CGFloat = 280
+        let previewX = reactionListCenterX - previewSize / 2
 
         previewContainer = NSView(frame: NSRect(
             x: previewX,
@@ -147,8 +156,10 @@ class ClaudeHooksView: NSView {
             ("napping", "Taking a break while you're away")
         ]
 
-        let leftColumnCenterX: CGFloat = bounds.width * 0.32
-        let startY: CGFloat = 230
+        // Position list to be centered under the sprite preview
+        // Sprite is centered at x=280, so center the list there too
+        let listCenterX: CGFloat = 280
+        let startY: CGFloat = 250
         let rowHeight: CGFloat = 24
 
         for (index, (action, description)) in reactions.enumerated() {
@@ -156,7 +167,7 @@ class ClaudeHooksView: NSView {
 
             // Action label (orange) - right aligned before arrow
             let actionLabel = NSTextField(labelWithString: action)
-            actionLabel.frame = NSRect(x: leftColumnCenterX - 115, y: yOffset, width: 105, height: 18)
+            actionLabel.frame = NSRect(x: listCenterX - 115, y: yOffset, width: 105, height: 18)
             actionLabel.font = NSFont.monospacedSystemFont(ofSize: C.terminalFontSize + 1, weight: .bold)
             actionLabel.textColor = C.accentColor
             actionLabel.alignment = .right
@@ -165,7 +176,7 @@ class ClaudeHooksView: NSView {
 
             // Arrow
             let arrowLabel = NSTextField(labelWithString: "→")
-            arrowLabel.frame = NSRect(x: leftColumnCenterX - 5, y: yOffset, width: 20, height: 18)
+            arrowLabel.frame = NSRect(x: listCenterX - 5, y: yOffset, width: 20, height: 18)
             arrowLabel.font = NSFont.monospacedSystemFont(ofSize: C.terminalFontSize + 1, weight: .regular)
             arrowLabel.textColor = C.textDimColor
             arrowLabel.alignment = .center
@@ -174,7 +185,7 @@ class ClaudeHooksView: NSView {
 
             // Description label
             let descLabel = NSTextField(labelWithString: description)
-            descLabel.frame = NSRect(x: leftColumnCenterX + 20, y: yOffset, width: 280, height: 18)
+            descLabel.frame = NSRect(x: listCenterX + 20, y: yOffset, width: 250, height: 18)
             descLabel.font = NSFont.monospacedSystemFont(ofSize: C.terminalFontSize + 1, weight: .regular)
             descLabel.textColor = C.textColor
             descLabel.alignment = .left
@@ -188,7 +199,7 @@ class ClaudeHooksView: NSView {
     private func setupTerminalSelection() {
         // Right column - vertically centered with the left column content
         let rightColumnCenterX: CGFloat = bounds.width * 0.75
-        let contentY: CGFloat = 145
+        let contentY: CGFloat = 145 + topPadding
 
         // Header
         let headerWidth: CGFloat = 200
@@ -274,6 +285,21 @@ class ClaudeHooksView: NSView {
         continueButton.addTrackingArea(trackingArea)
 
         addSubview(continueButton)
+    }
+
+    private func setupVersionLabel() {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        versionLabel = NSTextField(labelWithString: "v\(version)")
+        versionLabel.frame = NSRect(
+            x: 0,
+            y: bounds.height + 15,
+            width: bounds.width,
+            height: 16
+        )
+        versionLabel.font = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
+        versionLabel.textColor = C.textDimColor
+        versionLabel.alignment = .center
+        addSubview(versionLabel)
     }
 
     // MARK: - Mouse Handling
