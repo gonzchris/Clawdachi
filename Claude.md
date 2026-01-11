@@ -109,7 +109,6 @@ It's a small piece of joy that makes your desktop feel a little more alive.
 
 ### Other
 - **Sleep mode:** Closes eyes, spawns floating Z's
-- **GIF recording:** Capture animations with Cmd+Shift+R
 - **Window position:** Remembers where you left it
 
 ### Visual Effects
@@ -158,9 +157,6 @@ Clawdachi/
 ├── App/
 │   └── AppDelegate.swift              # Window setup, keyboard shortcuts
 ├── ClawdachiApp.swift                 # App entry point
-├── Recording/
-│   ├── AnimationRecorder.swift        # GIF frame capture
-│   └── GIFExporter.swift              # GIF file creation
 ├── Resources/
 │   ├── claude-status.sh               # Hook script (tracks thinking, planning, waiting)
 │   ├── Fonts/
@@ -292,7 +288,8 @@ ChatBubbleWindow.dismiss(animated: true)
 
 | Shortcut | Action |
 |----------|--------|
-| Cmd+Shift+R | Toggle GIF recording |
+| Cmd+, | Open settings |
+| Cmd+Z | Toggle sleep mode |
 | Cmd+Q | Quit (when focused) |
 
 ---

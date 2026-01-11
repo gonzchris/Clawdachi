@@ -9,12 +9,10 @@ import UserNotifications
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var window: NSWindow!
-    private var animationRecorder: AnimationRecorder?
     private var scene: ClawdachiScene?
 
     /// Public accessor for the sprite window (used by ChatBubbleWindow)
     var spriteWindow: NSWindow { window }
-    private var globalEventMonitor: Any?
     private var localEventMonitor: Any?
 
     private enum Keys {
@@ -30,7 +28,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Initialize menu bar controller (will show icon if enabled in settings)
         _ = MenuBarController.shared
 
-        // Request notification permissions for recording feedback
+        // Request notification permissions
         requestNotificationPermissions()
 
         // Check if onboarding is needed
@@ -43,8 +41,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             restoreWindowPosition()
             window.orderFront(nil)
 
-            // Set up keyboard shortcut for recording
-            setupRecordingShortcut()
+            // Set up keyboard shortcuts
+            setupKeyboardShortcuts()
 
             // Show time-of-day greeting after short delay
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
@@ -81,7 +79,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.orderFront(nil)
 
         // Set up keyboard shortcuts
-        setupRecordingShortcut()
+        setupKeyboardShortcuts()
 
         // TEMP: Show sprite immediately for debugging
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
@@ -145,17 +143,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             object: window
         )
 
-        // Set up animation recorder
-        animationRecorder = AnimationRecorder(scene: scene!, view: skView)
     }
 
-    private func setupRecordingShortcut() {
-        // Global monitor for recording only (works when app is not focused)
-        globalEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            self?.handleGlobalKeyEvent(event)
-        }
-
-        // Local monitor for all shortcuts (only when app is focused)
+    private func setupKeyboardShortcuts() {
+        // Local monitor for shortcuts (only when app is focused)
         localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if self?.handleLocalKeyEvent(event) == true {
                 return nil  // Consume the event
@@ -164,34 +155,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func handleGlobalKeyEvent(_ event: NSEvent) {
-        let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-
-        // Only Cmd+Shift+R (recording) works globally
-        if modifierFlags == [.command, .shift],
-           event.charactersIgnoringModifiers?.lowercased() == "r" {
-            animationRecorder?.toggleRecording()
-        }
-    }
-
     private func handleLocalKeyEvent(_ event: NSEvent) -> Bool {
         let modifierFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
 
-        // Check for Cmd+Shift+R (recording)
-        if modifierFlags == [.command, .shift],
-           event.charactersIgnoringModifiers?.lowercased() == "r" {
-            animationRecorder?.toggleRecording()
-            return true
-        }
-
-        // Check for Cmd+, (settings) - local only
+        // Check for Cmd+, (settings)
         if modifierFlags == [.command],
            event.charactersIgnoringModifiers == "," {
             openSettings()
             return true
         }
 
-        // Check for Cmd+Z (sleep mode toggle) - local only
+        // Check for Cmd+Z (sleep mode toggle)
         if modifierFlags == [.command],
            event.charactersIgnoringModifiers?.lowercased() == "z" {
             toggleSleep()
@@ -269,11 +243,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        // Clean up event monitors
-        if let monitor = globalEventMonitor {
-            NSEvent.removeMonitor(monitor)
-            globalEventMonitor = nil
-        }
+        // Clean up event monitor
         if let monitor = localEventMonitor {
             NSEvent.removeMonitor(monitor)
             localEventMonitor = nil
