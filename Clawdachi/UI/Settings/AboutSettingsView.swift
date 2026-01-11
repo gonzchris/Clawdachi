@@ -82,23 +82,29 @@ class AboutSettingsView: NSView {
     }
 
     private func setupLinks() {
+        // Buttons inline horizontally
+        let buttonY: CGFloat = 130
+        var buttonX: CGFloat = 20
+
         // Website button
-        let websiteFrame = NSRect(x: 20, y: 130, width: 150, height: 24)
+        let websiteFrame = NSRect(x: buttonX, y: buttonY, width: 100, height: 24)
         websiteButton = SettingsButton(frame: websiteFrame, title: "clawdachi.app")
         websiteButton.target = self
         websiteButton.action = #selector(websiteClicked)
         addSubview(websiteButton)
+        buttonX += 110
 
         // Clawdachi Twitter button
-        let clawdachiFrame = NSRect(x: 20, y: 160, width: 150, height: 24)
-        clawdachiButton = SettingsButton(frame: clawdachiFrame, title: "𝕏  @clawdachi")
+        let clawdachiFrame = NSRect(x: buttonX, y: buttonY, width: 100, height: 24)
+        clawdachiButton = SettingsButton(frame: clawdachiFrame, title: "𝕏 @clawdachi")
         clawdachiButton.target = self
         clawdachiButton.action = #selector(clawdachiClicked)
         addSubview(clawdachiButton)
+        buttonX += 110
 
         // Chris Twitter button
-        let twitterFrame = NSRect(x: 20, y: 190, width: 150, height: 24)
-        twitterButton = SettingsButton(frame: twitterFrame, title: "𝕏  @chrisgonzalez")
+        let twitterFrame = NSRect(x: buttonX, y: buttonY, width: 120, height: 24)
+        twitterButton = SettingsButton(frame: twitterFrame, title: "𝕏 @chrisgonzalez")
         twitterButton.target = self
         twitterButton.action = #selector(twitterClicked)
         addSubview(twitterButton)

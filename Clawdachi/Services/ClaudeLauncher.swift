@@ -90,19 +90,11 @@ class ClaudeLauncher {
         // Generate and run AppleScript
         let script = generateAppleScript(for: targetTerminal, directory: directory)
 
-        var error: NSDictionary?
-        guard let appleScript = NSAppleScript(source: script) else {
-            completion?(.appleScriptError("Failed to create AppleScript"))
-            return
-        }
-
-        appleScript.executeAndReturnError(&error)
-
-        if let error = error {
-            let errorMessage = error[NSAppleScript.errorMessage] as? String ?? "Unknown error"
-            completion?(.appleScriptError(errorMessage))
-        } else {
+        switch AppleScriptExecutor.runWithResult(script) {
+        case .success:
             completion?(.success)
+        case .failure(let errorMessage):
+            completion?(.appleScriptError(errorMessage))
         }
     }
 
