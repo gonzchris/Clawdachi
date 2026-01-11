@@ -1,16 +1,26 @@
 # Clawdachi
 
-A pixel art desktop pet for macOS. A friendly orange blob that lives on your screen, breathes, blinks, whistles, dances to your music, and reacts when you interact with it.
+A pixel art desktop companion for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). A friendly orange blob that lives on your screen, reacts to Claude's activity, and keeps you company while you code.
 
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-## Features
+## Claude Code Integration
+
+Clawdachi automatically detects when Claude Code is running and reacts:
+
+- **Thinking animation** - Focused eyes with floating math symbols while Claude works
+- **Planning animation** - Lightbulb with sparkles when Claude is designing
+- **Question mark** - When Claude is waiting for your input
+- **Party celebration** - When a session completes
+
+On first launch, Clawdachi will ask to install hooks to `~/.claude/settings.json` to enable this integration.
+
+## Other Features
 
 - **Idle animations** - Breathing, blinking, whistling, eye tracking, and more
 - **Music-reactive dancing** - Detects Spotify and Apple Music playback
-- **Claude Code integration** - Shows thinking animation when Claude is working, celebrates when done
 - **Click interactions** - Waves, bounces, shows hearts
 - **Drag anywhere** - Pick it up and move it around your screen (it gets nervous!)
 - **Sleep mode** - Put it to bed when you need to focus
@@ -32,24 +42,6 @@ open Clawdachi.xcodeproj
 ```
 
 Build and run with `Cmd+R`.
-
-## Claude Code Integration
-
-Clawdachi automatically detects when [Claude Code](https://claude.ai/claude-code) is running and shows:
-
-- **Thinking animation** - Focused eyes with floating math symbols
-- **Planning animation** - Lightbulb with sparkles when designing
-- **Question mark** - When Claude is waiting for your input
-- **Party celebration** - When a session completes
-
-On first launch, Clawdachi will ask to install hooks to `~/.claude/settings.json` to enable this integration.
-
-## Keyboard Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| `Cmd+Shift+R` | Toggle GIF recording |
-| `Cmd+,` | Open settings |
 
 ## Contributing
 
