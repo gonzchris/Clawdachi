@@ -1,0 +1,191 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  SCHEME: Clawdachi
+  PROJECT: Clawdachi.xcodeproj
+  APP_NAME: Clawdachi
+  BUNDLE_ID: co.solobuilt.Clawdachi
+
+jobs:
+  build-and-release:
+    runs-on: macos-14
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Select Xcode version
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+
+      # Step 3: Extract version from tag
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      # Step 4: Import signing certificate
+      - name: Import Code Signing Certificate
+        env:
+          P12_CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_APPLICATION_CERTIFICATE_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/signing.keychain-db
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+
+          # Create keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate
+          echo "$P12_CERTIFICATE_BASE64" | base64 --decode > $RUNNER_TEMP/certificate.p12
+          security import $RUNNER_TEMP/certificate.p12 \
+            -P "$P12_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+
+          # Set keychain as default and allow codesign access
+          security list-keychain -d user -s "$KEYCHAIN_PATH" login.keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Clean up certificate file
+          rm -f $RUNNER_TEMP/certificate.p12
+
+      # Step 5: Build the app
+      - name: Build Release Archive
+        run: |
+          xcodebuild archive \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/$APP_NAME.xcarchive" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Developer ID Application" \
+            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
+            OTHER_CODE_SIGN_FLAGS="--options=runtime"
+
+      # Step 6: Export the app from archive
+      - name: Export App from Archive
+        run: |
+          cat > $RUNNER_TEMP/ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>developer-id</string>
+              <key>teamID</key>
+              <string>${{ secrets.APPLE_TEAM_ID }}</string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>signingCertificate</key>
+              <string>Developer ID Application</string>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/$APP_NAME.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+
+      # Step 7: Verify code signature
+      - name: Verify Code Signature
+        run: |
+          codesign --verify --deep --strict --verbose=4 "$RUNNER_TEMP/export/$APP_NAME.app"
+          spctl --assess --type execute --verbose "$RUNNER_TEMP/export/$APP_NAME.app"
+
+      # Step 8: Install create-dmg
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      # Step 9: Create DMG
+      - name: Create DMG
+        run: |
+          # Create a temporary folder for DMG contents
+          mkdir -p "$RUNNER_TEMP/dmg-staging"
+          cp -R "$RUNNER_TEMP/export/$APP_NAME.app" "$RUNNER_TEMP/dmg-staging/"
+
+          # Create DMG with create-dmg
+          create-dmg \
+            --volname "$APP_NAME" \
+            --volicon "$RUNNER_TEMP/export/$APP_NAME.app/Contents/Resources/AppIcon.icns" \
+            --background "scripts/dmg-background.png" \
+            --window-pos 200 120 \
+            --window-size 540 380 \
+            --icon-size 80 \
+            --icon "$APP_NAME.app" 140 180 \
+            --hide-extension "$APP_NAME.app" \
+            --app-drop-link 400 180 \
+            --no-internet-enable \
+            "$RUNNER_TEMP/$APP_NAME-${{ steps.version.outputs.version }}.dmg" \
+            "$RUNNER_TEMP/dmg-staging/"
+
+      # Step 10: Sign the DMG
+      - name: Sign DMG
+        run: |
+          codesign --force --sign "Developer ID Application" \
+            --options runtime \
+            "$RUNNER_TEMP/$APP_NAME-${{ steps.version.outputs.version }}.dmg"
+
+      # Step 11: Notarize the DMG
+      - name: Notarize DMG
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcrun notarytool submit \
+            "$RUNNER_TEMP/$APP_NAME-${{ steps.version.outputs.version }}.dmg" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_ID_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+
+      # Step 12: Staple notarization ticket
+      - name: Staple Notarization Ticket
+        run: |
+          xcrun stapler staple "$RUNNER_TEMP/$APP_NAME-${{ steps.version.outputs.version }}.dmg"
+          xcrun stapler validate "$RUNNER_TEMP/$APP_NAME-${{ steps.version.outputs.version }}.dmg"
+
+      # Step 13: Create GitHub Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Clawdachi v${{ steps.version.outputs.version }}
+          body: |
+            ## Clawdachi v${{ steps.version.outputs.version }}
+
+            A cute pixel art desktop pet for macOS.
+
+            ### Installation
+            1. Download the DMG file below
+            2. Open the DMG and drag Clawdachi to your Applications folder
+            3. Launch Clawdachi from Applications
+
+            ### What's New
+            See commit history for details.
+          files: |
+            ${{ runner.temp }}/Clawdachi-${{ steps.version.outputs.version }}.dmg
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 14: Cleanup keychain
+      - name: Cleanup
+        if: always()
+        run: |
+          security delete-keychain $RUNNER_TEMP/signing.keychain-db || true
