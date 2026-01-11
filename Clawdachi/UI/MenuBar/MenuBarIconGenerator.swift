@@ -56,7 +56,7 @@ enum MenuBarIconGenerator {
         // Scaled down to fit limbs in 18x18
         let scale: CGFloat = 1.5
         let offsetX: CGFloat = 1.5
-        let offsetY: CGFloat = 0
+        let offsetY: CGFloat = 3
 
         // --- Legs (4 legs below body) ---
         // Far left leg
