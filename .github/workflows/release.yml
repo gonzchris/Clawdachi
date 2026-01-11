@@ -114,11 +114,11 @@ jobs:
             -exportPath "$RUNNER_TEMP/export" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
 
-      # Step 7: Verify code signature
+      # Step 7: Verify code signature (notarization check happens after stapling)
       - name: Verify Code Signature
         run: |
           codesign --verify --deep --strict --verbose=4 "$RUNNER_TEMP/export/$APP_NAME.app"
-          spctl --assess --type execute --verbose "$RUNNER_TEMP/export/$APP_NAME.app"
+          echo "Code signature valid. Notarization will be verified after stapling."
 
       # Step 8: Install create-dmg
       - name: Install create-dmg
@@ -172,6 +172,7 @@ jobs:
         run: |
           xcrun stapler staple "$RUNNER_TEMP/$APP_NAME-${{ steps.version.outputs.version }}.dmg"
           xcrun stapler validate "$RUNNER_TEMP/$APP_NAME-${{ steps.version.outputs.version }}.dmg"
+          echo "Notarization verified. DMG is ready for distribution."
 
       # Step 13: Create GitHub Release
       - name: Create GitHub Release
