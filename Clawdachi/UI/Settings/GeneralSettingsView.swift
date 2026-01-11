@@ -19,7 +19,7 @@ class GeneralSettingsView: NSView {
     private var hideDockIconCheckbox: NSButton!
     private var showMenuBarCheckbox: NSButton!
     private var terminalLabel: NSTextField!
-    private var terminalPopup: NSPopUpButton!
+    private var terminalButtons: [NSButton] = []
 
     // MARK: - Initialization
 
@@ -82,23 +82,35 @@ class GeneralSettingsView: NSView {
         terminalLabel.textColor = C.textColor
         addSubview(terminalLabel)
 
-        // Popup button
-        terminalPopup = NSPopUpButton(frame: NSRect(x: 20, y: 185, width: 150, height: 24), pullsDown: false)
-        terminalPopup.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
-        terminalPopup.target = self
-        terminalPopup.action = #selector(terminalChanged(_:))
+        // Radio buttons for each terminal
+        let terminals = ClaudeLauncher.Terminal.allCases
+        var buttonY: CGFloat = 185
 
-        // Add terminal options
-        for terminal in ClaudeLauncher.Terminal.allCases {
+        for (index, terminal) in terminals.enumerated() {
             let isInstalled = ClaudeLauncher.shared.isTerminalInstalled(terminal)
-            let title = isInstalled ? terminal.displayName : "\(terminal.displayName) (not installed)"
-            terminalPopup.addItem(withTitle: title)
-            terminalPopup.lastItem?.tag = terminal.hashValue
-            terminalPopup.lastItem?.isEnabled = isInstalled
-            terminalPopup.lastItem?.representedObject = terminal
-        }
+            let title = isInstalled ? terminal.displayName : "\(terminal.displayName) (n/a)"
 
-        addSubview(terminalPopup)
+            let button = NSButton(frame: NSRect(x: 20, y: buttonY, width: 150, height: 20))
+            button.setButtonType(.radio)
+            button.title = title
+            button.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
+            button.tag = index
+            button.target = self
+            button.action = #selector(terminalRadioChanged(_:))
+            button.isEnabled = isInstalled
+
+            // Style the button text
+            let textColor = isInstalled ? C.textColor : C.textDimColor
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular),
+                .foregroundColor: textColor
+            ]
+            button.attributedTitle = NSAttributedString(string: title, attributes: attrs)
+
+            addSubview(button)
+            terminalButtons.append(button)
+            buttonY += 24
+        }
     }
 
     private func styleCheckbox(_ checkbox: NSButton) {
@@ -123,11 +135,10 @@ class GeneralSettingsView: NSView {
 
         // Select current terminal preference
         let currentTerminal = ClaudeLauncher.shared.preferredTerminal
-        for (index, item) in terminalPopup.itemArray.enumerated() {
-            if let terminal = item.representedObject as? ClaudeLauncher.Terminal,
-               terminal == currentTerminal {
-                terminalPopup.selectItem(at: index)
-                break
+        let terminals = ClaudeLauncher.Terminal.allCases
+        for (index, terminal) in terminals.enumerated() {
+            if index < terminalButtons.count {
+                terminalButtons[index].state = (terminal == currentTerminal) ? .on : .off
             }
         }
     }
@@ -143,11 +154,16 @@ class GeneralSettingsView: NSView {
         }
     }
 
-    @objc private func terminalChanged(_ sender: NSPopUpButton) {
-        guard let selectedItem = sender.selectedItem,
-              let terminal = selectedItem.representedObject as? ClaudeLauncher.Terminal else {
-            return
+    @objc private func terminalRadioChanged(_ sender: NSButton) {
+        let terminals = ClaudeLauncher.Terminal.allCases
+        guard sender.tag < terminals.count else { return }
+
+        let selectedTerminal = terminals[sender.tag]
+        ClaudeLauncher.shared.preferredTerminal = selectedTerminal
+
+        // Update radio button states
+        for (index, button) in terminalButtons.enumerated() {
+            button.state = (index == sender.tag) ? .on : .off
         }
-        ClaudeLauncher.shared.preferredTerminal = terminal
     }
 }

@@ -347,19 +347,14 @@ class ClaudeSessionMonitor: PollingService {
     }
 
     private func parseSessionFile(at url: URL) -> SessionInfo? {
-        do {
-            let data = try Data(contentsOf: url)
-            let session = try JSONDecoder().decode(SessionData.self, from: data)
-            return SessionInfo(
-                id: session.session_id ?? url.deletingPathExtension().lastPathComponent,
-                status: session.status,
-                timestamp: session.timestamp,
-                cwd: session.cwd,
-                tty: session.tty
-            )
-        } catch {
-            return nil
-        }
+        guard let session = SessionDataParser.parse(from: url) else { return nil }
+        return SessionInfo(
+            id: session.session_id ?? url.deletingPathExtension().lastPathComponent,
+            status: session.status,
+            timestamp: session.timestamp,
+            cwd: session.cwd,
+            tty: session.tty
+        )
     }
 
     // MARK: - Session Selection
@@ -484,17 +479,6 @@ class ClaudeSessionMonitor: PollingService {
             onSessionSwitched?(oldSessionId, newSession)
         }
     }
-}
-
-// MARK: - Session Data Model (internal JSON parsing)
-
-private struct SessionData: Codable {
-    let status: String
-    let timestamp: Double
-    let session_id: String?
-    let tool_name: String?
-    let cwd: String?
-    let tty: String?
 }
 
 // MARK: - Notification Names
