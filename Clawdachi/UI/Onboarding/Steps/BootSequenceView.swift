@@ -196,7 +196,7 @@ class BootSequenceView: NSView {
         versionLabel = NSTextField(labelWithString: "v\(version)")
         versionLabel.frame = NSRect(
             x: 0,
-            y: bounds.height + 6,
+            y: bounds.height - 10,
             width: bounds.width,
             height: 16
         )
@@ -210,7 +210,7 @@ class BootSequenceView: NSView {
         disclaimerLabel = NSTextField(labelWithString: "Not affiliated with Anthropic")
         disclaimerLabel.frame = NSRect(
             x: 0,
-            y: bounds.height + 22,
+            y: bounds.height + 6,
             width: bounds.width,
             height: 14
         )
