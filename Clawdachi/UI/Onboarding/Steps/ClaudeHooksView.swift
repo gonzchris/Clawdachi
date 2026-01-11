@@ -292,7 +292,7 @@ class ClaudeHooksView: NSView {
         versionLabel = NSTextField(labelWithString: "v\(version)")
         versionLabel.frame = NSRect(
             x: 0,
-            y: bounds.height + 15,
+            y: bounds.height + 6,
             width: bounds.width,
             height: 16
         )

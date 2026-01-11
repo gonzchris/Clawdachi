@@ -31,6 +31,7 @@ class CustomizeStepView: NSView {
     private var tabBar: CustomizationTabBar!
     private var itemGridView: CustomizationGridView!
     private var continueButton: NSButton!
+    private var versionLabel: NSTextField!
 
     private var currentCategory: ClosetCategory = .themes
     private var hasLaunched = false  // Prevent multiple launch clicks
@@ -55,6 +56,7 @@ class CustomizeStepView: NSView {
         setupTabBar()
         setupItemGrid()
         setupContinueButton()
+        setupVersionLabel()
     }
 
     override var isFlipped: Bool { true }
@@ -162,6 +164,21 @@ class CustomizeStepView: NSView {
         continueButton.addTrackingArea(trackingArea)
 
         addSubview(continueButton)
+    }
+
+    private func setupVersionLabel() {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        versionLabel = NSTextField(labelWithString: "v\(version)")
+        versionLabel.frame = NSRect(
+            x: 0,
+            y: bounds.height + 6,
+            width: bounds.width,
+            height: 16
+        )
+        versionLabel.font = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
+        versionLabel.textColor = C.textDimColor
+        versionLabel.alignment = .center
+        addSubview(versionLabel)
     }
 
     // MARK: - Mouse Handling

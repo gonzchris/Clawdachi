@@ -191,15 +191,12 @@ class BootSequenceView: NSView {
     }
 
     private func setupBottomBarElements() {
-        // Bottom bar Y position (content area ends, bottom bar begins)
-        let bottomBarY = bounds.height
-
         // Version label - centered in bottom bar
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
         versionLabel = NSTextField(labelWithString: "v\(version)")
         versionLabel.frame = NSRect(
             x: 0,
-            y: bottomBarY + 8,
+            y: bounds.height + 6,
             width: bounds.width,
             height: 16
         )
@@ -209,11 +206,11 @@ class BootSequenceView: NSView {
         versionLabel.alphaValue = 0
         addSubview(versionLabel)
 
-        // Disclaimer - small text at bottom right
+        // Disclaimer - small text below version
         disclaimerLabel = NSTextField(labelWithString: "Not affiliated with Anthropic")
         disclaimerLabel.frame = NSRect(
             x: 0,
-            y: bottomBarY + 26,
+            y: bounds.height + 22,
             width: bounds.width,
             height: 14
         )
