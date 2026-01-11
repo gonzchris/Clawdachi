@@ -432,6 +432,7 @@ class SettingsButton: NSView {
     private typealias C = SettingsConstants
 
     var title: String
+    var icon: NSImage?
     var isHovered: Bool = false
 
     weak var target: AnyObject?
@@ -439,14 +440,16 @@ class SettingsButton: NSView {
 
     private var trackingArea: NSTrackingArea?
 
-    init(frame: NSRect, title: String) {
+    init(frame: NSRect, title: String, icon: NSImage? = nil) {
         self.title = title
+        self.icon = icon
         super.init(frame: frame)
         setupTracking()
     }
 
     required init?(coder: NSCoder) {
         self.title = ""
+        self.icon = nil
         super.init(coder: coder)
         setupTracking()
     }
@@ -487,12 +490,27 @@ class SettingsButton: NSView {
             .foregroundColor: textColor
         ]
         let str = NSAttributedString(string: title, attributes: attrs)
-        let size = str.size()
-        let point = NSPoint(
-            x: (bounds.width - size.width) / 2,
-            y: (bounds.height - size.height) / 2
-        )
-        str.draw(at: point)
+        let textSize = str.size()
+
+        // Calculate layout with optional icon
+        let iconSize: CGFloat = 12
+        let iconSpacing: CGFloat = 4
+        let hasIcon = icon != nil
+
+        let totalWidth = hasIcon ? (iconSize + iconSpacing + textSize.width) : textSize.width
+        let startX = (bounds.width - totalWidth) / 2
+
+        // Draw icon if present
+        if let icon = icon {
+            let iconY = (bounds.height - iconSize) / 2
+            let iconRect = NSRect(x: startX, y: iconY, width: iconSize, height: iconSize)
+            icon.draw(in: iconRect)
+        }
+
+        // Draw text
+        let textX = hasIcon ? (startX + iconSize + iconSpacing) : startX
+        let textY = (bounds.height - textSize.height) / 2
+        str.draw(at: NSPoint(x: textX, y: textY))
     }
 
     override func mouseEntered(with event: NSEvent) {

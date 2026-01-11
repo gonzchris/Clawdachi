@@ -221,9 +221,6 @@ class ClaudeHooksView: NSView {
         for (index, terminal) in terminals.enumerated() {
             let button = NSButton(frame: NSRect(x: buttonX, y: buttonY, width: buttonWidth, height: buttonHeight))
             button.setButtonType(.radio)
-            button.title = terminal.displayName
-            button.font = NSFont.monospacedSystemFont(ofSize: C.terminalFontSize + 1, weight: .regular)
-            button.contentTintColor = C.textColor
             button.tag = index
             button.target = self
             button.action = #selector(terminalButtonClicked(_:))
@@ -231,10 +228,16 @@ class ClaudeHooksView: NSView {
             // Check if terminal is installed
             let isInstalled = ClaudeLauncher.shared.isTerminalInstalled(terminal)
             button.isEnabled = isInstalled
-            if !isInstalled {
-                button.contentTintColor = C.textDimColor
-                button.title = "\(terminal.displayName) (n/a)"
-            }
+
+            // Use attributedTitle for proper text color (contentTintColor doesn't work for radio buttons)
+            let titleText = isInstalled ? terminal.displayName : "\(terminal.displayName) (n/a)"
+            let titleColor = isInstalled ? C.textColor : C.textDimColor
+            let font = NSFont.monospacedSystemFont(ofSize: C.terminalFontSize + 1, weight: .regular)
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: titleColor
+            ]
+            button.attributedTitle = NSAttributedString(string: titleText, attributes: attrs)
 
             addSubview(button)
             terminalButtons.append(button)

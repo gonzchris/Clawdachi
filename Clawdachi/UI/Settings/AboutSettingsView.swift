@@ -18,6 +18,7 @@ class AboutSettingsView: NSView {
     private var versionLabel: NSTextField!
     private var descriptionLabel: NSTextField!
     private var websiteButton: SettingsButton!
+    private var githubButton: SettingsButton!
     private var clawdachiButton: SettingsButton!
     private var twitterButton: SettingsButton!
 
@@ -94,9 +95,17 @@ class AboutSettingsView: NSView {
         addSubview(websiteButton)
         buttonX += 110
 
+        // GitHub button
+        let githubFrame = NSRect(x: buttonX, y: buttonY, width: 70, height: 24)
+        githubButton = SettingsButton(frame: githubFrame, title: "GitHub")
+        githubButton.target = self
+        githubButton.action = #selector(githubClicked)
+        addSubview(githubButton)
+        buttonX += 80
+
         // Clawdachi Twitter button
         let clawdachiFrame = NSRect(x: buttonX, y: buttonY, width: 100, height: 24)
-        clawdachiButton = SettingsButton(frame: clawdachiFrame, title: "𝕏 @clawdachi")
+        clawdachiButton = SettingsButton(frame: clawdachiFrame, title: "@clawdachi")
         clawdachiButton.target = self
         clawdachiButton.action = #selector(clawdachiClicked)
         addSubview(clawdachiButton)
@@ -104,7 +113,7 @@ class AboutSettingsView: NSView {
 
         // Chris Twitter button
         let twitterFrame = NSRect(x: buttonX, y: buttonY, width: 120, height: 24)
-        twitterButton = SettingsButton(frame: twitterFrame, title: "𝕏 @chrisgonzalez")
+        twitterButton = SettingsButton(frame: twitterFrame, title: "@chrisgonzalez")
         twitterButton.target = self
         twitterButton.action = #selector(twitterClicked)
         addSubview(twitterButton)
@@ -114,6 +123,12 @@ class AboutSettingsView: NSView {
 
     @objc private func websiteClicked() {
         if let url = URL(string: "https://clawdachi.app") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    @objc private func githubClicked() {
+        if let url = URL(string: "https://github.com/gonzchris/Clawdachi") {
             NSWorkspace.shared.open(url)
         }
     }
