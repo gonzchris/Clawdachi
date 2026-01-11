@@ -33,7 +33,6 @@ class ClaudeHooksView: NSView {
     private var skView: SKView!
     private var previewScene: SKScene!
     private var previewSprite: ClawdachiSprite!
-    private var greetingLabel: NSTextField!
 
     // Reaction descriptions
     private var reactionLabels: [NSTextField] = []
@@ -135,15 +134,6 @@ class ClaudeHooksView: NSView {
         previewScene.addChild(previewSprite)
 
         skView.presentScene(previewScene)
-
-        // Greeting label above preview (hidden initially, shown on first view)
-        greetingLabel = NSTextField(labelWithString: "> hi")
-        greetingLabel.frame = NSRect(x: previewX, y: contentY + 15, width: previewSize, height: 18)
-        greetingLabel.font = NSFont.monospacedSystemFont(ofSize: C.terminalFontSize, weight: .bold)
-        greetingLabel.textColor = C.accentColor
-        greetingLabel.alignment = .center
-        greetingLabel.alphaValue = 0
-        addSubview(greetingLabel)
     }
 
     // MARK: - Reaction List (Below Preview)
@@ -318,21 +308,9 @@ class ClaudeHooksView: NSView {
         previewSprite?.regenerateTextures()
         previewSprite?.startAnimations()
 
-        // Show greeting first
-        greetingLabel.alphaValue = 0
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.3
-            greetingLabel.animator().alphaValue = 1
-        }
-
-        // After delay, fade out greeting and start demo cycle
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.3
-                self?.greetingLabel.animator().alphaValue = 0
-            } completionHandler: {
-                self?.startDemoCycle()
-            }
+        // Start demo cycle after a short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.startDemoCycle()
         }
     }
 

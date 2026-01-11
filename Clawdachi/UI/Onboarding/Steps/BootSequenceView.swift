@@ -29,6 +29,7 @@ class BootSequenceView: NSView {
     private var spriteScene: SKScene!
     private var miniSprite: ClawdachiSprite!
     private var versionLabel: NSTextField!
+    private var greetingLabel: NSTextField!
     private var readyButton: NSButton!
 
     private var isAnimating = false
@@ -52,6 +53,7 @@ class BootSequenceView: NSView {
         setupLogo()
         setupMiniSprite()
         setupVersion()
+        setupGreeting()
         setupReadyButton()
     }
 
@@ -147,6 +149,30 @@ class BootSequenceView: NSView {
         addSubview(versionLabel)
     }
 
+    private func setupGreeting() {
+        let greeting = ClawdachiMessages.greetingForCurrentTime()
+        greetingLabel = NSTextField(labelWithString: greeting)
+        greetingLabel.frame = NSRect(
+            x: 0,
+            y: (bounds.height - 180) / 2 + 180,  // Below the version label
+            width: bounds.width,
+            height: 20
+        )
+        greetingLabel.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .bold)
+        greetingLabel.textColor = C.accentColor
+        greetingLabel.alignment = .center
+        greetingLabel.alphaValue = 0
+
+        // Phosphor glow effect
+        greetingLabel.wantsLayer = true
+        greetingLabel.layer?.shadowColor = C.accentColor.cgColor
+        greetingLabel.layer?.shadowOffset = .zero
+        greetingLabel.layer?.shadowRadius = 6
+        greetingLabel.layer?.shadowOpacity = 0.5
+
+        addSubview(greetingLabel)
+    }
+
     private func setupReadyButton() {
         readyButton = NSButton(frame: NSRect(
             x: (bounds.width - 250) / 2,
@@ -224,6 +250,7 @@ class BootSequenceView: NSView {
         logoLabel.alphaValue = 0
         spriteContainer.alphaValue = 0
         versionLabel.alphaValue = 0
+        greetingLabel.alphaValue = 0
         readyButton.alphaValue = 0
 
         // Start showing logo
@@ -281,8 +308,16 @@ class BootSequenceView: NSView {
             }
         }
 
+        // Fade in greeting after version
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.25
+                self?.greetingLabel.animator().alphaValue = 1.0
+            }
+        }
+
         // Show ready button after a short delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.showReadyButton()
         }
     }
