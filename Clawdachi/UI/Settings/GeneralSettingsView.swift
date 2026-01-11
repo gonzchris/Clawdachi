@@ -82,15 +82,17 @@ class GeneralSettingsView: NSView {
         terminalLabel.textColor = C.textColor
         addSubview(terminalLabel)
 
-        // Radio buttons for each terminal
+        // Radio buttons for each terminal - inline horizontally
         let terminals = ClaudeLauncher.Terminal.allCases
-        var buttonY: CGFloat = 185
+        var buttonX: CGFloat = 20
+        let buttonY: CGFloat = 185
 
         for (index, terminal) in terminals.enumerated() {
             let isInstalled = ClaudeLauncher.shared.isTerminalInstalled(terminal)
             let title = isInstalled ? terminal.displayName : "\(terminal.displayName) (n/a)"
 
-            let button = NSButton(frame: NSRect(x: 20, y: buttonY, width: 150, height: 20))
+            let buttonWidth: CGFloat = isInstalled ? 80 : 100
+            let button = NSButton(frame: NSRect(x: buttonX, y: buttonY, width: buttonWidth, height: 20))
             button.setButtonType(.radio)
             button.title = title
             button.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
@@ -109,7 +111,7 @@ class GeneralSettingsView: NSView {
 
             addSubview(button)
             terminalButtons.append(button)
-            buttonY += 24
+            buttonX += buttonWidth + 10
         }
     }
 

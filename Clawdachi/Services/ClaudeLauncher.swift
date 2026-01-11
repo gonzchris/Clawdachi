@@ -160,14 +160,13 @@ class ClaudeLauncher {
             var seenPaths = Set<String>()
 
             for file in jsonFiles {
-                guard let data = try? Data(contentsOf: file),
-                      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                      let cwdString = json["cwd"] as? String,
-                      let timestamp = json["timestamp"] as? Double else {
+                guard let session = SessionDataParser.parse(from: file),
+                      let cwdString = session.cwd else {
                     continue
                 }
 
                 let path = URL(fileURLWithPath: cwdString)
+                let timestamp = session.timestamp
 
                 // Skip duplicates (keep most recent)
                 guard !seenPaths.contains(cwdString) else { continue }
