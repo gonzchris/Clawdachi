@@ -25,6 +25,7 @@ On first launch, Clawdachi will ask to install hooks to `~/.claude/settings.json
 
 ## Other Features
 
+- **Customization** - Dress up with hats, outfits, and accessories
 - **Idle animations** - Breathing, blinking, whistling, eye tracking, and more
 - **Music-reactive dancing** - Detects Spotify and Apple Music playback
 - **Click interactions** - Waves, bounces, shows hearts
