@@ -19,7 +19,7 @@ class TerminalTabTitleService {
 
     private var titleCache: [String: String] = [:]  // tty -> title
     private var lastFetchTime: [String: Date] = [:]
-    private let cacheDuration: TimeInterval = 2.0  // Refresh every 2 seconds
+    private let cacheDuration: TimeInterval = AnimationTimings.terminalTitleCacheDuration
 
     // MARK: - Public API
 

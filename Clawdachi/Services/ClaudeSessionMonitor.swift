@@ -94,10 +94,8 @@ class ClaudeSessionMonitor: PollingService {
         }
     }
 
-    /// For hysteresis in anyActive mode - prevents flickering between equal-priority sessions
-    private var lastMonitoredSessionId: String?
-    private var lastMonitoredTime: Date?
-    private let stickinessInterval: TimeInterval = 5.0
+    /// Session selector for "any active" mode
+    private let sessionSelector = MostActiveSessionSelector()
 
     /// Callback when session status changes (isActive, status, sessionId)
     var onStatusChanged: ((Bool, String?, String?) -> Void)?
@@ -111,19 +109,13 @@ class ClaudeSessionMonitor: PollingService {
     // MARK: - PollingService
 
     var pollTimer: Timer?
-    let pollInterval: TimeInterval = 2.0
+    let pollInterval: TimeInterval = AnimationTimings.claudeSessionPollInterval
 
     /// Sessions directory path
     private let sessionsPath: URL
 
-    /// Last known directory modification date (for change detection)
-    private var lastDirectoryModDate: Date?
-
-    /// Cached file modification dates (filename -> modDate)
-    private var fileModDates: [String: Date] = [:]
-
-    /// Cached parsed sessions (filename -> SessionInfo)
-    private var cachedSessions: [String: SessionInfo] = [:]
+    /// Session file cache for avoiding redundant parsing
+    private let cache = SessionFileCache()
 
     /// Serial queue for thread-safe cache access
     private let cacheQueue = DispatchQueue(label: "com.clawdachi.sessioncache")
@@ -251,8 +243,8 @@ class ClaudeSessionMonitor: PollingService {
     private func updateDirectoryModDate() {
         let dirAttributes = try? FileManager.default.attributesOfItem(atPath: sessionsPath.path)
         let dirModDate = dirAttributes?[.modificationDate] as? Date
-        if dirModDate != lastDirectoryModDate {
-            lastDirectoryModDate = dirModDate
+        if dirModDate != cache.directoryModDate {
+            cache.updateDirectoryModDate(dirModDate)
         }
     }
 
@@ -273,7 +265,7 @@ class ClaudeSessionMonitor: PollingService {
         let fileModDate = fileAttributes?.contentModificationDate
 
         // Try to use cached session if file hasn't changed
-        if let session = getCachedSession(filename: filename, currentModDate: fileModDate) {
+        if let session = cache.get(filename: filename, modDate: fileModDate) {
             return validateSession(session, file: file)
         }
 
@@ -283,20 +275,9 @@ class ClaudeSessionMonitor: PollingService {
         }
 
         // Update cache
-        cachedSessions[filename] = session
-        fileModDates[filename] = fileModDate
+        cache.set(session, filename: filename, modDate: fileModDate)
 
         return validateSession(session, file: file)
-    }
-
-    private func getCachedSession(filename: String, currentModDate: Date?) -> SessionInfo? {
-        guard let cachedModDate = fileModDates[filename],
-              let currentModDate = currentModDate,
-              cachedModDate == currentModDate,
-              let cachedSession = cachedSessions[filename] else {
-            return nil
-        }
-        return cachedSession
     }
 
     private func validateSession(_ session: SessionInfo, file: URL) -> SessionValidationResult {
@@ -365,34 +346,8 @@ class ClaudeSessionMonitor: PollingService {
             return sessions.first { $0.id == sessionId }
 
         case .anyActive:
-            return selectMostActiveSession(from: sessions)
+            return sessionSelector.select(from: sessions)
         }
-    }
-
-    private func selectMostActiveSession(from sessions: [SessionInfo]) -> SessionInfo? {
-        // Sort by activity priority (desc), then timestamp (desc)
-        let sortedByPriority = sessions.sorted { lhs, rhs in
-            if lhs.activityPriority != rhs.activityPriority {
-                return lhs.activityPriority > rhs.activityPriority
-            }
-            return lhs.timestamp > rhs.timestamp
-        }
-
-        guard let topSession = sortedByPriority.first else { return nil }
-
-        // Apply hysteresis to prevent flickering between equal-priority sessions
-        if let lastId = lastMonitoredSessionId,
-           let currentSession = sessions.first(where: { $0.id == lastId }),
-           currentSession.activityPriority >= topSession.activityPriority,
-           let lastTime = lastMonitoredTime,
-           Date().timeIntervalSince(lastTime) < stickinessInterval {
-            return currentSession
-        }
-
-        // Switch to new top session
-        lastMonitoredSessionId = topSession.id
-        lastMonitoredTime = Date()
-        return topSession
     }
 
     // MARK: - Cache Management
@@ -400,24 +355,16 @@ class ClaudeSessionMonitor: PollingService {
     private func cleanupStaleFiles(_ files: [URL]) {
         for file in files {
             try? FileManager.default.removeItem(at: file)
-            let filename = file.lastPathComponent
-            cachedSessions.removeValue(forKey: filename)
-            fileModDates.removeValue(forKey: filename)
+            cache.remove(filename: file.lastPathComponent)
         }
     }
 
     private func cleanupOrphanedCache(currentFilenames: Set<String>) {
-        let orphanedFiles = Set(cachedSessions.keys).subtracting(currentFilenames)
-        for filename in orphanedFiles {
-            cachedSessions.removeValue(forKey: filename)
-            fileModDates.removeValue(forKey: filename)
-        }
+        cache.cleanupOrphaned(currentFilenames: currentFilenames)
     }
 
     private func clearCache() {
-        lastDirectoryModDate = nil
-        fileModDates.removeAll()
-        cachedSessions.removeAll()
+        cache.clear()
     }
 
     // MARK: - State Update

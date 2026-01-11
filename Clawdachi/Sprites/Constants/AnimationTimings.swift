@@ -145,6 +145,17 @@ enum AnimationTimings {
     /// Set to 90s to allow for slight delays while still cleaning up crashed sessions quickly.
     static let sessionStalenessThreshold: TimeInterval = 90.0
 
+    // MARK: - Polling Intervals
+
+    /// Interval for polling music playback status (Spotify/Apple Music)
+    static let musicPlaybackPollInterval: TimeInterval = 3.5
+
+    /// Interval for polling Claude session status files
+    static let claudeSessionPollInterval: TimeInterval = 2.0
+
+    /// Cache duration for terminal tab titles
+    static let terminalTitleCacheDuration: TimeInterval = 2.0
+
     // MARK: - Claude Planning Animation
 
     /// Min interval between planning spark spawns

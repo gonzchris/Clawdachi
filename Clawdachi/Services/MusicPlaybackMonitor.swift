@@ -21,7 +21,7 @@ class MusicPlaybackMonitor: PollingService {
     // MARK: - PollingService
 
     var pollTimer: Timer?
-    let pollInterval: TimeInterval = 3.5
+    let pollInterval: TimeInterval = AnimationTimings.musicPlaybackPollInterval
 
     // MARK: - Initialization
 
