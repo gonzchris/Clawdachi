@@ -110,7 +110,7 @@ class ClaudeHooksView: NSView {
         // Calculate center of the reaction list content to center sprite above it
         // Reaction list: action (105) + arrow (20) + desc (250) = ~375px wide
         // Center should align with the arrow position
-        let reactionListCenterX: CGFloat = 280
+        let reactionListCenterX: CGFloat = 375
         let previewX = reactionListCenterX - previewSize / 2
 
         previewContainer = NSView(frame: NSRect(
