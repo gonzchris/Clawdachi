@@ -182,17 +182,31 @@ jobs:
         with:
           name: Clawdachi v${{ steps.version.outputs.version }}
           body: |
-            ## Clawdachi v${{ steps.version.outputs.version }}
+            A pixel art desktop companion for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). A friendly blob that lives on your screen, reacts to Claude's activity, and keeps you company while you code.
 
-            A cute pixel art desktop pet for macOS.
+            ## Installation
 
-            ### Installation
-            1. Download the DMG file below
+            1. Download `Clawdachi-${{ steps.version.outputs.version }}.dmg` below
             2. Open the DMG and drag Clawdachi to your Applications folder
             3. Launch Clawdachi from Applications
+            4. Grant permissions when prompted (accessibility for Claude integration)
 
-            ### What's New
-            See commit history for details.
+            ## Requirements
+
+            - macOS 14.0 (Sonoma) or later
+            - Works with Terminal and iTerm2
+
+            ## Features
+
+            - **Claude Code integration** - Reacts when Claude is thinking, planning, or waiting for input
+            - **Customization** - Change colors, add hats, outfits, and accessories
+            - **Music-reactive dancing** - Detects Spotify and Apple Music
+            - **Idle animations** - Breathing, blinking, whistling, and more
+            - **Interactive** - Click, drag, and play with your companion
+
+            ## First Launch
+
+            On first launch, Clawdachi will guide you through setup and ask to install Claude Code hooks. This enables the thinking/planning animations when you use Claude Code in your terminal.
           files: |
             ${{ runner.temp }}/Clawdachi-${{ steps.version.outputs.version }}.dmg
           draft: false
