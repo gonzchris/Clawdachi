@@ -2,9 +2,15 @@
 
 A pixel art desktop companion for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). A friendly orange blob that lives on your screen, reacts to Claude's activity, and keeps you company while you code.
 
+<p align="center">
+  <img src="demo.gif" alt="Clawdachi demo" width="200">
+</p>
+
 ![macOS](https://img.shields.io/badge/macOS-14.0+-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 ![License](https://img.shields.io/badge/License-MIT-green)
+
+**Works with:** Terminal, iTerm2
 
 ## Claude Code Integration
 
