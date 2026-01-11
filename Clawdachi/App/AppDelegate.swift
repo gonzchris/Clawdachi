@@ -132,8 +132,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Set as window content
         window.contentView = skView
 
-        // Set up debug menu
+        // Set up debug menu (only in debug builds)
+        #if DEBUG
         DebugMenuController.shared.setupDebugMenu(scene: scene!)
+        #endif
 
         // Observe window movement to save position
         NotificationCenter.default.addObserver(
