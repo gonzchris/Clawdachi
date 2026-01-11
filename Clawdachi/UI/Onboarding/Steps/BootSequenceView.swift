@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import SpriteKit
 
 /// Delegate for boot sequence completion
 protocol BootSequenceViewDelegate: AnyObject {
@@ -23,6 +24,10 @@ class BootSequenceView: NSView {
     weak var delegate: BootSequenceViewDelegate?
 
     private var logoLabel: NSTextField!
+    private var spriteContainer: NSView!
+    private var skView: SKView!
+    private var spriteScene: SKScene!
+    private var miniSprite: ClawdachiSprite!
     private var versionLabel: NSTextField!
     private var readyButton: NSButton!
 
@@ -45,6 +50,7 @@ class BootSequenceView: NSView {
         wantsLayer = true
 
         setupLogo()
+        setupMiniSprite()
         setupVersion()
         setupReadyButton()
     }
@@ -83,12 +89,46 @@ class BootSequenceView: NSView {
         addSubview(logoLabel)
     }
 
+    private func setupMiniSprite() {
+        let containerSize: CGFloat = 64  // Container size for the sprite
+        let spriteY = (bounds.height - 180) / 2 + 138  // Below logo
+
+        // Container view
+        spriteContainer = NSView(frame: NSRect(
+            x: (bounds.width - containerSize) / 2,
+            y: spriteY,
+            width: containerSize,
+            height: containerSize
+        ))
+        spriteContainer.wantsLayer = true
+        spriteContainer.alphaValue = 0
+        addSubview(spriteContainer)
+
+        // SpriteKit view
+        skView = SKView(frame: NSRect(x: 0, y: 0, width: containerSize, height: containerSize))
+        skView.allowsTransparency = true
+        spriteContainer.addSubview(skView)
+
+        // Create scene
+        let sceneSize: CGFloat = 40
+        spriteScene = SKScene(size: CGSize(width: sceneSize, height: sceneSize))
+        spriteScene.backgroundColor = .clear
+        spriteScene.scaleMode = .aspectFit
+
+        // Create the actual sprite
+        miniSprite = ClawdachiSprite()
+        miniSprite.position = CGPoint(x: sceneSize / 2, y: sceneSize / 2 - 2)
+        spriteScene.addChild(miniSprite)
+
+        skView.presentScene(spriteScene)
+    }
+
     private func setupVersion() {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
         versionLabel = NSTextField(labelWithString: "v\(version)")
         versionLabel.frame = NSRect(
             x: 0,
-            y: (bounds.height - 180) / 2 + 145,  // Below the logo
+            y: (bounds.height - 180) / 2 + 190,  // Below the mini sprite
             width: bounds.width,
             height: 20
         )
@@ -182,6 +222,7 @@ class BootSequenceView: NSView {
         currentLogoLine = 0
         logoLabel.stringValue = ""
         logoLabel.alphaValue = 0
+        miniSpriteView.alphaValue = 0
         versionLabel.alphaValue = 0
         readyButton.alphaValue = 0
 
@@ -223,14 +264,22 @@ class BootSequenceView: NSView {
     }
 
     private func finishAnimation() {
-        // Fade in version
+        // Fade in mini sprite
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2
-            versionLabel.animator().alphaValue = 1.0
+            miniSpriteView.animator().alphaValue = 1.0
+        }
+
+        // Fade in version after sprite
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.2
+                self?.versionLabel.animator().alphaValue = 1.0
+            }
         }
 
         // Show ready button after a short delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
             self?.showReadyButton()
         }
     }
@@ -243,5 +292,125 @@ class BootSequenceView: NSView {
             self?.isAnimating = false
             self?.delegate?.bootSequenceDidComplete()
         }
+    }
+
+    // MARK: - Mini Sprite Generation
+
+    /// Generates a mini static sprite image for the boot sequence
+    private func generateMiniSpriteImage(size: CGFloat) -> NSImage {
+        let image = NSImage(size: NSSize(width: size, height: size), flipped: false) { rect in
+            NSColor.clear.setFill()
+            rect.fill()
+
+            // Pixel scale (size / sprite logical size of ~24 pixels)
+            let pixelSize = size / 24
+
+            // Colors matching ClawdachiPalette (hardcoded for boot sequence)
+            let primaryOrange = NSColor(red: 255/255, green: 153/255, blue: 51/255, alpha: 1.0)
+            let shadowOrange = NSColor(red: 204/255, green: 102/255, blue: 0/255, alpha: 1.0)
+            let highlightOrange = NSColor(red: 255/255, green: 187/255, blue: 119/255, alpha: 1.0)
+            let eyeColor = NSColor(red: 34/255, green: 34/255, blue: 34/255, alpha: 1.0)
+
+            // Helper to draw a pixel
+            func drawPixel(x: Int, y: Int, color: NSColor) {
+                color.setFill()
+                CGRect(
+                    x: CGFloat(x) * pixelSize,
+                    y: CGFloat(y) * pixelSize,
+                    width: pixelSize,
+                    height: pixelSize
+                ).fill()
+            }
+
+            // Body (centered blob, rows 4-16, centered around x=12)
+            let bodyWidth = 9  // Half-width
+            for row in 4...16 {
+                var width = bodyWidth
+                // Round corners at top and bottom
+                if row == 4 || row == 16 {
+                    width = bodyWidth - 1
+                }
+
+                let left = 12 - width
+                let right = 12 + width - 1
+
+                for x in left...right {
+                    // Left edge shadow
+                    if x < left + 2 {
+                        drawPixel(x: x, y: row, color: shadowOrange)
+                    }
+                    // Right edge highlight
+                    else if x > right - 2 {
+                        drawPixel(x: x, y: row, color: highlightOrange)
+                    }
+                    // Top highlight
+                    else if row >= 15 {
+                        drawPixel(x: x, y: row, color: highlightOrange)
+                    }
+                    // Bottom shadow
+                    else if row == 4 {
+                        drawPixel(x: x, y: row, color: shadowOrange)
+                    }
+                    // Main body
+                    else {
+                        drawPixel(x: x, y: row, color: primaryOrange)
+                    }
+                }
+            }
+
+            // Left arm (3x2, attached at left side)
+            for row in 9...10 {
+                drawPixel(x: 1, y: row, color: shadowOrange)
+                drawPixel(x: 2, y: row, color: primaryOrange)
+                drawPixel(x: 3, y: row, color: primaryOrange)
+            }
+
+            // Right arm (3x2, attached at right side)
+            for row in 9...10 {
+                drawPixel(x: 20, y: row, color: primaryOrange)
+                drawPixel(x: 21, y: row, color: primaryOrange)
+                drawPixel(x: 22, y: row, color: highlightOrange)
+            }
+
+            // Left leg (2x4)
+            for row in 0...3 {
+                if row == 0 {
+                    drawPixel(x: 7, y: row, color: shadowOrange)
+                    drawPixel(x: 8, y: row, color: shadowOrange)
+                } else {
+                    drawPixel(x: 7, y: row, color: shadowOrange)
+                    drawPixel(x: 8, y: row, color: primaryOrange)
+                }
+            }
+
+            // Right leg (2x4)
+            for row in 0...3 {
+                if row == 0 {
+                    drawPixel(x: 15, y: row, color: shadowOrange)
+                    drawPixel(x: 16, y: row, color: shadowOrange)
+                } else {
+                    drawPixel(x: 15, y: row, color: primaryOrange)
+                    drawPixel(x: 16, y: row, color: highlightOrange)
+                }
+            }
+
+            // Eyes (3x3 each, positioned in upper body)
+            // Left eye
+            for row in 11...13 {
+                for x in 8...10 {
+                    drawPixel(x: x, y: row, color: eyeColor)
+                }
+            }
+            // Right eye
+            for row in 11...13 {
+                for x in 13...15 {
+                    drawPixel(x: x, y: row, color: eyeColor)
+                }
+            }
+
+            return true
+        }
+
+        return image
     }
 }

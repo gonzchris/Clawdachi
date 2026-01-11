@@ -11,6 +11,9 @@ env:
   APP_NAME: Clawdachi
   BUNDLE_ID: co.solobuilt.Clawdachi
 
+permissions:
+  contents: write
+
 jobs:
   build-and-release:
     runs-on: macos-14
