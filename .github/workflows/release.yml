@@ -134,7 +134,6 @@ jobs:
           # Create DMG with create-dmg
           create-dmg \
             --volname "$APP_NAME" \
-            --volicon "$RUNNER_TEMP/export/$APP_NAME.app/Contents/Resources/AppIcon.icns" \
             --background "scripts/dmg-background.png" \
             --window-pos 200 120 \
             --window-size 540 380 \
