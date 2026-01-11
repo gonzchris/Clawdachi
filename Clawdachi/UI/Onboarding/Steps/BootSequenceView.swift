@@ -28,9 +28,12 @@ class BootSequenceView: NSView {
     private var skView: SKView!
     private var spriteScene: SKScene!
     private var miniSprite: ClawdachiSprite!
-    private var versionLabel: NSTextField!
     private var greetingLabel: NSTextField!
     private var readyButton: NSButton!
+
+    // Bottom bar elements (only shown in boot view)
+    private var versionLabel: NSTextField!
+    private var disclaimerLabel: NSTextField!
 
     private var isAnimating = false
     private var currentLogoLine = 0
@@ -52,9 +55,9 @@ class BootSequenceView: NSView {
 
         setupLogo()
         setupMiniSprite()
-        setupVersion()
         setupGreeting()
         setupReadyButton()
+        setupBottomBarElements()
     }
 
     override var isFlipped: Bool { true }
@@ -125,40 +128,19 @@ class BootSequenceView: NSView {
         skView.presentScene(spriteScene)
     }
 
-    private func setupVersion() {
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-        versionLabel = NSTextField(labelWithString: "v\(version)")
-        versionLabel.frame = NSRect(
-            x: 0,
-            y: (bounds.height - 180) / 2 + 155,  // Below the mini sprite
-            width: bounds.width,
-            height: 20
-        )
-        versionLabel.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
-        versionLabel.textColor = C.textDimColor
-        versionLabel.alignment = .center
-        versionLabel.alphaValue = 0
-
-        // Subtle phosphor glow
-        versionLabel.wantsLayer = true
-        versionLabel.layer?.shadowColor = C.textDimColor.cgColor
-        versionLabel.layer?.shadowOffset = .zero
-        versionLabel.layer?.shadowRadius = 4
-        versionLabel.layer?.shadowOpacity = 0.4
-
-        addSubview(versionLabel)
-    }
-
     private func setupGreeting() {
         let greeting = ClawdachiMessages.greetingForCurrentTime()
         greetingLabel = NSTextField(labelWithString: greeting)
+
+        // Position above the sprite's head
+        let spriteY = (bounds.height - 180) / 2 + 105
         greetingLabel.frame = NSRect(
             x: 0,
-            y: (bounds.height - 180) / 2 + 180,  // Below the version label
+            y: spriteY - 18,  // Above the sprite
             width: bounds.width,
-            height: 20
+            height: 18
         )
-        greetingLabel.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .bold)
+        greetingLabel.font = NSFont.monospacedSystemFont(ofSize: C.terminalFontSize, weight: .bold)
         greetingLabel.textColor = C.accentColor
         greetingLabel.alignment = .center
         greetingLabel.alphaValue = 0
@@ -208,6 +190,40 @@ class BootSequenceView: NSView {
         addSubview(readyButton)
     }
 
+    private func setupBottomBarElements() {
+        // Bottom bar Y position (content area ends, bottom bar begins)
+        let bottomBarY = bounds.height
+
+        // Version label - centered in bottom bar
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        versionLabel = NSTextField(labelWithString: "v\(version)")
+        versionLabel.frame = NSRect(
+            x: 0,
+            y: bottomBarY + 8,
+            width: bounds.width,
+            height: 16
+        )
+        versionLabel.font = NSFont.monospacedSystemFont(ofSize: 10, weight: .regular)
+        versionLabel.textColor = C.textDimColor
+        versionLabel.alignment = .center
+        versionLabel.alphaValue = 0
+        addSubview(versionLabel)
+
+        // Disclaimer - small text at bottom right
+        disclaimerLabel = NSTextField(labelWithString: "Not affiliated with Anthropic")
+        disclaimerLabel.frame = NSRect(
+            x: 0,
+            y: bottomBarY + 26,
+            width: bounds.width,
+            height: 14
+        )
+        disclaimerLabel.font = NSFont.monospacedSystemFont(ofSize: 9, weight: .regular)
+        disclaimerLabel.textColor = C.textDimColor.withAlphaComponent(0.6)
+        disclaimerLabel.alignment = .center
+        disclaimerLabel.alphaValue = 0
+        addSubview(disclaimerLabel)
+    }
+
     // MARK: - Mouse Handling
 
     override func mouseEntered(with event: NSEvent) {
@@ -249,9 +265,10 @@ class BootSequenceView: NSView {
         logoLabel.stringValue = ""
         logoLabel.alphaValue = 0
         spriteContainer.alphaValue = 0
-        versionLabel.alphaValue = 0
         greetingLabel.alphaValue = 0
         readyButton.alphaValue = 0
+        versionLabel.alphaValue = 0
+        disclaimerLabel.alphaValue = 0
 
         // Start showing logo
         showNextLogoLine()
@@ -291,33 +308,27 @@ class BootSequenceView: NSView {
     }
 
     private func finishAnimation() {
-        // Start sprite animations and fade in
+        // Start sprite animations and fade in sprite + greeting together
         miniSprite?.regenerateTextures()
         miniSprite?.startAnimations()
 
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2
             spriteContainer.animator().alphaValue = 1.0
+            greetingLabel.animator().alphaValue = 1.0
         }
 
-        // Fade in version after sprite
+        // Fade in bottom bar elements
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = 0.2
                 self?.versionLabel.animator().alphaValue = 1.0
-            }
-        }
-
-        // Fade in greeting after version
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.25
-                self?.greetingLabel.animator().alphaValue = 1.0
+                self?.disclaimerLabel.animator().alphaValue = 1.0
             }
         }
 
         // Show ready button after a short delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
             self?.showReadyButton()
         }
     }
