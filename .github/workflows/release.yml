@@ -22,7 +22,7 @@ jobs:
 
       # Step 2: Select Xcode version
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+        run: sudo xcode-select -s /Applications/Xcode_16.1.app/Contents/Developer
 
       # Step 3: Extract version from tag
       - name: Extract version from tag
