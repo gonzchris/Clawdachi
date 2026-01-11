@@ -210,7 +210,7 @@ class ClaudeHooksView: NSView {
         addSubview(terminalHeader)
 
         // Terminal buttons - stacked vertically, centered under header
-        let terminals: [ClaudeLauncher.Terminal] = [.terminalApp, .iTerm, .ghostty]
+        let terminals: [ClaudeLauncher.Terminal] = [.terminalApp, .iTerm]
         let buttonWidth: CGFloat = 150
         let buttonHeight: CGFloat = 24
         let buttonSpacing: CGFloat = 8
@@ -242,7 +242,7 @@ class ClaudeHooksView: NSView {
     }
 
     @objc private func terminalButtonClicked(_ sender: NSButton) {
-        let terminals: [ClaudeLauncher.Terminal] = [.terminalApp, .iTerm, .ghostty]
+        let terminals: [ClaudeLauncher.Terminal] = [.terminalApp, .iTerm]
         guard sender.tag < terminals.count else { return }
 
         selectedTerminal = terminals[sender.tag]
@@ -251,7 +251,7 @@ class ClaudeHooksView: NSView {
     }
 
     private func updateTerminalSelection() {
-        let terminals: [ClaudeLauncher.Terminal] = [.terminalApp, .iTerm, .ghostty]
+        let terminals: [ClaudeLauncher.Terminal] = [.terminalApp, .iTerm]
         for (index, button) in terminalButtons.enumerated() {
             button.state = terminals[index] == selectedTerminal ? .on : .off
         }

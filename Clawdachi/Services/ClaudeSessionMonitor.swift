@@ -231,20 +231,8 @@ class ClaudeSessionMonitor: PollingService {
             // Update sessions with tab titles
             sessions = sessions.map { session in
                 var updated = session
-
-                // First try TTY-based matching (works for Terminal.app and iTerm2)
                 if let tty = session.tty, let title = tabTitles[tty] {
                     updated.tabTitle = title
-                } else if let cwd = session.cwd {
-                    // Fallback: Try to match Ghostty windows by project directory name
-                    let projectName = (cwd as NSString).lastPathComponent
-                    for (key, title) in tabTitles where key.hasPrefix("ghostty:") {
-                        // Check if the Ghostty window title contains the project name
-                        if key.contains(projectName) {
-                            updated.tabTitle = title
-                            break
-                        }
-                    }
                 }
                 return updated
             }

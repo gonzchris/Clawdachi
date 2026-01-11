@@ -17,13 +17,11 @@ class ClaudeLauncher {
     enum Terminal: String, CaseIterable {
         case terminalApp = "Terminal"
         case iTerm = "iTerm"
-        case ghostty = "Ghostty"
 
         var bundleIdentifier: String {
             switch self {
             case .terminalApp: return "com.apple.Terminal"
             case .iTerm: return "com.googlecode.iterm2"
-            case .ghostty: return "com.mitchellh.ghostty"
             }
         }
 
@@ -31,7 +29,6 @@ class ClaudeLauncher {
             switch self {
             case .terminalApp: return "Terminal"
             case .iTerm: return "iTerm2"
-            case .ghostty: return "Ghostty"
             }
         }
     }
@@ -132,20 +129,6 @@ class ClaudeLauncher {
                     write text "cd '\(escapedPath)' && claude"
                 end tell
                 activate
-            end tell
-            """
-
-        case .ghostty:
-            return """
-            tell application "Ghostty"
-                activate
-            end tell
-            delay 0.3
-            tell application "System Events"
-                tell process "Ghostty"
-                    keystroke "cd '\(escapedPath)' && claude"
-                    keystroke return
-                end tell
             end tell
             """
         }
