@@ -49,32 +49,42 @@ enum MenuBarIconGenerator {
 
     // MARK: - Icon Drawing
 
-    /// Simple blob silhouette (wider rectangular shape with dot eyes as holes)
+    /// Full sprite silhouette with body, arms, and legs
     private static func drawBlobIcon() {
         let color = NSColor.black
 
-        // Wider rectangle blob shape
-        let scale: CGFloat = 2.0
-        let offsetX: CGFloat = 0
-        let offsetY: CGFloat = 2
+        // Scaled down to fit limbs in 18x18
+        let scale: CGFloat = 1.5
+        let offsetX: CGFloat = 1.5
+        let offsetY: CGFloat = 0
 
-        // Top row (slightly narrower for rounded look)
-        drawPixelRect(x: 1, y: 5, w: 7, h: 1, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)
+        // --- Legs (4 legs below body) ---
+        // Far left leg
+        drawPixelRect(x: 1, y: 0, w: 1, h: 2, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)
+        // Inner left leg
+        drawPixelRect(x: 3, y: 0, w: 1, h: 2, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)
+        // Inner right leg
+        drawPixelRect(x: 5, y: 0, w: 1, h: 2, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)
+        // Far right leg
+        drawPixelRect(x: 7, y: 0, w: 1, h: 2, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)
 
-        // Middle rows - draw around the eye positions to leave holes
-        // Row y=4 (full width, no eyes)
-        drawPixelRect(x: 0, y: 4, w: 9, h: 1, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)
+        // --- Body (rectangular, no arms) ---
+        // Bottom row of body
+        drawPixelRect(x: 1, y: 2, w: 7, h: 1, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)
 
-        // Row y=3 (eyes at x=2 and x=6, leave gaps)
-        drawPixelRect(x: 0, y: 3, w: 2, h: 1, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)  // left of left eye
-        drawPixelRect(x: 3, y: 3, w: 3, h: 1, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)  // between eyes
-        drawPixelRect(x: 7, y: 3, w: 2, h: 1, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)  // right of right eye
+        // Main body rows (below eyes)
+        drawPixelRect(x: 1, y: 3, w: 7, h: 2, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)
 
-        // Rows y=1-2 (full width, below eyes)
-        drawPixelRect(x: 0, y: 1, w: 9, h: 2, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)
+        // Eye row (y=5) - leave gaps for eyes at x=2 and x=6
+        drawPixelRect(x: 1, y: 5, w: 1, h: 1, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)  // left of left eye
+        drawPixelRect(x: 3, y: 5, w: 3, h: 1, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)  // between eyes
+        drawPixelRect(x: 7, y: 5, w: 1, h: 1, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)  // right of right eye
 
-        // Bottom row (slightly narrower for rounded look)
-        drawPixelRect(x: 1, y: 0, w: 7, h: 1, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)
+        // Row above eyes
+        drawPixelRect(x: 1, y: 6, w: 7, h: 1, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)
+
+        // Top row (full width - rectangular)
+        drawPixelRect(x: 1, y: 7, w: 7, h: 1, color: color, scale: scale, offsetX: offsetX, offsetY: offsetY)
     }
 
     // MARK: - Drawing Helpers
