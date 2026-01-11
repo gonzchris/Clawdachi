@@ -112,14 +112,17 @@ class MenuBarController {
 
         let menu = NSMenu()
 
-        // Title
-        let titleItem = NSMenuItem(title: "Clawdachi", action: nil, keyEquivalent: "")
-        titleItem.isEnabled = false
-        menu.addItem(titleItem)
+        // Launch Claude Code submenu
+        let launchItem = NSMenuItem(title: "Launch Claude Code", action: nil, keyEquivalent: "")
+        launchItem.image = NSImage(systemSymbolName: "terminal", accessibilityDescription: nil)
+        let launchSubmenu = NSMenu(title: "Launch Claude Code")
+        buildLaunchClaudeSubmenu(launchSubmenu)
+        launchItem.submenu = launchSubmenu
+        menu.addItem(launchItem)
 
         menu.addItem(NSMenuItem.separator())
 
-        // Current session indicator
+        // Active sessions
         let monitor = ClaudeSessionMonitor.shared
         let sessions = monitor.activeSessions
         let currentMode = monitor.selectionMode
@@ -173,11 +176,21 @@ class MenuBarController {
 
         menu.addItem(NSMenuItem.separator())
 
-        // Preferences
-        let settingsItem = NSMenuItem(title: "Preferences...", action: #selector(openSettings), keyEquivalent: "")
+        // Settings
+        let settingsItem = NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
-        settingsItem.image = NSImage(systemSymbolName: "gear", accessibilityDescription: nil)
         menu.addItem(settingsItem)
+
+        // Sleep mode toggle
+        let isSleeping = ClawdachiScene.shared?.isSleeping ?? false
+        let sleepItem = NSMenuItem(
+            title: isSleeping ? "Wake Up" : "Sleep Mode",
+            action: #selector(toggleSleep),
+            keyEquivalent: "z"
+        )
+        sleepItem.target = self
+        sleepItem.image = NSImage(systemSymbolName: isSleeping ? "sun.max.fill" : "moon.fill", accessibilityDescription: nil)
+        menu.addItem(sleepItem)
 
         // Quit
         let quitItem = NSMenuItem(title: "Quit Clawdachi", action: #selector(quitApp), keyEquivalent: "q")
@@ -218,6 +231,76 @@ class MenuBarController {
         return NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)
     }
 
+    // MARK: - Launch Claude Submenu
+
+    private func buildLaunchClaudeSubmenu(_ menu: NSMenu) {
+        let launcher = ClaudeLauncher.shared
+        let recentDirs = launcher.recentDirectories(limit: 5)
+        let availableTerminals = launcher.availableTerminals()
+        let preferredTerminal = launcher.preferredTerminal
+
+        // Recent directories
+        if recentDirs.isEmpty {
+            let emptyItem = NSMenuItem(
+                title: "(No recent projects)",
+                action: nil,
+                keyEquivalent: ""
+            )
+            emptyItem.isEnabled = false
+            menu.addItem(emptyItem)
+        } else {
+            for dir in recentDirs {
+                let item = NSMenuItem(
+                    title: dir.displayName,
+                    action: #selector(launchClaudeInDirectory(_:)),
+                    keyEquivalent: ""
+                )
+                item.target = self
+                item.representedObject = dir.path
+                item.image = NSImage(systemSymbolName: "folder", accessibilityDescription: nil)
+                menu.addItem(item)
+            }
+        }
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Browse option
+        let browseItem = NSMenuItem(
+            title: "Browse...",
+            action: #selector(launchClaudeBrowse),
+            keyEquivalent: ""
+        )
+        browseItem.target = self
+        browseItem.image = NSImage(systemSymbolName: "folder.badge.plus", accessibilityDescription: nil)
+        menu.addItem(browseItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Terminal preference
+        if availableTerminals.isEmpty {
+            let noTerminalItem = NSMenuItem(
+                title: "No supported terminal found",
+                action: nil,
+                keyEquivalent: ""
+            )
+            noTerminalItem.isEnabled = false
+            menu.addItem(noTerminalItem)
+        } else {
+            for terminal in availableTerminals {
+                let item = NSMenuItem(
+                    title: terminal.displayName,
+                    action: #selector(selectPreferredTerminal(_:)),
+                    keyEquivalent: ""
+                )
+                item.target = self
+                item.representedObject = terminal.rawValue
+                item.state = (terminal == preferredTerminal) ? .on : .off
+                item.image = NSImage(systemSymbolName: "terminal.fill", accessibilityDescription: nil)
+                menu.addItem(item)
+            }
+        }
+    }
+
     // MARK: - Actions
 
     @objc private func selectSession(_ sender: NSMenuItem) {
@@ -232,7 +315,68 @@ class MenuBarController {
         SettingsWindow.shared.toggle(relativeTo: appDelegate.spriteWindow)
     }
 
+    @objc private func toggleSleep() {
+        ClawdachiScene.shared?.toggleSleep()
+        rebuildMenu()
+    }
+
     @objc private func quitApp() {
         NSApp.terminate(nil)
+    }
+
+    @objc private func launchClaudeInDirectory(_ sender: NSMenuItem) {
+        guard let path = sender.representedObject as? URL else { return }
+
+        ClawdachiScene.shared?.showChatBubble("> let's build", duration: 2.0)
+
+        ClaudeLauncher.shared.launch(in: path) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    break
+                case .terminalNotInstalled(let terminal):
+                    ClawdachiScene.shared?.showChatBubble("\(terminal.displayName) not found", duration: 3.0)
+                case .directoryNotFound:
+                    ClawdachiScene.shared?.showChatBubble("folder not found", duration: 3.0)
+                case .appleScriptError(let message):
+                    ClawdachiScene.shared?.showChatBubble("error: \(message)", duration: 3.0)
+                }
+            }
+        }
+    }
+
+    @objc private func launchClaudeBrowse() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.message = "Choose a directory to launch Claude Code in"
+        panel.prompt = "Launch Claude"
+
+        if panel.runModal() == .OK, let url = panel.url {
+            ClawdachiScene.shared?.showChatBubble("> let's build", duration: 2.0)
+
+            ClaudeLauncher.shared.launch(in: url) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success:
+                        break
+                    case .terminalNotInstalled(let terminal):
+                        ClawdachiScene.shared?.showChatBubble("\(terminal.displayName) not found", duration: 3.0)
+                    case .directoryNotFound:
+                        ClawdachiScene.shared?.showChatBubble("folder not found", duration: 3.0)
+                    case .appleScriptError(let message):
+                        ClawdachiScene.shared?.showChatBubble("error: \(message)", duration: 3.0)
+                    }
+                }
+            }
+        }
+    }
+
+    @objc private func selectPreferredTerminal(_ sender: NSMenuItem) {
+        guard let rawValue = sender.representedObject as? String,
+              let terminal = ClaudeLauncher.Terminal(rawValue: rawValue) else { return }
+        ClaudeLauncher.shared.preferredTerminal = terminal
+        rebuildMenu()
     }
 }

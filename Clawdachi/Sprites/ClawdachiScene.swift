@@ -15,7 +15,7 @@ class ClawdachiScene: SKScene {
     // MARK: - Properties
 
     private(set) var clawdachi: ClawdachiSprite!
-    private var isSleeping = false
+    private(set) var isSleeping = false
     private var musicMonitor: MusicPlaybackMonitor!
     private var claudeMonitor: ClaudeSessionMonitor!
     private var claudeStatusHandler: ClaudeStatusHandler!
