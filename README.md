@@ -1,15 +1,5 @@
 # Clawdachi
 
-<div style="position: relative; padding-top: 56.25%;">
-  <iframe
-    src="https://customer-y8uzs9mjooqbbv62.cloudflarestream.com/57a2cab479f62843009c21815eb7dd0d/iframe?poster=https%3A%2F%2Fcustomer-y8uzs9mjooqbbv62.cloudflarestream.com%2F57a2cab479f62843009c21815eb7dd0d%2Fthumbnails%2Fthumbnail.jpg%3Ftime%3D%26height%3D600"
-    loading="lazy"
-    style="border: none; position: absolute; top: 0; left: 0; height: 100%; width: 100%;"
-    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
-    allowfullscreen="true"
-  ></iframe>
-</div>
-
 A pixel art desktop companion for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). A friendly orange blob that lives on your screen, reacts to Claude's activity, and keeps you company while you code.
 
 <p align="center">
